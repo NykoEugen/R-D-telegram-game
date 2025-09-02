@@ -123,7 +123,7 @@ def main():
         web.run_app(
             app,
             host="0.0.0.0",
-            port=8000,
+            port=Config.PORT,
             print=lambda _: None  # Disable default logging
         )
     else:

@@ -24,7 +24,10 @@ def check_environment():
         print("\n📝 Please create a .env file with the following content:")
         print("BOT_TOKEN=your_telegram_bot_token_here")
         print("OPENAI_API_KEY=your_openai_api_key_here")
+        print("OPENAI_MODEL=gpt-3.5-turbo  # Optional, defaults to gpt-3.5-turbo")
         print("NGROK_URL=https://your-ngrok-url.ngrok.io  # Optional for webhook mode")
+        print("PORT=8000  # Optional, defaults to 8000")
+        print("WEBHOOK_SECRET=your_secret_here  # Optional for webhook security")
         print("\n💡 You can copy from .env.example and fill in your actual values.")
         return False
     
@@ -78,7 +81,7 @@ def show_instructions():
     
     print("\n🔧 MODES:")
     print("• Polling Mode (default): Just run the bot")
-    print("• Webhook Mode: Set NGROK_URL in .env and run ngrok http 8000")
+    print("• Webhook Mode: Set NGROK_URL in .env and run ngrok http <PORT> (default: 8000)")
     
     print("\n📱 TESTING:")
     print("1. Start the bot")
