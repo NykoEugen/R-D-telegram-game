@@ -1,11 +1,11 @@
-import logging
 from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.filters import Command
 from app.services.openai_service import OpenAIService
+from app.services.logging_service import get_logger
 
 router = Router()
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 @router.message(Command("quest"))
 async def cmd_quest(message: Message):
@@ -38,10 +38,17 @@ async def cmd_quest(message: Message):
             )
         
         await message.answer(quest_text, parse_mode="Markdown")
-        logger.info(f"User {message.from_user.id} requested a quest")
+        logger.info("User requested a quest", 
+                   user_id=message.from_user.id,
+                   user_name=message.from_user.first_name,
+                   chat_id=message.chat.id)
         
     except Exception as e:
-        logger.error(f"Error in quest command: {e}")
+        logger.error("Error in quest command", 
+                    user_id=message.from_user.id,
+                    chat_id=message.chat.id,
+                    error_type=type(e).__name__,
+                    error_message=str(e))
         _ = message.get("_")
         await message.answer(
             f"{_('quest_error')}\n\n"
@@ -66,4 +73,7 @@ async def cmd_status(message: Message):
     )
     
     await message.answer(status_text, parse_mode="Markdown")
-    logger.info(f"User {message.from_user.id} requested game status")
+    logger.info("User requested game status", 
+               user_id=message.from_user.id,
+               user_name=message.from_user.first_name,
+               chat_id=message.chat.id)

@@ -1,12 +1,12 @@
-import logging
 from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.filters import Command
 from app.services.openai_service import OpenAIService
+from app.services.logging_service import get_logger
 from app.config import Config
 
 router = Router()
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 @router.message(Command("start"))
 async def cmd_start(message: Message):
@@ -45,10 +45,17 @@ async def cmd_start(message: Message):
             )
         
         await message.answer(welcome_text, parse_mode="Markdown")
-        logger.info(f"User {message.from_user.id} started the bot")
+        logger.info("User started the bot", 
+                   user_id=message.from_user.id,
+                   user_name=message.from_user.first_name,
+                   chat_id=message.chat.id)
         
     except Exception as e:
-        logger.error(f"Error in start command: {e}")
+        logger.error("Error in start command", 
+                    user_id=message.from_user.id,
+                    chat_id=message.chat.id,
+                    error_type=type(e).__name__,
+                    error_message=str(e))
         _ = message.get("_")
         await message.answer(
             f"{_('fallback_welcome')}\n\n"
@@ -78,4 +85,7 @@ async def cmd_help(message: Message):
     )
     
     await message.answer(help_text, parse_mode="Markdown")
-    logger.info(f"User {message.from_user.id} requested help")
+    logger.info("User requested help", 
+               user_id=message.from_user.id,
+               user_name=message.from_user.first_name,
+               chat_id=message.chat.id)

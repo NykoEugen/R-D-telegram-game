@@ -1,10 +1,10 @@
-import logging
 from aiogram import Router, F
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.filters import Command
+from app.services.logging_service import get_logger
 
 router = Router()
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 @router.message(Command("language"))
 async def cmd_language(message: Message):
@@ -34,10 +34,17 @@ async def cmd_language(message: Message):
             reply_markup=keyboard
         )
         
-        logger.info(f"User {message.from_user.id} requested language selection")
+        logger.info("User requested language selection", 
+                   user_id=message.from_user.id,
+                   user_name=message.from_user.first_name,
+                   chat_id=message.chat.id)
         
     except Exception as e:
-        logger.error(f"Error in language command: {e}")
+        logger.error("Error in language command", 
+                    user_id=message.from_user.id,
+                    chat_id=message.chat.id,
+                    error_type=type(e).__name__,
+                    error_message=str(e))
         # Fallback message
         await message.answer("🌍 Please choose your language: /language")
 
@@ -59,10 +66,19 @@ async def handle_language_callback(callback: CallbackQuery):
             callback.message.get("_")("language_changed", language=lang_name)
         )
         
-        logger.info(f"User {callback.from_user.id} changed language to: {lang_code}")
+        logger.info("User changed language", 
+                   user_id=callback.from_user.id,
+                   user_name=callback.from_user.first_name,
+                   chat_id=callback.message.chat.id,
+                   language_code=lang_code,
+                   language_name=lang_name)
         
     except Exception as e:
-        logger.error(f"Error in language callback: {e}")
+        logger.error("Error in language callback", 
+                    user_id=callback.from_user.id,
+                    chat_id=callback.message.chat.id,
+                    error_type=type(e).__name__,
+                    error_message=str(e))
         await callback.answer("❌ Error changing language")
     
     # Answer callback to remove loading state

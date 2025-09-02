@@ -1,56 +1,31 @@
 import asyncio
-import logging
 import sys
 from pathlib import Path
 
 from aiogram import Bot, Dispatcher
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
-from pythonjsonlogger import jsonlogger
 
 from app.config import Config
 from app.handlers import start, game, language
+from app.handlers.errors import setup_error_handlers
 from app.middlewares.i18n import I18nMiddleware
+from app.middlewares.correlation import CorrelationMiddleware
+from app.services.logging_service import setup_logging, get_logger
 
 # Configure logging
-def setup_logging():
-    """Configure logging with JSON format and proper level."""
-    log_level = getattr(logging, Config.LOG_LEVEL.upper(), logging.INFO)
-    
-    # Create JSON formatter
-    formatter = jsonlogger.JsonFormatter(
-        fmt='%(asctime)s %(name)s %(levelname)s %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+def setup_logging_config():
+    """Configure logging with structured JSON format and orjson."""
+    # Setup logging with our new service
+    setup_logging(
+        log_level=Config.LOG_LEVEL,
+        log_file="logs/bot.log",
+        enable_console=True
     )
-    
-    # Configure root logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(log_level)
-    
-    # Remove existing handlers
-    for handler in root_logger.handlers[:]:
-        root_logger.removeHandler(handler)
-    
-    # Add console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(log_level)
-    console_handler.setFormatter(formatter)
-    root_logger.addHandler(console_handler)
-    
-    # Add file handler
-    log_file = Path("logs/bot.log")
-    log_file.parent.mkdir(exist_ok=True)
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(log_level)
-    file_handler.setFormatter(formatter)
-    root_logger.addHandler(file_handler)
-    
-    logger = logging.getLogger(__name__)
-    logger.info("Logging configured successfully")
 
 async def on_startup(bot: Bot, base_url: str):
     """Actions to perform on bot startup."""
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__)
     
     if base_url:
         # Set webhook
@@ -58,7 +33,8 @@ async def on_startup(bot: Bot, base_url: str):
             url=f"{base_url}{Config.WEBHOOK_PATH}",
             drop_pending_updates=True
         )
-        logger.info(f"Webhook set to {base_url}{Config.WEBHOOK_PATH}")
+        logger.info("Webhook set successfully", 
+                   webhook_url=f"{base_url}{Config.WEBHOOK_PATH}")
     else:
         # Delete webhook for polling mode
         await bot.delete_webhook(drop_pending_updates=True)
@@ -68,7 +44,7 @@ async def on_startup(bot: Bot, base_url: str):
 
 async def on_shutdown(bot: Bot):
     """Actions to perform on bot shutdown."""
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__)
     
     # Delete webhook
     await bot.delete_webhook()
@@ -81,14 +57,16 @@ async def on_shutdown(bot: Bot):
 def main():
     """Main function to start the bot."""
     # Setup logging
-    setup_logging()
-    logger = logging.getLogger(__name__)
+    setup_logging_config()
+    logger = get_logger(__name__)
     
     # Initialize bot and dispatcher
     bot = Bot(token=Config.BOT_TOKEN, parse_mode="HTML")
     dp = Dispatcher()
     
-    # Register middleware
+    # Register middleware in order of execution
+    dp.message.middleware(CorrelationMiddleware())
+    dp.callback_query.middleware(CorrelationMiddleware())
     dp.message.middleware(I18nMiddleware())
     dp.callback_query.middleware(I18nMiddleware())
     
@@ -96,6 +74,9 @@ def main():
     dp.include_router(start.router)
     dp.include_router(game.router)
     dp.include_router(language.router)
+    
+    # Setup error handlers
+    setup_error_handlers(dp)
     
     # Register startup and shutdown handlers
     dp.startup.register(on_startup)
