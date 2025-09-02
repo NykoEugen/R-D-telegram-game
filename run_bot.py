@@ -7,6 +7,7 @@ This script provides clear instructions and handles common setup issues.
 import os
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
 def check_environment():
     """Check if required environment variables are set."""
@@ -98,6 +99,9 @@ def main():
     """Main function."""
     print("🎮 Fantasy RPG Adventure Bot - Startup Check")
     print("="*50)
+    
+    # Load environment variables from .env file
+    load_dotenv()
     
     # Check if .env file exists
     if not Path(".env").exists():

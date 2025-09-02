@@ -69,32 +69,7 @@ class GlobalErrorHandler(BaseMiddleware):
         
         return info
     
-    def _format_exception(self, exc: Exception) -> Dict[str, Any]:
-        """Format exception details for logging."""
-        details = {
-            'type': type(exc).__name__,
-            'message': str(exc),
-            'args': exc.args,
-        }
-        
-        # Add specific details for known exception types
-        if isinstance(exc, TelegramAPIError):
-            details.update({
-                'api_error_code': getattr(exc, 'code', None),
-                'api_error_description': getattr(exc, 'description', None),
-                'api_error_parameters': getattr(exc, 'parameters', None),
-            })
-        elif isinstance(exc, TelegramNetworkError):
-            details.update({
-                'network_error_type': type(exc).__name__,
-                'retry_after': getattr(exc, 'retry_after', None),
-            })
-        elif isinstance(exc, TelegramRetryAfter):
-            details.update({
-                'retry_after_seconds': getattr(exc, 'retry_after', None),
-            })
-        
-        return details
+
 
 def setup_error_handlers(router: Router) -> None:
     """Setup error handlers for the router."""
@@ -102,72 +77,45 @@ def setup_error_handlers(router: Router) -> None:
     @router.errors()
     async def errors_handler(event: ErrorEvent) -> bool:
         """Handle all errors that occur during update processing."""
-        corr_id = get_correlation_id()
-        
-        # Extract error information
-        error = event.exception
-        update = event.update
-        
-        # Extract update information
-        update_info = {}
         try:
-            if update.message:
-                update_info.update({
-                    'type': 'message',
-                    'user_id': update.message.from_user.id if update.message.from_user else None,
-                    'chat_id': update.message.chat.id if update.message.chat else None,
-                })
-            elif update.callback_query:
-                update_info.update({
-                    'type': 'callback_query',
-                    'user_id': update.callback_query.from_user.id if update.callback_query.from_user else None,
-                    'chat_id': update.callback_query.message.chat.id if update.callback_query.message else None,
-                })
-        except Exception:
-            pass
-        
-        # Log the error with full context
-        logger.error(
-            "Error event occurred",
-            correlation_id=corr_id,
-            update_type=update_info.get('type'),
-            user_id=update_info.get('user_id'),
-            chat_id=update_info.get('chat_id'),
-            error_type=type(error).__name__,
-            error_message=str(error),
-            exception_details=self._format_exception(error)
-        )
+            corr_id = get_correlation_id()
+            
+            # Extract error information
+            error = event.exception
+            update = event.update
+            
+            # Extract update information
+            update_info = {}
+            try:
+                if update.message:
+                    update_info.update({
+                        'type': 'message',
+                        'user_id': update.message.from_user.id if update.message.from_user else None,
+                        'chat_id': update.message.chat.id if update.message.chat else None,
+                    })
+                elif update.callback_query:
+                    update_info.update({
+                        'type': 'callback_query',
+                        'user_id': update.callback_query.from_user.id if update.callback_query.from_user else None,
+                        'chat_id': update.callback_query.message.chat.id if update.callback_query.message else None,
+                    })
+            except Exception:
+                pass
+            
+            # Log the error with full context
+            logger.error(
+                "Error event occurred",
+                correlation_id=corr_id,
+                update_type=update_info.get('type'),
+                user_id=update_info.get('user_id'),
+                chat_id=update_info.get('chat_id'),
+                error_type=type(error).__name__,
+                error_message=str(error)
+            )
+            
+        except Exception as e:
+            # Fallback error logging
+            logger.error("Error in error handler", error=str(e))
         
         # Return True to indicate the error was handled
         return True
-    
-    # Add the _format_exception method to the errors_handler function
-    def _format_exception(self, exc: Exception) -> Dict[str, Any]:
-        """Format exception details for logging."""
-        details = {
-            'type': type(exc).__name__,
-            'message': str(exc),
-            'args': exc.args,
-        }
-        
-        # Add specific details for known exception types
-        if isinstance(exc, TelegramAPIError):
-            details.update({
-                'api_error_code': getattr(exc, 'code', None),
-                'api_error_description': getattr(exc, 'description', None),
-                'api_error_parameters': getattr(exc, 'parameters', None),
-            })
-        elif isinstance(exc, TelegramNetworkError):
-            details.update({
-                'network_error_type': type(exc).__name__,
-                'retry_after': getattr(exc, 'retry_after', None),
-            })
-        elif isinstance(exc, TelegramRetryAfter):
-            details.update({
-                'retry_after_seconds': getattr(exc, 'retry_after', None),
-            })
-        
-        return details
-    
-    # Attach the method to the function
-    errors_handler._format_exception = _format_exception

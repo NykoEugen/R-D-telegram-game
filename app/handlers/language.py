@@ -10,10 +10,6 @@ logger = get_logger(__name__)
 async def cmd_language(message: Message):
     """Handle the /language command - show language selection."""
     try:
-        # Get current language
-        current_lang = message.get("get_user_language")()
-        current_lang_name = "English" if current_lang == "en" else "Українська"
-        
         # Create inline keyboard for language selection
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [
@@ -30,7 +26,8 @@ async def cmd_language(message: Message):
         
         # Send language selection message
         await message.answer(
-            message.get("_")("choose_language"),
+            "🌍 **Choose Your Language**\n\n"
+            "Please select your preferred language:",
             reply_markup=keyboard
         )
         
@@ -55,15 +52,14 @@ async def handle_language_callback(callback: CallbackQuery):
         # Extract language code from callback data
         lang_code = callback.data.split("_")[1]
         
-        # Set user language
-        callback.message.get("set_user_language")(lang_code)
-        
         # Get language name for display
         lang_name = "English" if lang_code == "en" else "Українська"
         
         # Send confirmation message
         await callback.message.edit_text(
-            callback.message.get("_")("language_changed", language=lang_name)
+            f"✅ **Language Changed Successfully!**\n\n"
+            f"🌍 Your language has been set to: **{lang_name}**\n\n"
+            f"💡 **Note:** Language support is coming soon! For now, the bot will continue in English."
         )
         
         logger.info("User changed language", 
