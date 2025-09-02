@@ -9,7 +9,8 @@ from aiohttp import web
 from pythonjsonlogger import jsonlogger
 
 from app.config import Config
-from app.handlers import start, game
+from app.handlers import start, game, language
+from app.middlewares.i18n import I18nMiddleware
 
 # Configure logging
 def setup_logging():
@@ -87,9 +88,14 @@ def main():
     bot = Bot(token=Config.BOT_TOKEN, parse_mode="HTML")
     dp = Dispatcher()
     
+    # Register middleware
+    dp.message.middleware(I18nMiddleware())
+    dp.callback_query.middleware(I18nMiddleware())
+    
     # Register routers
     dp.include_router(start.router)
     dp.include_router(game.router)
+    dp.include_router(language.router)
     
     # Register startup and shutdown handlers
     dp.startup.register(on_startup)
