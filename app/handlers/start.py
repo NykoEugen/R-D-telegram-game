@@ -13,32 +13,35 @@ async def cmd_start(message: Message):
     """Handle the /start command - greet player and introduce the RPG world."""
     try:
         user_name = message.from_user.first_name or "Adventurer"
+        _ = message.get("_")  # Get translation function
         
         # Generate world description using OpenAI
         world_description = await OpenAIService.generate_world_description()
         
         if world_description:
             welcome_text = (
-                f"🎮 **Welcome to {Config.GAME_NAME}, {user_name}!** 🎮\n\n"
-                f"🌍 **The World:** {world_description}\n\n"
-                f"⚔️ **Your Adventure Awaits!** ⚔️\n\n"
-                f"**Available Commands:**\n"
-                f"• /start - Show this welcome message\n"
-                f"• /quest - Get a new quest\n"
-                f"• /help - Show help information\n\n"
-                f"Ready to embark on your epic journey? Use /quest to begin your first adventure!"
+                f"{_('start_welcome', name=user_name)}\n\n"
+                f"{_('world_description', description=world_description)}\n\n"
+                f"{_('adventure_awaits')}\n\n"
+                f"{_('available_commands')}\n"
+                f"{_('start_command')}\n"
+                f"{_('quest_command')}\n"
+                f"{_('help_command')}\n"
+                f"{_('language_command')}\n\n"
+                f"{_('ready_adventure')}"
             )
         else:
             # Fallback if OpenAI fails
             welcome_text = (
-                f"🎮 **Welcome to {Config.GAME_NAME}, {user_name}!** 🎮\n\n"
-                f"🌍 **The World:** {Config.GAME_DESCRIPTION}\n\n"
-                f"⚔️ **Your Adventure Awaits!** ⚔️\n\n"
-                f"**Available Commands:**\n"
-                f"• /start - Show this welcome message\n"
-                f"• /quest - Get a new quest\n"
-                f"• /help - Show help information\n\n"
-                f"Ready to embark on your epic journey? Use /quest to begin your first adventure!"
+                f"{_('start_welcome', name=user_name)}\n\n"
+                f"{_('fallback_world', description=Config.GAME_DESCRIPTION)}\n\n"
+                f"{_('adventure_awaits')}\n\n"
+                f"{_('available_commands')}\n"
+                f"{_('start_command')}\n"
+                f"{_('quest_command')}\n"
+                f"{_('help_command')}\n"
+                f"{_('language_command')}\n\n"
+                f"{_('ready_adventure')}"
             )
         
         await message.answer(welcome_text, parse_mode="Markdown")
@@ -46,28 +49,32 @@ async def cmd_start(message: Message):
         
     except Exception as e:
         logger.error(f"Error in start command: {e}")
+        _ = message.get("_")
         await message.answer(
-            "🎮 Welcome to Fantasy RPG Adventure! 🎮\n\n"
-            "Something went wrong with the world generation, but your adventure awaits!\n"
-            "Use /quest to begin your journey!"
+            f"{_('fallback_welcome')}\n\n"
+            f"{_('error_message')}\n"
+            f"{_('quest_command')}"
         )
 
 @router.message(Command("help"))
 async def cmd_help(message: Message):
     """Handle the /help command - show available commands and game information."""
+    _ = message.get("_")  # Get translation function
+    
     help_text = (
-        f"🎮 **{Config.GAME_NAME} - Help** 🎮\n\n"
-        f"**Game Commands:**\n"
-        f"• /start - Welcome message and world introduction\n"
-        f"• /quest - Get a new quest description\n"
-        f"• /help - Show this help message\n\n"
-        f"**About the Game:**\n"
-        f"This is a text-based RPG where you'll receive quests and embark on adventures in a medieval fantasy world.\n\n"
-        f"**Getting Started:**\n"
-        f"1. Use /start to begin your journey\n"
-        f"2. Use /quest to receive your first quest\n"
-        f"3. More game features coming soon!\n\n"
-        f"⚔️ **May your adventures be legendary!** ⚔️"
+        f"{_('help_title')}\n\n"
+        f"{_('game_commands')}\n"
+        f"{_('start_command')}\n"
+        f"{_('quest_command')}\n"
+        f"{_('help_command')}\n"
+        f"{_('language_command')}\n\n"
+        f"{_('about_game')}\n"
+        f"{_('about_description')}\n\n"
+        f"{_('getting_started')}\n"
+        f"{_('getting_started_1')}\n"
+        f"{_('getting_started_2')}\n"
+        f"{_('getting_started_3')}\n\n"
+        f"{_('adventure_legendary')}"
     )
     
     await message.answer(help_text, parse_mode="Markdown")
