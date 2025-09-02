@@ -43,6 +43,48 @@ A text-based RPG game bot for Telegram built with aiogram 3.13, featuring AI-gen
    - Get an OpenAI API key from [OpenAI Platform](https://platform.openai.com/)
    - For local testing, install ngrok and get a public URL
 
+## 🛠️ Development Setup
+
+### Prerequisites
+
+- Python 3.12+
+- Git with pre-commit support
+
+### Development Installation
+
+1. **Install development dependencies**
+   ```bash
+   pip install -r requirements-dev.txt
+   ```
+
+2. **Set up pre-commit hooks**
+   ```bash
+   make precommit-install
+   ```
+
+3. **Verify installation**
+   ```bash
+   make check
+   ```
+
+### Development Commands
+
+- `make install-dev` - Install all dependencies (including dev tools)
+- `make format` - Format code with Black and isort
+- `make lint` - Run Ruff linter
+- `make typecheck` - Run MyPy type checker
+- `make fix` - Auto-fix linting issues and format code
+- `make check` - Run all checks (format, lint, typecheck)
+- `make clean` - Clean up cache directories
+
+### Code Quality Tools
+
+- **Black** - Code formatter (line length: 88)
+- **isort** - Import sorting (Black-compatible)
+- **Ruff** - Fast Python linter with auto-fix
+- **MyPy** - Static type checker
+- **pre-commit** - Git hooks for code quality
+
 ### Environment Variables
 
 Create a `.env` file with the following variables:
@@ -53,12 +95,21 @@ BOT_TOKEN=your_telegram_bot_token_here
 
 # OpenAI API Configuration
 OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-3.5-turbo
 
 # Ngrok Configuration for Local Testing
 NGROK_URL=https://your-ngrok-url.ngrok.io
 
 # Logging Configuration
 LOG_LEVEL=INFO
+
+# Webhook Configuration
+PORT=8000
+WEBHOOK_SECRET=your_webhook_secret_here
+
+# Game Configuration (optional - these have defaults)
+# GAME_NAME=Fantasy RPG Adventure
+# GAME_DESCRIPTION=Embark on epic quests in a medieval fantasy world!
 ```
 
 ## 🎯 Usage
@@ -73,7 +124,7 @@ python app/main.py
 
 1. **Start ngrok for local testing**
    ```bash
-   ngrok http 8000
+   ngrok http 8000  # or use your custom PORT from .env
    ```
 
 2. **Update your .env with the ngrok URL**
@@ -109,6 +160,10 @@ R-D-telegram-game/
 │       ├── __init__.py
 │       └── openai_service.py # OpenAI API integration
 ├── requirements.txt          # Python dependencies
+├── requirements-dev.txt      # Development dependencies
+├── pyproject.toml           # Project configuration and tool settings
+├── .pre-commit-config.yaml  # Pre-commit hooks configuration
+├── Makefile                 # Development task automation
 ├── .env.example             # Environment variables template
 ├── .gitignore               # Git ignore patterns
 └── README.md                # This file
@@ -116,11 +171,52 @@ R-D-telegram-game/
 
 ## 🔧 Configuration
 
+### Configuration System
+
+The bot uses **Pydantic BaseSettings** for robust configuration management:
+
+- **Automatic .env loading** with environment variable support
+- **Type validation** and default values for all settings
+- **Model validation** ensures only valid OpenAI models are used
+- **Backward compatibility** with existing code
+- **Environment variable overrides** for flexible deployment
+
+### Environment Variables
+
+All configuration is managed through environment variables with sensible defaults:
+
+- **Required**: `BOT_TOKEN`, `OPENAI_API_KEY`
+- **Optional**: `OPENAI_MODEL`, `LOG_LEVEL`, `PORT`, `WEBHOOK_SECRET`, `NGROK_URL`
+- **Game settings**: `GAME_NAME`, `GAME_DESCRIPTION` (with defaults)
+
+### Available OpenAI Models
+
+The bot supports all current OpenAI chat completion models:
+
+**🚀 GPT-4 Models (Most Capable):**
+- `gpt-4o` - Best overall performance, great for storytelling
+- `gpt-4-turbo` - Excellent balance of capability and cost
+- `gpt-4` - High-quality responses
+- `gpt-4-32k` - Extended context window
+
+**⚡ GPT-3.5 Models (Fast & Cost-Effective):**
+- `gpt-3.5-turbo` - Fast and cost-effective (default)
+- `gpt-3.5-turbo-16k` - Extended context
+- `gpt-3.5-turbo-instruct` - Instruction-following
+
+**📚 Legacy Models:**
+- Various snapshot versions for specific use cases
+
+**💡 Recommendations:**
+- **For best quality**: `gpt-4o` (most expensive)
+- **For balanced performance**: `gpt-4-turbo`
+- **For cost-effectiveness**: `gpt-3.5-turbo` (default)
+
 ### Bot Settings
 
 The bot automatically detects whether to use webhook or polling mode based on the `NGROK_URL` environment variable:
 
-- **With NGROK_URL**: Uses webhook mode on port 8000
+- **With NGROK_URL**: Uses webhook mode on configurable port (default: 8000)
 - **Without NGROK_URL**: Uses polling mode
 
 ### Logging

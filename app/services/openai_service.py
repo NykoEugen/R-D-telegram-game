@@ -21,7 +21,7 @@ class OpenAIService:
         """
         try:
             response = await openai.ChatCompletion.acreate(
-                model="gpt-3.5-turbo",
+                model=Config.OPENAI_MODEL,
                 messages=[
                     {
                         "role": "system",
@@ -54,7 +54,7 @@ class OpenAIService:
         """
         try:
             response = await openai.ChatCompletion.acreate(
-                model="gpt-3.5-turbo",
+                model=Config.OPENAI_MODEL,
                 messages=[
                     {
                         "role": "system",
