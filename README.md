@@ -43,6 +43,48 @@ A text-based RPG game bot for Telegram built with aiogram 3.13, featuring AI-gen
    - Get an OpenAI API key from [OpenAI Platform](https://platform.openai.com/)
    - For local testing, install ngrok and get a public URL
 
+## 🛠️ Development Setup
+
+### Prerequisites
+
+- Python 3.12+
+- Git with pre-commit support
+
+### Development Installation
+
+1. **Install development dependencies**
+   ```bash
+   pip install -r requirements-dev.txt
+   ```
+
+2. **Set up pre-commit hooks**
+   ```bash
+   make precommit-install
+   ```
+
+3. **Verify installation**
+   ```bash
+   make check
+   ```
+
+### Development Commands
+
+- `make install-dev` - Install all dependencies (including dev tools)
+- `make format` - Format code with Black and isort
+- `make lint` - Run Ruff linter
+- `make typecheck` - Run MyPy type checker
+- `make fix` - Auto-fix linting issues and format code
+- `make check` - Run all checks (format, lint, typecheck)
+- `make clean` - Clean up cache directories
+
+### Code Quality Tools
+
+- **Black** - Code formatter (line length: 88)
+- **isort** - Import sorting (Black-compatible)
+- **Ruff** - Fast Python linter with auto-fix
+- **MyPy** - Static type checker
+- **pre-commit** - Git hooks for code quality
+
 ### Environment Variables
 
 Create a `.env` file with the following variables:
@@ -109,6 +151,10 @@ R-D-telegram-game/
 │       ├── __init__.py
 │       └── openai_service.py # OpenAI API integration
 ├── requirements.txt          # Python dependencies
+├── requirements-dev.txt      # Development dependencies
+├── pyproject.toml           # Project configuration and tool settings
+├── .pre-commit-config.yaml  # Pre-commit hooks configuration
+├── Makefile                 # Development task automation
 ├── .env.example             # Environment variables template
 ├── .gitignore               # Git ignore patterns
 └── README.md                # This file

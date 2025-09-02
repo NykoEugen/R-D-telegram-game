@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "r-d-telegram-game"
+version = "0.1.0"
+description = "Telegram RPG game built with aiogram 3.13"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram==3.13.0",
+    "python-dotenv==1.0.0",
+    "openai==1.12.0",
+    "aiohttp==3.9.1",
+    "python-json-logger==2.0.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==24.8.0",
+    "isort==5.13.2",
+    "mypy==1.11.2",
+    "ruff==0.6.9",
+    "pre-commit==3.8.0",
+    "types-requests==2.32.0.20240712",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+line_length = 88
+src_paths = ["app"]
+known_first_party = ["app"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["app"]
+select = ["E", "F", "I", "B", "UP", "SIM", "PL"]
+ignore = ["E203"]  # to be compatible with Black
+fix = true
+
+[tool.ruff.lint.per-file-ignores]
+"app/__init__.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["app"]
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+no_implicit_optional = true
+check_untyped_defs = true
+pretty = true
+show_error_codes = true
+namespace_packages = true
+explicit_package_bases = true
+# aiogram is async; allow partial strictness for now:
+strict_optional = true
