@@ -11,30 +11,34 @@ logger = get_logger(__name__)
 async def cmd_quest(message: Message):
     """Handle the /quest command - generate and provide a new quest description."""
     try:
-        _ = message.get("_")  # Get translation function
-        
         # Show typing indicator
-        await message.answer(_("quest_generating"), parse_mode="Markdown")
+        await message.answer("⚔️ Generating your quest...", parse_mode="HTML")
         
         # Generate quest description using OpenAI
         quest_description = await OpenAIService.generate_quest_description()
         
         if quest_description:
             quest_text = (
-                f"{_('new_quest')}\n\n"
-                f"{_('quest_description', description=quest_description)}\n\n"
-                f"{_('what_will_you_do')}\n"
-                f"{_('quest_options')}\n\n"
-                f"{_('quest_hint')}"
+                f"🗺️ **NEW QUEST GENERATED!**\n\n"
+                f"📜 **Quest Description:**\n{quest_description}\n\n"
+                f"🤔 **What will you do?**\n"
+                f"• Accept the quest and begin your journey\n"
+                f"• Ask for more details\n"
+                f"• Request a different quest\n\n"
+                f"💡 **Hint:** Use /quest again to generate a new quest!"
             )
         else:
             # Fallback if OpenAI fails
             quest_text = (
-                f"{_('quest_failed')}\n\n"
-                f"{_('fallback_quest')}\n\n"
-                f"{_('what_will_you_do')}\n"
-                f"{_('quest_options')}\n\n"
-                f"{_('quest_hint')}"
+                f"🗺️ **QUEST GENERATION FAILED**\n\n"
+                f"📜 **Fallback Quest:**\n"
+                f"Journey to the ancient ruins of Eldoria and retrieve the Crystal of Wisdom. "
+                f"Beware of the shadow creatures that lurk in the darkness.\n\n"
+                f"🤔 **What will you do?**\n"
+                f"• Accept the quest and begin your journey\n"
+                f"• Ask for more details\n"
+                f"• Request a different quest\n\n"
+                f"💡 **Hint:** Use /quest again to generate a new quest!"
             )
         
         await message.answer(quest_text, parse_mode="Markdown")
@@ -49,27 +53,24 @@ async def cmd_quest(message: Message):
                     chat_id=message.chat.id,
                     error_type=type(e).__name__,
                     error_message=str(e))
-        _ = message.get("_")
         await message.answer(
-            f"{_('quest_error')}\n\n"
-            f"{_('quest_error_message')}\n\n"
-            f"{_('quest_error_hint')}"
+            "❌ **Quest Generation Error**\n\n"
+            "There was an error generating your quest. Please try again later.\n\n"
+            "💡 **Hint:** Use /quest again in a few moments."
         )
 
 @router.message(Command("status"))
 async def cmd_status(message: Message):
     """Handle the /status command - placeholder for future game status functionality."""
-    _ = message.get("_")  # Get translation function
-    
     status_text = (
-        f"{_('game_status')}\n\n"
-        f"{_('current_game')}\n"
-        f"{_('player_level')}\n"
-        f"{_('experience')}\n"
-        f"{_('gold')}\n"
-        f"{_('inventory')}\n\n"
-        f"{_('under_development')}\n\n"
-        f"{_('status_hint')}"
+        f"📊 **GAME STATUS**\n\n"
+        f"🎮 **Current Game:** Fantasy RPG Adventure\n"
+        f"👤 **Player Level:** 1\n"
+        f"⭐ **Experience:** 0/100\n"
+        f"💰 **Gold:** 10\n"
+        f"🎒 **Inventory:** Empty\n\n"
+        f"🚧 **Under Development**\n\n"
+        f"💡 **Hint:** This feature is coming soon! For now, focus on completing quests."
     )
     
     await message.answer(status_text, parse_mode="Markdown")

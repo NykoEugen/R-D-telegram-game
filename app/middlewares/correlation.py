@@ -19,7 +19,8 @@ class CorrelationMiddleware(BaseMiddleware):
         self,
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
-        data: Dict[str, Any]
+        data: Dict[str, Any],
+        **kwargs
     ) -> Any:
         """Process update with correlation ID and logging."""
         # Generate correlation ID for this update
@@ -42,7 +43,7 @@ class CorrelationMiddleware(BaseMiddleware):
         )
         
         try:
-            # Process the update
+            # Process the update - avoid unpacking data to prevent handler parameter conflicts
             result = await handler(event, data)
             
             # Log successful processing

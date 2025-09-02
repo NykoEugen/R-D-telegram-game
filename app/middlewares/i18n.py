@@ -76,7 +76,8 @@ class I18nMiddleware(BaseMiddleware):
         self,
         handler: callable,
         event: Union[Message, CallbackQuery],
-        data: Dict[str, Any]
+        data: Dict[str, Any],
+        **kwargs
     ) -> Any:
         """Process the event through the middleware."""
         user_id = event.from_user.id
