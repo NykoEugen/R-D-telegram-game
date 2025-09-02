@@ -1,12 +1,12 @@
 import openai
-import logging
 from typing import Optional
 from app.config import Config
+from app.services.logging_service import get_logger
 
 # Configure OpenAI client
 openai.api_key = Config.OPENAI_API_KEY
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class OpenAIService:
     """Service for interacting with OpenAI API to generate game content."""
@@ -37,11 +37,17 @@ class OpenAIService:
             )
             
             quest_description = response.choices[0].message.content.strip()
-            logger.info("Successfully generated quest description via OpenAI API")
+            logger.info("Successfully generated quest description via OpenAI API",
+                       model=Config.OPENAI_MODEL,
+                       max_tokens=150,
+                       temperature=0.8)
             return quest_description
             
         except Exception as e:
-            logger.error(f"Failed to generate quest description: {e}")
+            logger.error("Failed to generate quest description",
+                        model=Config.OPENAI_MODEL,
+                        error_type=type(e).__name__,
+                        error_message=str(e))
             return None
     
     @staticmethod
@@ -70,9 +76,15 @@ class OpenAIService:
             )
             
             world_description = response.choices[0].message.content.strip()
-            logger.info("Successfully generated world description via OpenAI API")
+            logger.info("Successfully generated world description via OpenAI API",
+                       model=Config.OPENAI_MODEL,
+                       max_tokens=120,
+                       temperature=0.7)
             return world_description
             
         except Exception as e:
-            logger.error(f"Failed to generate world description: {e}")
+            logger.error("Failed to generate world description",
+                        model=Config.OPENAI_MODEL,
+                        error_type=type(e).__name__,
+                        error_message=str(e))
             return None

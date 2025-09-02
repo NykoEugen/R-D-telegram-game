@@ -1,12 +1,12 @@
 import json
-import logging
 from pathlib import Path
 from typing import Any, Dict, Union
 from aiogram import BaseMiddleware
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
+from app.services.logging_service import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class I18nMiddleware(BaseMiddleware):
     """Middleware for internationalization support."""
@@ -29,12 +29,14 @@ class I18nMiddleware(BaseMiddleware):
                 if lang_file.exists():
                     with open(lang_file, 'r', encoding='utf-8') as f:
                         self.translations[lang_code] = json.load(f)
-                        logger.info(f"Loaded translations for language: {lang_code}")
+                        logger.info("Loaded translations for language", language_code=lang_code)
                 else:
-                    logger.warning(f"Translation file not found: {lang_file}")
+                    logger.warning("Translation file not found", language_file=str(lang_file))
                     
         except Exception as e:
-            logger.error(f"Error loading translations: {e}")
+            logger.error("Error loading translations", 
+                        error_type=type(e).__name__,
+                        error_message=str(e))
             # Fallback to empty translations
             self.translations = {}
     
@@ -46,9 +48,12 @@ class I18nMiddleware(BaseMiddleware):
         """Set user's preferred language."""
         if language_code in self.supported_languages:
             self.user_languages[user_id] = language_code
-            logger.info(f"User {user_id} language set to: {language_code}")
+            logger.info("User language set", user_id=user_id, language_code=language_code)
         else:
-            logger.warning(f"Unsupported language code: {language_code}")
+            logger.warning("Unsupported language code", 
+                          user_id=user_id, 
+                          language_code=language_code,
+                          supported_languages=self.supported_languages)
     
     def get_text(self, user_id: int, key: str, **kwargs) -> str:
         """Get translated text for a given key and user."""
@@ -61,7 +66,10 @@ class I18nMiddleware(BaseMiddleware):
         try:
             return text.format(**kwargs)
         except KeyError as e:
-            logger.warning(f"Missing format key {e} for text key {key} in language {lang_code}")
+            logger.warning("Missing format key for text", 
+                          missing_key=str(e),
+                          text_key=key,
+                          language_code=lang_code)
             return text
     
     async def __call__(
