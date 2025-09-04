@@ -15,6 +15,7 @@ class Action(StrEnum):
     ACCEPT = "accept"
     INVESTIGATE = "investigate"
     PREPARE = "prepare"
+    RUN_AI = "run_ai"
 
 @dataclass(frozen=True)
 class ActionMeta:
@@ -36,4 +37,5 @@ ACTION_META: dict[Action, ActionMeta] = {
     Action.ACCEPT:   ActionMeta("action.accept", "btn.accept"),
     Action.INVESTIGATE: ActionMeta("action.investigate", "btn.investigate"),
     Action.PREPARE:  ActionMeta("action.prepare", "btn.prepare"),
+    Action.RUN_AI:   ActionMeta("action.run_ai", "btn.run_ai"),
 }

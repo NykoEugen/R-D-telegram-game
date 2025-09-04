@@ -4,7 +4,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.ai import AIGenerationService
+from app.services.ai import AIGenerationService, ai_action_service
 from app.services.logging_service import get_logger
 from app.services.i18n_service import i18n_service
 from app.services.fsm_service import FSMStateService
@@ -12,6 +12,7 @@ from app.handlers.keyboards import build_actions_kb
 from app.handlers.callbacks import ActionCB
 from app.game.actions import Action
 from app.game.states import GameStates
+from app.game.scenes import create_quest_scene, create_demo_scene
 
 router = Router()
 logger = get_logger(__name__)
@@ -51,7 +52,7 @@ async def cmd_quest(message: Message, state: FSMContext, db_session: AsyncSessio
         # Create action buttons for quest scenarios
         user_language = i18n_service.get_user_language(user_id)
         scene_id = f"quest-{user_id}-{message.message_id}"  # Unique scene ID
-        quest_actions = [Action.ACCEPT, Action.INVESTIGATE, Action.PREPARE, Action.TALK, Action.BACK]
+        quest_actions = [Action.ACCEPT, Action.INVESTIGATE, Action.PREPARE, Action.TALK, Action.RUN_AI, Action.BACK]
         
         # Build keyboard with context hint from quest description
         context_hint = quest_description if quest_description else "A mysterious quest awaits your decision."
@@ -175,7 +176,7 @@ async def demo_actions(msg: Message, state: FSMContext, db_session: AsyncSession
         
         locale = i18n_service.get_user_language(user_id)
         scene_id = "intro-wolf-001"
-        actions = [Action.ATTACK, Action.TALK, Action.SNEAK, Action.FLEE, Action.BACK]
+        actions = [Action.ATTACK, Action.TALK, Action.SNEAK, Action.FLEE, Action.RUN_AI, Action.BACK]
         
         kb = build_actions_kb(
             actions=actions,
@@ -232,6 +233,45 @@ async def on_action_press(cb: CallbackQuery, callback_data: ActionCB, state: FSM
         # Get current FSM state and data
         current_state = await state.get_state()
         fsm_data = await state.get_data()
+        
+        # Handle RUN_AI action with AI generation and logging
+        if action == Action.RUN_AI:
+            # Create scene context for AI generation
+            scene_context = create_demo_scene(scene_id, fsm_data.get("context_hint", "Unknown scene"))
+            
+            # Execute AI action with logging
+            ai_response = await ai_action_service.execute_run_ai_action(
+                user_id=user_id,
+                action=action,
+                scene_context=scene_context,
+                db_session=db_session,
+                game_session_id=fsm_data.get("game_session_id"),
+                additional_context={
+                    "fsm_state": current_state,
+                    "fsm_data": fsm_data
+                }
+            )
+            
+            if ai_response:
+                response_text = (
+                    f"🤖 **AI Action Executed**\n\n"
+                    f"{ai_response}\n\n"
+                    f"Action: `{action}`\n"
+                    f"Scene: `{scene_id}`\n"
+                    f"State: `{current_state}`\n\n"
+                    f"*AI generation logged to database!*"
+                )
+            else:
+                response_text = (
+                    f"❌ **AI Action Failed**\n\n"
+                    f"Action: `{action}`\n"
+                    f"Scene: `{scene_id}`\n"
+                    f"State: `{current_state}`\n\n"
+                    f"*AI generation failed, but attempt was logged.*"
+                )
+            
+            await cb.message.edit_text(response_text, parse_mode="Markdown")
+            return
         
         # Update FSM state based on action
         if action == Action.BACK:
