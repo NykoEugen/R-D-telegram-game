@@ -63,6 +63,12 @@ class Settings(BaseSettings):
     webhook_secret: Optional[str] = Field(default=None, env="WEBHOOK_SECRET", description="Webhook secret for security")
     port: int = Field(default=8000, env="PORT", description="Port for webhook server")
     
+    # Database configuration
+    database_url: str = Field(..., env="DATABASE_URL", description="Database connection URL")
+    
+    # Redis configuration
+    redis_url: str = Field(..., env="REDIS_URL", description="Redis connection URL")
+    
     # Game configuration
     game_name: str = Field(default="Fantasy RPG Adventure", description="Name of the game")
     game_description: str = Field(default="Embark on epic quests in a medieval fantasy world!", description="Game description")
@@ -130,6 +136,12 @@ class Config:
     WEBHOOK_URL = settings.webhook_url
     WEBHOOK_SECRET = settings.webhook_secret
     PORT = settings.port
+    
+    # Database configuration
+    DATABASE_URL = settings.database_url
+    
+    # Redis configuration
+    REDIS_URL = settings.redis_url
     
     # Game configuration
     GAME_NAME = settings.game_name
