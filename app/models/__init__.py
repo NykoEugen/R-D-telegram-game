@@ -7,18 +7,42 @@ Import the Base class and any models you need from this module.
 
 from app.core.db import Base
 
-# Import all models here when they are created
+# Import all models
 from .user import User
-# from .game_session import GameSession
-# from .character import Character
-# from .inventory import Inventory
-# from .quest import Quest
+from .player import Player, PlayerStatus
+from .items import Item, InventoryItem, ItemRarity, ItemType
+from .lore import Scene, Action, Quest, QuestProgress, SceneType, ActionType, QuestStatus, QuestType
+from .telemetry import GameSession, MessageLog, AIGeneration, SessionStatus, MessageType, AIGenerationType
+from .i18n import I18nString, I18nCategory
 
 __all__ = [
     "Base",
+    # User models
     "User",
-    # "GameSession", 
-    # "Character",
-    # "Inventory",
-    # "Quest",
+    "Player",
+    "PlayerStatus",
+    # Item models
+    "Item",
+    "InventoryItem", 
+    "ItemRarity",
+    "ItemType",
+    # Lore models
+    "Scene",
+    "Action",
+    "Quest",
+    "QuestProgress",
+    "SceneType",
+    "ActionType", 
+    "QuestStatus",
+    "QuestType",
+    # Telemetry models
+    "GameSession",
+    "MessageLog",
+    "AIGeneration",
+    "SessionStatus",
+    "MessageType",
+    "AIGenerationType",
+    # I18n models
+    "I18nString",
+    "I18nCategory",
 ]
