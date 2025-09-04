@@ -3,6 +3,7 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from app.services.openai_service import OpenAIService
 from app.services.logging_service import get_logger
+from app.services.i18n_service import i18n_service
 
 router = Router()
 logger = get_logger(__name__)
@@ -11,34 +12,31 @@ logger = get_logger(__name__)
 async def cmd_quest(message: Message):
     """Handle the /quest command - generate and provide a new quest description."""
     try:
-        # Show typing indicator
-        await message.answer("⚔️ Generating your quest...", parse_mode="HTML")
+        user_id = message.from_user.id
         
-        # Generate quest description using OpenAI
-        quest_description = await OpenAIService.generate_quest_description()
+        # Show typing indicator
+        await message.answer(i18n_service.get_text(user_id, 'quest_generating'), parse_mode="HTML")
+        
+        # Generate quest description using OpenAI with user's language
+        user_language = i18n_service.get_user_language(user_id)
+        quest_description = await OpenAIService.generate_quest_description(language=user_language)
         
         if quest_description:
             quest_text = (
-                f"🗺️ **NEW QUEST GENERATED!**\n\n"
-                f"📜 **Quest Description:**\n{quest_description}\n\n"
-                f"🤔 **What will you do?**\n"
-                f"• Accept the quest and begin your journey\n"
-                f"• Ask for more details\n"
-                f"• Request a different quest\n\n"
-                f"💡 **Hint:** Use /quest again to generate a new quest!"
+                f"{i18n_service.get_text(user_id, 'new_quest')}\n\n"
+                f"{i18n_service.get_text(user_id, 'quest_description', description=quest_description)}\n\n"
+                f"{i18n_service.get_text(user_id, 'what_will_you_do')}\n"
+                f"{i18n_service.get_text(user_id, 'quest_options')}\n\n"
+                f"{i18n_service.get_text(user_id, 'quest_hint')}"
             )
         else:
             # Fallback if OpenAI fails
             quest_text = (
-                f"🗺️ **QUEST GENERATION FAILED**\n\n"
-                f"📜 **Fallback Quest:**\n"
-                f"Journey to the ancient ruins of Eldoria and retrieve the Crystal of Wisdom. "
-                f"Beware of the shadow creatures that lurk in the darkness.\n\n"
-                f"🤔 **What will you do?**\n"
-                f"• Accept the quest and begin your journey\n"
-                f"• Ask for more details\n"
-                f"• Request a different quest\n\n"
-                f"💡 **Hint:** Use /quest again to generate a new quest!"
+                f"{i18n_service.get_text(user_id, 'quest_failed')}\n\n"
+                f"{i18n_service.get_text(user_id, 'fallback_quest')}\n\n"
+                f"{i18n_service.get_text(user_id, 'what_will_you_do')}\n"
+                f"{i18n_service.get_text(user_id, 'quest_options')}\n\n"
+                f"{i18n_service.get_text(user_id, 'quest_hint')}"
             )
         
         await message.answer(quest_text, parse_mode="Markdown")
@@ -62,15 +60,17 @@ async def cmd_quest(message: Message):
 @router.message(Command("status"))
 async def cmd_status(message: Message):
     """Handle the /status command - placeholder for future game status functionality."""
+    user_id = message.from_user.id
+    
     status_text = (
-        f"📊 **GAME STATUS**\n\n"
-        f"🎮 **Current Game:** Fantasy RPG Adventure\n"
-        f"👤 **Player Level:** 1\n"
-        f"⭐ **Experience:** 0/100\n"
-        f"💰 **Gold:** 10\n"
-        f"🎒 **Inventory:** Empty\n\n"
-        f"🚧 **Under Development**\n\n"
-        f"💡 **Hint:** This feature is coming soon! For now, focus on completing quests."
+        f"{i18n_service.get_text(user_id, 'game_status')}\n\n"
+        f"{i18n_service.get_text(user_id, 'current_game')}\n"
+        f"{i18n_service.get_text(user_id, 'player_level')}\n"
+        f"{i18n_service.get_text(user_id, 'experience')}\n"
+        f"{i18n_service.get_text(user_id, 'gold')}\n"
+        f"{i18n_service.get_text(user_id, 'inventory')}\n\n"
+        f"{i18n_service.get_text(user_id, 'under_development')}\n\n"
+        f"{i18n_service.get_text(user_id, 'status_hint')}"
     )
     
     await message.answer(status_text, parse_mode="Markdown")

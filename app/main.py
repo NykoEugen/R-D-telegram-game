@@ -5,8 +5,8 @@ from app.config import Config
 from app.handlers import start, game, language
 from app.handlers.errors import setup_error_handlers, GlobalErrorHandler
 from app.middlewares.correlation import CorrelationMiddleware
-from app.middlewares.i18n import I18nMiddleware
 from app.services.logging_service import setup_logging, get_logger
+from app.services.i18n_service import i18n_service
 
 
 def main():
@@ -30,8 +30,9 @@ def main():
     dp.callback_query.middleware(GlobalErrorHandler())
     dp.message.middleware(CorrelationMiddleware())
     dp.callback_query.middleware(CorrelationMiddleware())
-    dp.message.middleware(I18nMiddleware())
-    dp.callback_query.middleware(I18nMiddleware())
+    
+    # Initialize i18n service (no middleware needed)
+    logger.info("i18n service initialized", supported_languages=i18n_service.supported_languages)
     
     # Setup error handlers
     setup_error_handlers(dp)
