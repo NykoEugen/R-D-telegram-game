@@ -63,6 +63,7 @@ class GameSession(Base):
     # Session data
     session_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     player_state_snapshot: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    current_state: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # Current FSM state
     
     # Session statistics
     messages_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

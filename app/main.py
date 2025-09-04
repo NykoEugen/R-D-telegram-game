@@ -7,6 +7,7 @@ from app.core.redis import init_redis, close_redis, get_redis
 from app.handlers.commands import start_router, game_router, language_router
 from app.handlers.errors import setup_error_handlers, GlobalErrorHandler
 from app.middlewares.correlation import CorrelationMiddleware
+from app.middlewares.database import DatabaseMiddleware
 from app.services.logging_service import setup_logging, get_logger
 from app.services.i18n_service import i18n_service
 
@@ -42,6 +43,8 @@ async def main():
     dp.callback_query.middleware(GlobalErrorHandler())
     dp.message.middleware(CorrelationMiddleware())
     dp.callback_query.middleware(CorrelationMiddleware())
+    dp.message.middleware(DatabaseMiddleware())
+    dp.callback_query.middleware(DatabaseMiddleware())
     
     # Initialize i18n service (no middleware needed)
     logger.info("i18n service initialized", supported_languages=i18n_service.supported_languages)

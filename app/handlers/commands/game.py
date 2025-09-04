@@ -1,21 +1,29 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.services.ai import AIGenerationService
 from app.services.logging_service import get_logger
 from app.services.i18n_service import i18n_service
+from app.services.fsm_service import FSMStateService
 from app.handlers.keyboards import build_actions_kb
 from app.handlers.callbacks import ActionCB
 from app.game.actions import Action
+from app.game.states import GameStates
 
 router = Router()
 logger = get_logger(__name__)
 
 @router.message(Command("quest"))
-async def cmd_quest(message: Message):
+async def cmd_quest(message: Message, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
     """Handle the /quest command - generate and provide a new quest description."""
     try:
         user_id = message.from_user.id
+        
+        # Set FSM state to quest active
+        await state.set_state(GameStates.QUEST_ACTIVE)
         
         # Show typing indicator
         await message.answer(i18n_service.get_text(user_id, 'quest_generating'), parse_mode="HTML")
@@ -55,6 +63,23 @@ async def cmd_quest(message: Message):
             row_width=2
         )
         
+        # Store quest data in FSM
+        await state.update_data(
+            quest_description=quest_description,
+            scene_id=scene_id,
+            quest_actions=quest_actions,
+            context_hint=context_hint
+        )
+        
+        # Sync FSM state to PostgreSQL
+        await fsm_service.sync_fsm_to_postgres(
+            state,
+            user_id,
+            action="quest_start",
+            scene_id=scene_id,
+            additional_data={"quest_description": quest_description}
+        )
+        
         await message.answer(quest_text, parse_mode="Markdown", reply_markup=keyboard)
         logger.info("User requested a quest", 
                    user_id=message.from_user.id,
@@ -74,32 +99,80 @@ async def cmd_quest(message: Message):
         )
 
 @router.message(Command("status"))
-async def cmd_status(message: Message):
-    """Handle the /status command - placeholder for future game status functionality."""
-    user_id = message.from_user.id
-    
-    status_text = (
-        f"{i18n_service.get_text(user_id, 'game_status')}\n\n"
-        f"{i18n_service.get_text(user_id, 'current_game')}\n"
-        f"{i18n_service.get_text(user_id, 'player_level')}\n"
-        f"{i18n_service.get_text(user_id, 'experience')}\n"
-        f"{i18n_service.get_text(user_id, 'gold')}\n"
-        f"{i18n_service.get_text(user_id, 'inventory')}\n\n"
-        f"{i18n_service.get_text(user_id, 'under_development')}\n\n"
-        f"{i18n_service.get_text(user_id, 'status_hint')}"
-    )
-    
-    await message.answer(status_text, parse_mode="Markdown")
-    logger.info("User requested game status", 
-               user_id=message.from_user.id,
-               user_name=message.from_user.first_name,
-               chat_id=message.chat.id)
+async def cmd_status(message: Message, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
+    """Handle the /status command - show game status and current FSM state."""
+    try:
+        user_id = message.from_user.id
+        
+        # Get current FSM state
+        current_state = await state.get_state()
+        fsm_data = await state.get_data()
+        
+        # Get session state from PostgreSQL
+        session_state = await fsm_service.get_session_state(user_id)
+        
+        # Build status text
+        status_text = (
+            f"{i18n_service.get_text(user_id, 'game_status')}\n\n"
+            f"{i18n_service.get_text(user_id, 'current_game')}\n"
+            f"{i18n_service.get_text(user_id, 'player_level')}\n"
+            f"{i18n_service.get_text(user_id, 'experience')}\n"
+            f"{i18n_service.get_text(user_id, 'gold')}\n"
+            f"{i18n_service.get_text(user_id, 'inventory')}\n\n"
+        )
+        
+        # Add FSM state information
+        if current_state:
+            status_text += f"🎮 **Current State:** `{current_state}`\n"
+        
+        if session_state:
+            status_text += f"📊 **Session:** {session_state['session_id'][:8]}...\n"
+            status_text += f"⚡ **Actions:** {session_state['actions_count']}\n"
+            status_text += f"💬 **Messages:** {session_state['messages_count']}\n"
+        
+        if fsm_data:
+            status_text += f"📝 **FSM Data:** {len(fsm_data)} items\n"
+        
+        status_text += (
+            f"\n{i18n_service.get_text(user_id, 'under_development')}\n\n"
+            f"{i18n_service.get_text(user_id, 'status_hint')}"
+        )
+        
+        # Sync FSM state to PostgreSQL
+        await fsm_service.sync_fsm_to_postgres(
+            state,
+            user_id,
+            action="status_check",
+            scene_id=fsm_data.get("scene_id")
+        )
+        
+        await message.answer(status_text, parse_mode="Markdown")
+        logger.info("User requested game status", 
+                   user_id=message.from_user.id,
+                   user_name=message.from_user.first_name,
+                   chat_id=message.chat.id,
+                   current_state=current_state)
+        
+    except Exception as e:
+        logger.error("Error in status command", 
+                    user_id=message.from_user.id,
+                    chat_id=message.chat.id,
+                    error_type=type(e).__name__,
+                    error_message=str(e))
+        await message.answer(
+            "❌ **Status Error**\n\n"
+            "There was an error retrieving your status. Please try again later."
+        )
 
 @router.message(Command("demo_actions"))
-async def demo_actions(msg: Message):
+async def demo_actions(msg: Message, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
     """Handle the /demo_actions command - demonstrate action buttons."""
     try:
         user_id = msg.from_user.id
+        
+        # Set FSM state to combat active
+        await state.set_state(GameStates.COMBAT_ACTIVE)
+        
         locale = i18n_service.get_user_language(user_id)
         scene_id = "intro-wolf-001"
         actions = [Action.ATTACK, Action.TALK, Action.SNEAK, Action.FLEE, Action.BACK]
@@ -109,6 +182,23 @@ async def demo_actions(msg: Message):
             locale=locale,
             scene_id=scene_id,
             context_hint="A wolf blocks the path in a dark forest."
+        )
+        
+        # Store demo data in FSM
+        await state.update_data(
+            scene_id=scene_id,
+            actions=actions,
+            context_hint="A wolf blocks the path in a dark forest.",
+            demo_mode=True
+        )
+        
+        # Sync FSM state to PostgreSQL
+        await fsm_service.sync_fsm_to_postgres(
+            state,
+            user_id,
+            action="demo_actions",
+            scene_id=scene_id,
+            additional_data={"demo_mode": True}
         )
         
         # Use localized text for the message
@@ -132,26 +222,67 @@ async def demo_actions(msg: Message):
         await msg.answer("❌ **Demo Actions Error**\n\nThere was an error loading the demo actions. Please try again later.")
 
 @router.callback_query(ActionCB.filter())
-async def on_action_press(cb: CallbackQuery, callback_data: ActionCB):
+async def on_action_press(cb: CallbackQuery, callback_data: ActionCB, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
     """Handle action button presses."""
     try:
+        user_id = cb.from_user.id
         action = callback_data.a   # e.g. "attack"
         scene_id = callback_data.s
         
-        # TODO: plug into existing game state machine / scene logic
+        # Get current FSM state and data
+        current_state = await state.get_state()
+        fsm_data = await state.get_data()
+        
+        # Update FSM state based on action
+        if action == Action.BACK:
+            await state.set_state(GameStates.MENU)
+        elif action in [Action.ATTACK, Action.DEFEND, Action.CAST]:
+            await state.set_state(GameStates.COMBAT_CHOICE)
+        elif action in [Action.TALK, Action.INVESTIGATE]:
+            await state.set_state(GameStates.DIALOGUE_CHOICE)
+        elif action == Action.ACCEPT:
+            await state.set_state(GameStates.QUEST_CHOICE)
+        else:
+            # Keep current state for other actions
+            pass
+        
+        # Update FSM data with action info
+        await state.update_data(
+            last_action=action,
+            last_scene_id=scene_id,
+            action_count=fsm_data.get("action_count", 0) + 1
+        )
+        
+        # Sync FSM state to PostgreSQL
+        await fsm_service.sync_fsm_to_postgres(
+            state,
+            user_id,
+            action=action,
+            scene_id=scene_id,
+            additional_data={"action_type": action}
+        )
+        
         await cb.answer()  # small UX improvement
         
         # Create a more informative response
-        response_text = f"🎮 **Action Selected**\n\nAction: `{action}`\nScene: `{scene_id}`\n\n*This is a demo - game logic integration coming soon!*"
+        response_text = (
+            f"🎮 **Action Selected**\n\n"
+            f"Action: `{action}`\n"
+            f"Scene: `{scene_id}`\n"
+            f"State: `{current_state}` → `{await state.get_state()}`\n\n"
+            f"*FSM state synced to PostgreSQL!*"
+        )
         
         await cb.message.edit_text(response_text, parse_mode="Markdown")
         
         logger.info("User selected action", 
-                   user_id=cb.from_user.id,
+                   user_id=user_id,
                    user_name=cb.from_user.first_name,
                    chat_id=cb.message.chat.id,
                    action=action,
-                   scene_id=scene_id)
+                   scene_id=scene_id,
+                   old_state=current_state,
+                   new_state=await state.get_state())
         
     except Exception as e:
         logger.error("Error in action callback", 
