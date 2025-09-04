@@ -1,23 +1,21 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, Union
-from aiogram import BaseMiddleware
-from aiogram.types import Message, CallbackQuery
-from aiogram.fsm.context import FSMContext
+from typing import Dict, Any
 from app.services.logging_service import get_logger
 
 logger = get_logger(__name__)
 
-class I18nMiddleware(BaseMiddleware):
-    """Middleware for internationalization support."""
+class I18nService:
+    """Standalone internationalization service without middleware dependencies."""
     
     def __init__(self):
-        super().__init__()
         self.translations: Dict[str, Dict[str, str]] = {}
         self.user_languages: Dict[int, str] = {}  # user_id -> language_code
         self.default_language = "en"
         self.supported_languages = ["en", "uk"]
+        self.storage_file = Path(__file__).parent.parent.parent / "user_languages.json"
         self._load_translations()
+        self._load_user_languages()
     
     def _load_translations(self):
         """Load translation files from the locales directory."""
@@ -40,6 +38,36 @@ class I18nMiddleware(BaseMiddleware):
             # Fallback to empty translations
             self.translations = {}
     
+    def _load_user_languages(self):
+        """Load user language preferences from storage file."""
+        try:
+            if self.storage_file.exists():
+                with open(self.storage_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    # Convert string keys back to integers
+                    self.user_languages = {int(k): v for k, v in data.items()}
+                    logger.info("Loaded user language preferences", count=len(self.user_languages))
+            else:
+                logger.info("No user language storage file found, starting with empty preferences")
+        except Exception as e:
+            logger.error("Error loading user language preferences", 
+                        error_type=type(e).__name__,
+                        error_message=str(e))
+            self.user_languages = {}
+    
+    def _save_user_languages(self):
+        """Save user language preferences to storage file."""
+        try:
+            # Convert integer keys to strings for JSON serialization
+            data = {str(k): v for k, v in self.user_languages.items()}
+            with open(self.storage_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            logger.debug("Saved user language preferences", count=len(self.user_languages))
+        except Exception as e:
+            logger.error("Error saving user language preferences", 
+                        error_type=type(e).__name__,
+                        error_message=str(e))
+    
     def get_user_language(self, user_id: int) -> str:
         """Get user's preferred language, defaulting to English."""
         return self.user_languages.get(user_id, self.default_language)
@@ -48,6 +76,7 @@ class I18nMiddleware(BaseMiddleware):
         """Set user's preferred language."""
         if language_code in self.supported_languages:
             self.user_languages[user_id] = language_code
+            self._save_user_languages()  # Persist the change
             logger.info("User language set", user_id=user_id, language_code=language_code)
         else:
             logger.warning("Unsupported language code", 
@@ -72,21 +101,13 @@ class I18nMiddleware(BaseMiddleware):
                           language_code=lang_code)
             return text
     
-    async def __call__(
-        self,
-        handler: callable,
-        event: Union[Message, CallbackQuery],
-        data: Dict[str, Any],
-        **kwargs
-    ) -> Any:
-        """Process the event through the middleware."""
-        user_id = event.from_user.id
-        
-        # Add i18n functions to data for handlers to use
-        data["_"] = lambda key, **kwargs: self.get_text(user_id, key, **kwargs)
-        data["get_user_language"] = lambda: self.get_user_language(user_id)
-        data["set_user_language"] = lambda lang: self.set_user_language(user_id, lang)
-        data["supported_languages"] = self.supported_languages
-        
-        # Continue processing
-        return await handler(event, data)
+    def get_language_name(self, language_code: str) -> str:
+        """Get display name for language code."""
+        language_names = {
+            "en": "English",
+            "uk": "Українська"
+        }
+        return language_names.get(language_code, language_code)
+
+# Global instance
+i18n_service = I18nService()
