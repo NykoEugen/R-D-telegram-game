@@ -1,7 +1,9 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.fsm.storage.redis import RedisStorage
 from app.core.config import Config
+from app.core.redis import init_redis, close_redis, get_redis
 from app.handlers.commands import start_router, game_router, language_router
 from app.handlers.errors import setup_error_handlers, GlobalErrorHandler
 from app.middlewares.correlation import CorrelationMiddleware
@@ -9,7 +11,7 @@ from app.services.logging_service import setup_logging, get_logger
 from app.services.i18n_service import i18n_service
 
 
-def main():
+async def main():
     """Main function to start the bot."""
     # Setup logging first
     setup_logging(
@@ -21,9 +23,19 @@ def main():
     logger = get_logger(__name__)
     logger.info("🚀 Starting Fantasy RPG Adventure Bot...")
     
-    # Initialize bot and dispatcher
+    # Initialize Redis connection
+    logger.info("🔗 Initializing Redis connection...")
+    await init_redis()
+    logger.info("✅ Redis connection initialized")
+    
+    # Create Redis storage for FSM
+    redis_client = get_redis()
+    storage = RedisStorage(redis=redis_client)
+    logger.info("📦 Redis FSM storage configured")
+    
+    # Initialize bot and dispatcher with Redis storage
     bot = Bot(token=Config.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
-    dp = Dispatcher()
+    dp = Dispatcher(storage=storage)
     
     # Add middlewares
     dp.message.middleware(GlobalErrorHandler())
@@ -48,12 +60,17 @@ def main():
     
     # Start polling
     try:
-        asyncio.run(dp.start_polling(bot))
+        await dp.start_polling(bot)
     except KeyboardInterrupt:
         logger.info("👋 Bot stopped by user")
     except Exception as e:
         logger.error("❌ Fatal error occurred", error_type=type(e).__name__, error_message=str(e))
         raise
+    finally:
+        # Cleanup Redis connection
+        logger.info("🧹 Cleaning up Redis connection...")
+        await close_redis()
+        logger.info("✅ Redis connection closed")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
