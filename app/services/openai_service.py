@@ -1,10 +1,16 @@
 import asyncio
 from typing import Optional, Callable, Awaitable, TypeVar
 import httpx
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, OpenAI
 from app.config import Config
 from app.services.logging_service import get_logger
 from app.prompts import get_prompts, get_prompt_config
+import hashlib
+import random
+from typing import Iterable
+from app.services.i18n_service import t
+from app.game.actions import Action, ACTION_META
+from app.config import Config
 
 logger = get_logger(__name__)
 T = TypeVar("T")
@@ -191,3 +197,60 @@ class OpenAIService:
                 extra={"model": cls.DEFAULT_MODEL, "language": language, "error_type": type(e).__name__},
             )
             return None
+
+
+class ActionLabelGenerator:
+    def __init__(self, enabled: bool = Config.OPENAI_ENABLED, model: str = Config.OPENAI_MODEL):
+        self.enabled = enabled and bool(Config.OPENAI_API_KEY)
+        self.model = model
+        try:
+            self.client = OpenAI(api_key=Config.OPENAI_API_KEY) if self.enabled else None
+        except Exception as e:
+            logger.warning("Failed to initialize OpenAI client for ActionLabelGenerator", error=str(e))
+            self.enabled = False
+            self.client = None
+
+    def _seed_from(self, *parts: Iterable[str]) -> int:
+        h = hashlib.sha256("::".join(parts).encode()).hexdigest()
+        return int(h[:8], 16)
+
+    def generate_label(self, action: Action, locale: str, scene_id: str, context_hint: str | None = None) -> str:
+        meta = ACTION_META[action]
+        fallback = t(meta.fallback_key, locale=locale)
+        if not self.enabled:
+            return fallback
+
+        rnd = random.Random(self._seed_from(action, locale, scene_id, context_hint or ""))
+
+        sys = (
+            f"You generate ultra-short Telegram inline button labels.\n"
+            f"Rules: 1) <= {meta.max_len} chars, 2) no emojis, 3) no quotes, "
+            f"4) imperative or concise noun, 5) strictly use the requested language."
+        )
+        desc = t(meta.prompt_key, locale=locale)
+        user = (
+            f"Language: {locale}\n"
+            f"Base action: {action}\n"
+            f"Action intent: {desc}\n"
+            f"Scene hint: {context_hint or 'n/a'}\n"
+            f"Return ONE label only, <= {meta.max_len} chars."
+        )
+
+        try:
+            resp = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "system", "content": sys},
+                          {"role": "user", "content": user}],
+                temperature=0.7,
+                top_p=0.9,
+                n=1,
+            )
+            text = (resp.choices[0].message.content or "").strip().replace("\n", " ")
+            if len(text) > meta.max_len:
+                text = text[:meta.max_len].strip()
+            if rnd.random() < 0.3 and text.lower() == fallback.lower():
+                text = text[: max(3, meta.max_len - 1)]
+            return text or fallback
+        except Exception:
+            return fallback
+

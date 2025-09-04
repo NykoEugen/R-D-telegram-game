@@ -37,9 +37,10 @@ class Settings(BaseSettings):
     bot_token: str = Field(..., env="BOT_TOKEN", description="Telegram bot token")
     
     # OpenAI configuration
+    openai_enabled: bool = Field(default=True, env="OPENAI_ENABLED", description="Whether OpenAI is enabled")
     openai_api_key: str = Field(..., env="OPENAI_API_KEY", description="OpenAI API key")
     openai_model: str = Field(
-        default="gpt-3.5-turbo", 
+        default="gpt-4o-mini", 
         env="OPENAI_MODEL", 
         description="OpenAI model to use for chat completion"
     )
@@ -65,6 +66,13 @@ class Settings(BaseSettings):
         if self.ngrok_url:
             return f"{self.ngrok_url}{self.webhook_path}"
         return ""
+    
+    @validator("openai_enabled", pre=True)
+    def validate_openai_enabled(cls, v):
+        """Convert string environment variable to boolean."""
+        if isinstance(v, str):
+            return v.lower() in ("1", "true", "yes", "on")
+        return bool(v)
     
     @validator("openai_model")
     def validate_openai_model(cls, v):
@@ -100,6 +108,7 @@ class Config:
     BOT_TOKEN = settings.bot_token
     
     # OpenAI configuration
+    OPENAI_ENABLED = settings.openai_enabled
     OPENAI_API_KEY = settings.openai_api_key
     OPENAI_MODEL = settings.openai_model
     

@@ -42,5 +42,29 @@
   "choose_language": "🌍 **Please choose your language:**",
   "language_changed": "✅ **Language changed to {language}!**",
   "current_language": "🌍 **Current language:** {language}",
-  "quest_intro": "Here is your quest:"
+  "quest_intro": "Here is your quest:",
+  "btn": {
+    "attack": "Attack",
+    "defend": "Defend",
+    "cast": "Cast",
+    "use_item": "Items",
+    "talk": "Talk",
+    "sneak": "Sneak",
+    "loot": "Loot",
+    "flee": "Flee",
+    "wait": "Wait",
+    "back": "Back"
+  },
+  "action": {
+    "attack": "Close/ranged strike. Keep it short.",
+    "defend": "Reduce damage, block/cover.",
+    "cast": "Spell/skill. 1-2 words.",
+    "use_item": "Use from inventory.",
+    "talk": "Negotiate/persuade.",
+    "sneak": "Stealth, avoid combat.",
+    "loot": "Quick search.",
+    "flee": "Retreat immediately.",
+    "wait": "Hold and observe.",
+    "back": "Return to menu."
+  }
 }
