@@ -61,6 +61,10 @@ class ActionLabelGenerator:
             Action.BACK: {
                 "en": ["Back", "Return", "Leave", "Exit", "Retreat"],
                 "uk": ["Назад", "Повернутися", "Покинути", "Вийти", "Відступити"]
+            },
+            Action.RUN_AI: {
+                "en": ["AI Action", "Smart Move", "AI Generate", "AI Response", "AI Help"],
+                "uk": ["ШІ Дія", "Розумний Крок", "ШІ Генерація", "ШІ Відповідь", "ШІ Допомога"]
             }
         }
         
@@ -87,6 +91,10 @@ class ActionLabelGenerator:
             elif any(word in context_lower for word in ["magic", "spell", "cast", "enchant", "magical", "wizard"]):
                 # Magic context
                 if action == Action.CAST:
+                    return variations[1] if len(variations) > 1 else variations[0]
+            elif any(word in context_lower for word in ["ai", "smart", "intelligent", "generate", "dynamic", "automatic"]):
+                # AI context
+                if action == Action.RUN_AI:
                     return variations[1] if len(variations) > 1 else variations[0]
         
         # Default to first variation or base fallback

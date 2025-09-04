@@ -1,7 +1,10 @@
 import json
 from pathlib import Path
 from functools import lru_cache
-from typing import Dict
+from typing import Dict, Optional, Any
+from app.services.logging_service import get_logger
+
+logger = get_logger(__name__)
 
 LOCALES_DIR = Path(__file__).parent.parent / "locales"
 DEFAULT_LOCALE = "uk"
@@ -9,18 +12,45 @@ SUPPORTED_LOCALES = {"uk", "en"}
 
 @lru_cache(maxsize=16)
 def _load_locale(locale: str) -> dict:
+    """Load locale data from JSON file with caching."""
     loc = locale if locale in SUPPORTED_LOCALES else DEFAULT_LOCALE
-    with open(LOCALES_DIR / f"{loc}.json", "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(LOCALES_DIR / f"{loc}.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logger.warning(f"Locale file not found: {loc}.json, falling back to {DEFAULT_LOCALE}")
+        with open(LOCALES_DIR / f"{DEFAULT_LOCALE}.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error(f"Error loading locale {loc}: {e}")
+        return {}
 
 def t(key: str, locale: str | None = None, **kwargs) -> str:
-    data = _load_locale(locale or DEFAULT_LOCALE)
-    ref = data
-    for part in key.split("."):
-        ref = ref.get(part, {})
-    if isinstance(ref, str):
-        return ref.format(**kwargs)
-    return key
+    """Get translated text by key with formatting support."""
+    try:
+        data = _load_locale(locale or DEFAULT_LOCALE)
+        ref = data
+        
+        # Navigate through nested keys (e.g., "btn.attack")
+        for part in key.split("."):
+            if isinstance(ref, dict):
+                ref = ref.get(part, {})
+            else:
+                logger.warning(f"Invalid key path: {key} (stopped at {part})")
+                return key
+        
+        if isinstance(ref, str):
+            try:
+                return ref.format(**kwargs)
+            except KeyError as e:
+                logger.warning(f"Missing format parameter {e} for key {key}")
+                return ref
+        else:
+            logger.warning(f"Key {key} is not a string: {type(ref)}")
+            return key
+    except Exception as e:
+        logger.error(f"Error getting translation for key {key}: {e}")
+        return key
 
 # Compatibility layer for existing code
 class I18nService:
@@ -76,6 +106,35 @@ class I18nService:
             "uk": "Українська"
         }
         return language_names.get(language_code, language_code)
+    
+    def get_action_prompt(self, user_id: int, action_key: str) -> str:
+        """Get AI prompt text for a specific action."""
+        lang_code = self.get_user_language(user_id)
+        return t(f"action.{action_key}", lang_code)
+    
+    def get_button_label(self, user_id: int, button_key: str) -> str:
+        """Get button label text for a specific button."""
+        lang_code = self.get_user_language(user_id)
+        return t(f"btn.{button_key}", lang_code)
+    
+    def get_all_available_keys(self, locale: str = None) -> Dict[str, Any]:
+        """Get all available translation keys for a locale."""
+        loc = locale or self.default_language
+        return _load_locale(loc)
+    
+    def validate_key(self, key: str, locale: str = None) -> bool:
+        """Check if a translation key exists."""
+        try:
+            data = _load_locale(locale or self.default_language)
+            ref = data
+            for part in key.split("."):
+                if isinstance(ref, dict):
+                    ref = ref.get(part, {})
+                else:
+                    return False
+            return isinstance(ref, str)
+        except Exception:
+            return False
 
 # Global instance for backward compatibility
 i18n_service = I18nService()

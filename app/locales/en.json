@@ -56,7 +56,8 @@
     "back": "Back",
     "accept": "Accept",
     "investigate": "Investigate",
-    "prepare": "Prepare"
+    "prepare": "Prepare",
+    "run_ai": "AI Action"
   },
   "action": {
     "attack": "Engage in combat or strike. Generate contextual action like 'Strike', 'Charge', 'Ambush' based on situation.",
@@ -71,6 +72,7 @@
     "back": "Return to previous menu or location. Generate contextual action like 'Back', 'Return', 'Leave' based on situation.",
     "accept": "Accept a quest, challenge, or offer. Generate contextual action like 'Accept', 'Agree', 'Take On' based on situation.",
     "investigate": "Gather information or examine something. Generate contextual action like 'Investigate', 'Examine', 'Research' based on situation.",
-    "prepare": "Get ready for action or battle. Generate contextual action like 'Prepare', 'Ready', 'Gear Up' based on situation."
+    "prepare": "Get ready for action or battle. Generate contextual action like 'Prepare', 'Ready', 'Gear Up' based on situation.",
+    "run_ai": "Use AI to generate dynamic content or responses. Generate contextual action like 'AI Generate', 'Smart Action', 'AI Response' based on situation."
   }
 }
