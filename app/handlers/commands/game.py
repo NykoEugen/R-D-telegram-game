@@ -1,7 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
-from app.services.openai_service import OpenAIService
+from app.services.ai import AIGenerationService
 from app.services.logging_service import get_logger
 from app.services.i18n_service import i18n_service
 from app.handlers.keyboards import build_actions_kb
@@ -22,7 +22,7 @@ async def cmd_quest(message: Message):
         
         # Generate quest description using OpenAI with user's language
         user_language = i18n_service.get_user_language(user_id)
-        quest_description = await OpenAIService.generate_quest_description(language=user_language)
+        quest_description = await AIGenerationService.generate_quest_description(language=user_language)
         
         if quest_description:
             quest_text = (

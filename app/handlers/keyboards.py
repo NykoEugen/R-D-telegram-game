@@ -2,7 +2,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardMarkup
 from app.handlers.callbacks import ActionCB
 from app.game.actions import Action
-from app.services.openai_service import ActionLabelGenerator
+from app.services.ai import ActionLabelGenerator
 
 gen = ActionLabelGenerator()
 

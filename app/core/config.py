@@ -1,3 +1,9 @@
+"""
+Core configuration module for the Telegram RPG game bot.
+
+This module provides a clean, single source of truth for all configuration settings.
+"""
+
 import os
 from typing import Optional, Literal
 from pydantic import Field, validator
@@ -24,6 +30,7 @@ AVAILABLE_OPENAI_MODELS = [
     "gpt-4-0613",
     "gpt-4-32k-0613",
 ]
+
 
 class Settings(BaseSettings):
     """Configuration class for the Telegram RPG game bot using Pydantic BaseSettings."""

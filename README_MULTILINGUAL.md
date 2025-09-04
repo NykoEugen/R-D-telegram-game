@@ -13,13 +13,13 @@ The bot now supports **Ukrainian** and **English** languages, with a flexible sy
 - **`uk.json`** - Ukrainian translations
 - Each file contains key-value pairs for all bot messages
 
-### 2. I18n Middleware (`app/middlewares/i18n.py`)
+### 2. I18n Service (`app/services/i18n_service.py`)
 - Automatically detects and manages user language preferences
-- Loads translations from JSON files
+- Loads translations from JSON files with caching
 - Provides translation functions to handlers
-- Stores user language preferences in memory (easily extensible to database)
+- Stores user language preferences in JSON file (easily extensible to database)
 
-### 3. Language Handler (`app/handlers/language.py`)
+### 3. Language Handler (`app/handlers/commands/language.py`)
 - Implements `/language` command
 - Provides inline keyboard for language selection
 - Handles language switching callbacks
@@ -58,12 +58,13 @@ The bot now supports **Ukrainian** and **English** languages, with a flexible sy
 
 ### Translation Function Usage
 ```python
-# In handlers, get the translation function
-_ = message.get("_")
+# In handlers, use the i18n service
+from app.services.i18n_service import i18n_service
 
-# Use translation keys instead of hardcoded strings
-welcome_text = _("start_welcome", name=user_name)
-quest_text = _("quest_description", description=quest_desc)
+# Get translated text for user
+user_id = message.from_user.id
+welcome_text = i18n_service.get_text(user_id, "start_welcome", name=user_name)
+quest_text = i18n_service.get_text(user_id, "quest_description", description=quest_desc)
 ```
 
 ### Adding New Translation Keys
@@ -83,12 +84,13 @@ quest_text = _("quest_description", description=quest_desc)
 
 3. Use in handlers:
    ```python
-   message_text = _("new_feature")
+   user_id = message.from_user.id
+   message_text = i18n_service.get_text(user_id, "new_feature")
    ```
 
 ### Adding New Languages
 1. Create new locale file: `app/locales/de.json`
-2. Add language code to middleware: `self.supported_languages = ["en", "uk", "de"]`
+2. Add language code to i18n service: `self.supported_languages = ["en", "uk", "de"]`
 3. Add language button to `/language` command
 
 ## 📊 Current Translation Coverage
@@ -134,10 +136,10 @@ python demo_i18n.py
 ### Environment Variables
 No additional environment variables required. The system works with existing bot configuration.
 
-### Middleware Settings
+### Service Settings
 ```python
-# In app/middlewares/i18n.py
-self.default_language = "en"  # Change default language
+# In app/services/i18n_service.py
+self.default_language = "uk"  # Change default language
 self.supported_languages = ["en", "uk"]  # Add/remove languages
 ```
 
@@ -146,17 +148,23 @@ self.supported_languages = ["en", "uk"]  # Add/remove languages
 ```
 app/
 ├── locales/
+│   ├── __init__.py
 │   ├── en.json          # English translations
 │   └── uk.json          # Ukrainian translations
-├── middlewares/
-│   ├── __init__.py
-│   └── i18n.py          # I18n middleware
+├── services/
+│   └── i18n_service.py  # I18n service (replaces middleware)
 ├── handlers/
 │   ├── __init__.py
-│   ├── start.py         # Updated with i18n
-│   ├── game.py          # Updated with i18n
-│   └── language.py      # New language handler
-└── main.py              # Updated with middleware
+│   └── commands/        # Command handlers
+│       ├── __init__.py
+│       ├── start.py     # Updated with i18n
+│       ├── game.py      # Updated with i18n
+│       └── language.py  # Language selection handler
+├── core/
+│   ├── __init__.py
+│   ├── config.py        # Configuration management
+│   └── utils.py         # Common utilities
+└── main.py              # Updated with new structure
 ```
 
 ## 🚀 Getting Started
@@ -168,7 +176,7 @@ pip install -r requirements.txt
 
 ### 2. Run the Bot
 ```bash
-python run_bot.py
+python app/main.py
 ```
 
 ### 3. Test Multilingual Features
@@ -184,10 +192,10 @@ python run_bot.py
 1. **Translations not loading**
    - Check file paths in `app/locales/`
    - Verify JSON syntax in locale files
-   - Check middleware initialization in `main.py`
+   - Check i18n service initialization in `main.py`
 
 2. **Language not switching**
-   - Verify middleware is registered in dispatcher
+   - Verify i18n service is properly initialized
    - Check callback query handling in language handler
    - Ensure user ID is being passed correctly
 
@@ -208,7 +216,7 @@ LOG_LEVEL = "DEBUG"
 1. **Always use translation keys** instead of hardcoded strings
 2. **Keep translation keys descriptive** and consistent
 3. **Test with multiple languages** during development
-4. **Use parameters** for dynamic content: `_("key", param=value)`
+4. **Use parameters** for dynamic content: `i18n_service.get_text(user_id, "key", param=value)`
 5. **Maintain parallel structure** between locale files
 
 ## 🔮 Roadmap
