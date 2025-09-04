@@ -4,13 +4,25 @@
 BOT_TOKEN=your_telegram_bot_token_here
 
 # OpenAI Configuration
+OPENAI_ENABLED=true
 OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_MODEL=gpt-4o-mini
+
+# Database Configuration
+DATABASE_URL=postgresql+asyncpg://telegram_user:telegram_password@localhost:5432/telegram_game
+
+# Redis Configuration
+REDIS_URL=redis://localhost:6379/0
 
 # Logging Configuration
 LOG_LEVEL=INFO
 
 # Webhook Configuration (optional for local development)
 NGROK_URL=
+WEBHOOK_PATH=/webhook
 WEBHOOK_SECRET=
 PORT=8000
+
+# Game Configuration
+GAME_NAME=Fantasy RPG Adventure
+GAME_DESCRIPTION=Embark on epic quests in a medieval fantasy world!
