@@ -6,9 +6,12 @@ A text-based RPG game bot for Telegram built with aiogram 3.13, featuring AI-gen
 
 - **AI-Generated Quests**: Dynamic quest descriptions using OpenAI API
 - **Fantasy World**: Immersive medieval D&D-style setting
+- **Multilingual Support**: English and Ukrainian with easy extension
+- **Action-Based Gameplay**: Interactive buttons for player choices
 - **Webhook Support**: Production-ready with ngrok support for local testing
 - **Async Architecture**: Built with modern Python async/await patterns
-- **Structured Logging**: JSON-formatted logs for easy monitoring
+- **Structured Logging**: JSON-formatted logs with correlation IDs
+- **Modular Design**: Clean separation of concerns for maintainability
 
 ## 🚀 Quick Start
 
@@ -140,9 +143,11 @@ python app/main.py
 ### Available Commands
 
 - `/start` - Welcome message and world introduction
-- `/quest` - Get a new AI-generated quest
+- `/quest` - Get a new AI-generated quest with action buttons
 - `/help` - Show help information
 - `/status` - Game status (placeholder for future features)
+- `/language` - Change bot language (English/Ukrainian)
+- `/demo_actions` - Demo interactive action buttons
 
 ## 🏗️ Project Structure
 
@@ -150,23 +155,49 @@ python app/main.py
 R-D-telegram-game/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py              # Main entry point
-│   ├── config.py            # Configuration and environment variables
-│   ├── handlers/
+│   ├── main.py                    # Main entry point
+│   ├── core/                      # Core functionality
 │   │   ├── __init__.py
-│   │   ├── start.py         # Start and help commands
-│   │   └── game.py          # Game commands (quest, status)
-│   └── services/
-│       ├── __init__.py
-│       └── openai_service.py # OpenAI API integration
-├── requirements.txt          # Python dependencies
-├── requirements-dev.txt      # Development dependencies
-├── pyproject.toml           # Project configuration and tool settings
-├── .pre-commit-config.yaml  # Pre-commit hooks configuration
-├── Makefile                 # Development task automation
-├── .env.example             # Environment variables template
-├── .gitignore               # Git ignore patterns
-└── README.md                # This file
+│   │   ├── config.py              # Configuration management
+│   │   └── utils.py               # Common utilities
+│   ├── services/                  # Service layer
+│   │   ├── __init__.py
+│   │   ├── ai/                    # AI services
+│   │   │   ├── __init__.py
+│   │   │   ├── generation_service.py  # AI content generation
+│   │   │   └── label_generator.py     # Action button labels
+│   │   ├── i18n_service.py        # Internationalization
+│   │   └── logging_service.py     # Structured logging
+│   ├── handlers/                  # Request handlers
+│   │   ├── __init__.py
+│   │   ├── commands/              # Command handlers
+│   │   │   ├── __init__.py
+│   │   │   ├── start.py           # Start and help commands
+│   │   │   ├── game.py            # Game commands and callbacks
+│   │   │   └── language.py        # Language selection
+│   │   ├── callbacks.py           # Callback query handlers
+│   │   ├── errors.py              # Error handling
+│   │   └── keyboards.py           # Inline keyboard builders
+│   ├── game/                      # Game logic
+│   │   ├── __init__.py
+│   │   ├── actions.py             # Game actions and metadata
+│   │   └── scenes.py              # Scene management
+│   ├── middlewares/               # Middleware components
+│   │   ├── __init__.py
+│   │   └── correlation.py         # Request correlation
+│   ├── locales/                   # Translation files
+│   │   ├── __init__.py
+│   │   ├── en.json                # English translations
+│   │   └── uk.json                # Ukrainian translations
+│   └── prompts.py                 # AI prompt templates
+├── requirements.txt               # Python dependencies
+├── requirements-dev.txt           # Development dependencies
+├── pyproject.toml                # Project configuration and tool settings
+├── .pre-commit-config.yaml       # Pre-commit hooks configuration
+├── Makefile                      # Development task automation
+├── .env.example                  # Environment variables template
+├── .gitignore                    # Git ignore patterns
+└── README.md                     # This file
 ```
 
 ## 🔧 Configuration
@@ -237,16 +268,31 @@ Quests are dynamically generated using OpenAI's GPT-3.5-turbo model with:
 
 The bot generates immersive world descriptions that set the stage for adventures.
 
+## 🎲 Game Mechanics
+
+### Interactive Actions
+- **Action Buttons**: Context-aware buttons for player choices
+- **Scene Management**: Dynamic scene contexts for different situations
+- **AI-Generated Labels**: Smart button labels based on context
+- **Quest System**: AI-generated quests with multiple action options
+
+### Multilingual Support
+- **Language Selection**: Easy switching between English and Ukrainian
+- **Localized Content**: All game content translated
+- **Fallback System**: Graceful handling of missing translations
+
 ## 🚧 Future Features
 
 This is an MVP skeleton. Planned enhancements include:
-- Player character system
-- Experience and leveling
-- Inventory management
-- Combat mechanics
-- Multiple quest types
-- Player interactions
-- Save/load game state
+- Player character system with stats and progression
+- Experience and leveling mechanics
+- Inventory management system
+- Combat mechanics with turn-based battles
+- Multiple quest types and storylines
+- Player interactions and NPCs
+- Save/load game state persistence
+- Achievement system
+- Multiplayer features
 
 ## 🤝 Contributing
 

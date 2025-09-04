@@ -1,8 +1,8 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
-from app.config import Config
-from app.handlers import start, game, language
+from app.core.config import Config
+from app.handlers.commands import start_router, game_router, language_router
 from app.handlers.errors import setup_error_handlers, GlobalErrorHandler
 from app.middlewares.correlation import CorrelationMiddleware
 from app.services.logging_service import setup_logging, get_logger
@@ -38,9 +38,9 @@ def main():
     setup_error_handlers(dp)
     
     # Register routers
-    dp.include_router(start.router)
-    dp.include_router(game.router)
-    dp.include_router(language.router)
+    dp.include_router(start_router)
+    dp.include_router(game_router)
+    dp.include_router(language_router)
     
     logger.info("✅ Bot initialized successfully")
     logger.info("📱 Bot is running in polling mode")

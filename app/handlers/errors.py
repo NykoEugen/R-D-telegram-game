@@ -3,6 +3,7 @@ from aiogram import BaseMiddleware, Router
 from aiogram.types import TelegramObject, ErrorEvent
 from aiogram.exceptions import TelegramAPIError, TelegramNetworkError, TelegramRetryAfter
 
+from app.core.utils import extract_update_info, format_exception
 from app.services.logging_service import get_logger, get_correlation_id
 
 logger = get_logger(__name__)
@@ -24,7 +25,7 @@ class GlobalErrorHandler(BaseMiddleware):
             corr_id = get_correlation_id()
             
             # Extract update information for logging
-            update_info = self._extract_update_info(event)
+            update_info = extract_update_info(event)
             
             # Log the error with full context
             logger.error(
@@ -35,39 +36,12 @@ class GlobalErrorHandler(BaseMiddleware):
                 chat_id=update_info.get('chat_id'),
                 error_type=type(e).__name__,
                 error_message=str(e),
-                exception_details=self._format_exception(e)
+                exception_details=format_exception(e)
             )
             
             # Re-raise the exception to maintain original behavior
             raise
     
-    def _extract_update_info(self, event: TelegramObject) -> Dict[str, Any]:
-        """Extract basic update information for error logging."""
-        info = {}
-        
-        try:
-            if hasattr(event, 'message') and event.message:
-                info.update({
-                    'type': 'message',
-                    'user_id': event.message.from_user.id if event.message.from_user else None,
-                    'chat_id': event.message.chat.id if event.message.chat else None,
-                })
-            elif hasattr(event, 'callback_query') and event.callback_query:
-                info.update({
-                    'type': 'callback_query',
-                    'user_id': event.callback_query.from_user.id if event.callback_query.from_user else None,
-                    'chat_id': event.callback_query.message.chat.id if event.callback_query.message else None,
-                })
-            elif hasattr(event, 'inline_query') and event.inline_query:
-                info.update({
-                    'type': 'inline_query',
-                    'user_id': event.inline_query.from_user.id if event.inline_query.from_user else None,
-                })
-        except Exception:
-            # If we can't extract info, just continue
-            pass
-        
-        return info
     
 
 
@@ -85,22 +59,7 @@ def setup_error_handlers(router: Router) -> None:
             update = event.update
             
             # Extract update information
-            update_info = {}
-            try:
-                if update.message:
-                    update_info.update({
-                        'type': 'message',
-                        'user_id': update.message.from_user.id if update.message.from_user else None,
-                        'chat_id': update.message.chat.id if update.message.chat else None,
-                    })
-                elif update.callback_query:
-                    update_info.update({
-                        'type': 'callback_query',
-                        'user_id': update.callback_query.from_user.id if update.callback_query.from_user else None,
-                        'chat_id': update.callback_query.message.chat.id if update.callback_query.message else None,
-                    })
-            except Exception:
-                pass
+            update_info = extract_update_info(update)
             
             # Log the error with full context
             logger.error(
