@@ -1,14 +1,14 @@
 """
 User model for the Telegram RPG game bot.
 
-This model represents a user in the game system.
+This model represents a user in the game system with basic Telegram information.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
-from sqlalchemy import String, Integer, DateTime, Boolean, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Integer, DateTime, Boolean
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
 
@@ -27,19 +27,18 @@ class User(Base):
     first_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     last_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     
-    # Game-specific information
+    # User preferences
     language: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_bot: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    
-    # Game state
-    current_scene: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    game_data: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON string
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     last_activity: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
+    # Relationships
+    player: Mapped[Optional["Player"]] = relationship("Player", back_populates="user", uselist=False)
     
     def __repr__(self) -> str:
         return f"<User(id={self.id}, telegram_id={self.telegram_id}, username={self.username})>"
