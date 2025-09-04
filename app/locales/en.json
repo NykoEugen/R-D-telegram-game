@@ -24,7 +24,7 @@
   "new_quest": "⚔️ **NEW QUEST RECEIVED!** ⚔️",
   "quest_description": "📜 **Quest:** {description}",
   "what_will_you_do": "🎯 **What will you do?**",
-  "quest_options": "• Accept the challenge?\n• Seek more information?\n• Prepare for battle?",
+  "quest_options": "Choose your action below:",
   "quest_hint": "💡 *Use /quest again for another quest, or /help for more commands.*",
   "quest_failed": "⚔️ **QUEST GENERATION FAILED** ⚔️",
   "fallback_quest": "📜 **Fallback Quest:** A mysterious artifact has been discovered in the ancient ruins. Local villagers speak of strange noises and glowing lights emanating from the depths. Will you investigate this ancient mystery?",
@@ -42,5 +42,35 @@
   "choose_language": "🌍 **Please choose your language:**",
   "language_changed": "✅ **Language changed to {language}!**",
   "current_language": "🌍 **Current language:** {language}",
-  "quest_intro": "Here is your quest:"
+  "quest_intro": "Here is your quest:",
+  "btn": {
+    "attack": "Attack",
+    "defend": "Defend",
+    "cast": "Cast",
+    "use_item": "Items",
+    "talk": "Talk",
+    "sneak": "Sneak",
+    "loot": "Loot",
+    "flee": "Flee",
+    "wait": "Wait",
+    "back": "Back",
+    "accept": "Accept",
+    "investigate": "Investigate",
+    "prepare": "Prepare"
+  },
+  "action": {
+    "attack": "Engage in combat or strike. Generate contextual action like 'Strike', 'Charge', 'Ambush' based on situation.",
+    "defend": "Protect yourself or others. Generate contextual action like 'Block', 'Shield', 'Cover' based on situation.",
+    "cast": "Use magic or special abilities. Generate contextual action like 'Heal', 'Fireball', 'Charm' based on situation.",
+    "use_item": "Use equipment or consumables. Generate contextual action like 'Potion', 'Rope', 'Key' based on situation.",
+    "talk": "Communicate or negotiate. Generate contextual action like 'Persuade', 'Question', 'Bargain' based on situation.",
+    "sneak": "Move stealthily or avoid detection. Generate contextual action like 'Sneak', 'Hide', 'Creep' based on situation.",
+    "loot": "Search for items or information. Generate contextual action like 'Search', 'Examine', 'Rummage' based on situation.",
+    "flee": "Retreat or escape. Generate contextual action like 'Flee', 'Retreat', 'Escape' based on situation.",
+    "wait": "Observe or delay action. Generate contextual action like 'Wait', 'Watch', 'Listen' based on situation.",
+    "back": "Return to previous menu or location. Generate contextual action like 'Back', 'Return', 'Leave' based on situation.",
+    "accept": "Accept a quest, challenge, or offer. Generate contextual action like 'Accept', 'Agree', 'Take On' based on situation.",
+    "investigate": "Gather information or examine something. Generate contextual action like 'Investigate', 'Examine', 'Research' based on situation.",
+    "prepare": "Get ready for action or battle. Generate contextual action like 'Prepare', 'Ready', 'Gear Up' based on situation."
+  }
 }
