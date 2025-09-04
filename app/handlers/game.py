@@ -28,8 +28,7 @@ async def cmd_quest(message: Message):
             quest_text = (
                 f"{i18n_service.get_text(user_id, 'new_quest')}\n\n"
                 f"{i18n_service.get_text(user_id, 'quest_description', description=quest_description)}\n\n"
-                f"{i18n_service.get_text(user_id, 'what_will_you_do')}\n"
-                f"{i18n_service.get_text(user_id, 'quest_options')}\n\n"
+                f"{i18n_service.get_text(user_id, 'what_will_you_do')}\n\n"
                 f"{i18n_service.get_text(user_id, 'quest_hint')}"
             )
         else:
@@ -37,12 +36,26 @@ async def cmd_quest(message: Message):
             quest_text = (
                 f"{i18n_service.get_text(user_id, 'quest_failed')}\n\n"
                 f"{i18n_service.get_text(user_id, 'fallback_quest')}\n\n"
-                f"{i18n_service.get_text(user_id, 'what_will_you_do')}\n"
-                f"{i18n_service.get_text(user_id, 'quest_options')}\n\n"
+                f"{i18n_service.get_text(user_id, 'what_will_you_do')}\n\n"
                 f"{i18n_service.get_text(user_id, 'quest_hint')}"
             )
         
-        await message.answer(quest_text, parse_mode="Markdown")
+        # Create action buttons for quest scenarios
+        user_language = i18n_service.get_user_language(user_id)
+        scene_id = f"quest-{user_id}-{message.message_id}"  # Unique scene ID
+        quest_actions = [Action.ACCEPT, Action.INVESTIGATE, Action.PREPARE, Action.TALK, Action.BACK]
+        
+        # Build keyboard with context hint from quest description
+        context_hint = quest_description if quest_description else "A mysterious quest awaits your decision."
+        keyboard = build_actions_kb(
+            actions=quest_actions,
+            locale=user_language,
+            scene_id=scene_id,
+            context_hint=context_hint,
+            row_width=2
+        )
+        
+        await message.answer(quest_text, parse_mode="Markdown", reply_markup=keyboard)
         logger.info("User requested a quest", 
                    user_id=message.from_user.id,
                    user_name=message.from_user.first_name,

@@ -12,6 +12,9 @@ class Action(StrEnum):
     FLEE = "flee"
     WAIT = "wait"
     BACK = "back"
+    ACCEPT = "accept"
+    INVESTIGATE = "investigate"
+    PREPARE = "prepare"
 
 @dataclass(frozen=True)
 class ActionMeta:
@@ -30,4 +33,7 @@ ACTION_META: dict[Action, ActionMeta] = {
     Action.FLEE:     ActionMeta("action.flee", "btn.flee"),
     Action.WAIT:     ActionMeta("action.wait", "btn.wait"),
     Action.BACK:     ActionMeta("action.back", "btn.back"),
+    Action.ACCEPT:   ActionMeta("action.accept", "btn.accept"),
+    Action.INVESTIGATE: ActionMeta("action.investigate", "btn.investigate"),
+    Action.PREPARE:  ActionMeta("action.prepare", "btn.prepare"),
 }
