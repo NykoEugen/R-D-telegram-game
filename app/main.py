@@ -6,6 +6,7 @@ from app.core.config import Config
 from app.core.redis import init_redis, close_redis, get_redis
 from app.core.db import init_db, close_db
 from app.handlers.commands import start_router, game_router, language_router, character_router
+from app.handlers.commands.hero import router as hero_router
 from app.handlers.commands.regions import router as regions_router
 from app.handlers.game import router as adventure_router
 from app.handlers.errors import setup_error_handlers, GlobalErrorHandler
@@ -65,6 +66,7 @@ async def main():
     dp.include_router(game_router)
     dp.include_router(language_router)
     dp.include_router(character_router)
+    dp.include_router(hero_router)
     dp.include_router(regions_router)
     dp.include_router(adventure_router)
     

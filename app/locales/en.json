@@ -62,7 +62,34 @@
     "rest": "Rest",
     "explore": "Explore",
     "negotiate": "Negotiate",
-    "retreat": "Retreat"
+    "retreat": "Retreat",
+    "create_hero": "🎭 Create Hero",
+    "about_heroes": "ℹ️ About Heroes",
+    "start_quest": "⚔️ Start Quest",
+    "adventure": "🗺️ Adventure",
+    "view_hero": "👤 View Hero",
+    "regions": "🌍 Regions",
+    "warrior": "⚔️ Warrior",
+    "rogue": "🗡️ Rogue",
+    "mage": "🔮 Mage",
+    "cleric": "⛑️ Cleric",
+    "ranger": "🏹 Ranger",
+    "create_character": "Create Character",
+    "cancel": "❌ Cancel",
+    "view_stats": "📊 View Stats",
+    "level_up": "⬆️ Level Up",
+    "distribute_points": "🎯 Distribute Points",
+    "add_str": "💪 +STR",
+    "add_agi": "🏃 +AGI",
+    "add_int": "🧠 +INT",
+    "add_vit": "❤️ +VIT",
+    "add_luk": "🍀 +LUK",
+    "confirm": "✅ Confirm",
+    "create_new_hero": "🔄 Create New Hero",
+    "hero_stats": "📊 Stats",
+    "back_to_menu": "⬅️ Back to Menu",
+    "main_menu": "🏠 Main Menu",
+    "exit_menu": "🚪 Exit Menu"
   },
   "action": {
     "attack": "Engage in combat or strike. Generate contextual action like 'Strike', 'Charge', 'Ambush' based on situation.",
@@ -129,14 +156,14 @@
         "cleric": "⛑️ **Cleric** - Divine healers and protectors. Balanced intelligence and vitality.",
         "ranger": "🏹 **Ranger** - Versatile hunters and scouts. Balanced strength and agility."
       },
-      "summary": "**Character Summary**\n\nName: {name}\nClass: {class}\n\nDescription: {description}\n\nAre you sure you want to create this character?",
-      "created": "🎉 **Character Created!**\n\nWelcome, **{name}** the {class}!\n\nYour adventure begins now. Use /character to view your stats or /adventure to start exploring!",
+      "summary": "**Character Summary**\n\nName: {name}\nClass: {class_name}\n\nDescription: {description}\n\nAre you sure you want to create this character?",
+      "created": "🎉 **Character Created!**\n\nWelcome, **{name}** the {class_name}!\n\nYour adventure begins now. Use /character to view your stats or /adventure to start exploring!",
       "cancelled": "Character creation cancelled."
     },
     "stats": {
       "no_character": "You don't have a character yet! Use /create_character to create one.",
-      "summary": "**{name}** (Level {level})\nClass: {class}\n\n**Base Attributes:**\n• Strength: {strength}\n• Agility: {agility}\n• Intelligence: {intelligence}\n• Vitality: {vitality}\n• Luck: {luck}\n\n**Derived Stats:**\n• HP: {health}/{max_health}\n• Attack: {attack}\n• Magic: {magic}\n• Crit Chance: {crit_chance:.1f}%\n• Dodge: {dodge:.1f}%\n\n**Progress:**\n• XP: {experience} ({xp_current}/{xp_required} to next level)\n• Available Stat Points: {available_points}",
-      "detailed": "**📊 Detailed Character Stats**\n\n**{name}** (Level {level})\nClass: {class}\n\n**Base Attributes:**\n• 💪 Strength: {strength} (Attack: {attack})\n• 🏃 Agility: {agility} (Crit: {crit_chance:.1f}%, Dodge: {dodge:.1f}%)\n• 🧠 Intelligence: {intelligence} (Magic: {magic})\n• ❤️ Vitality: {vitality} (HP: {max_health})\n• 🍀 Luck: {luck}\n\n**Combat Stats:**\n• HP: {health}/{max_health}\n• Attack Power: {attack}\n• Magic Power: {magic}\n• Critical Hit Chance: {crit_chance:.1f}%\n• Dodge Chance: {dodge:.1f}%\n\n**Progress:**\n• Experience: {experience}\n• XP to Next Level: {xp_current}/{xp_required}\n• Available Stat Points: {available_points}\n\n**Resources:**\n• Coins: {coins}\n• Gems: {gems}\n• Energy: {energy}/{max_energy}"
+      "summary": "**{name}** (Level {level})\nClass: {class_name}\n\n**Base Attributes:**\n• Strength: {strength}\n• Agility: {agility}\n• Intelligence: {intelligence}\n• Vitality: {vitality}\n• Luck: {luck}\n\n**Derived Stats:**\n• HP: {health}/{max_health}\n• Attack: {attack}\n• Magic: {magic}\n• Crit Chance: {crit_chance:.1f}%\n• Dodge: {dodge:.1f}%\n\n**Progress:**\n• XP: {experience} ({xp_current}/{xp_required} to next level)\n• Available Stat Points: {available_points}",
+      "detailed": "**📊 Detailed Character Stats**\n\n**{name}** (Level {level})\nClass: {class_name}\n\n**Base Attributes:**\n• 💪 Strength: {strength} (Attack: {attack})\n• 🏃 Agility: {agility} (Crit: {crit_chance:.1f}%, Dodge: {dodge:.1f}%)\n• 🧠 Intelligence: {intelligence} (Magic: {magic})\n• ❤️ Vitality: {vitality} (HP: {max_health})\n• 🍀 Luck: {luck}\n\n**Combat Stats:**\n• HP: {health}/{max_health}\n• Attack Power: {attack}\n• Magic Power: {magic}\n• Critical Hit Chance: {crit_chance:.1f}%\n• Dodge Chance: {dodge:.1f}%\n\n**Progress:**\n• Experience: {experience}\n• XP to Next Level: {xp_current}/{xp_required}\n• Available Stat Points: {available_points}\n\n**Resources:**\n• Coins: {coins}\n• Gems: {gems}\n• Energy: {energy}/{max_energy}"
     },
     "level_up": {
       "congratulations": "🎉 **Level Up!**\n\nCongratulations! You've reached level {level}!\n\nYou have {points} stat points to distribute.\nUse /character to view your updated stats.",
@@ -253,12 +280,75 @@
     "quests_completed": "• Quests Completed: {count}",
     "all_regions": "**All Regions:**",
     "requires": "Requires:",
-    "level_requirement": "Level {level}",
+    "level_requirement_short": "Level {level}",
     "quest_requirement": "Quest '{quest}'",
     "explore_area": "You explore the area but nothing of interest happens this time.",
     "no_enemies": "No enemies found in this region!",
     "error_player_data": "Error: Player data not found!",
     "character_data_not_found": "Character data not found!",
     "start_adventure_first": "You need to start your adventure first! Use /start to begin."
+  },
+  "hero": {
+    "required": "🦸 **Hero Required**\n\nYou need a hero to access this feature!\n\nCreate your hero first to begin your epic journey.",
+    "management": {
+      "title": "🦸 **Hero Management**",
+      "no_hero": "Welcome to the world of heroes! You don't have a hero yet.\n\nCreate your first hero to begin your epic adventure!",
+      "has_hero": "**{hero_name}** the {hero_class}\nLevel {level} • {experience} XP\n\nChoose an action:",
+      "no_hero_menu": "🦸 **Hero Management**\n\nWelcome to the world of heroes! You don't have a hero yet.\n\nCreate your first hero to begin your epic adventure!",
+      "has_hero_menu": "🦸 **Hero Management**\n\n**{hero_name}** the {hero_class}\nLevel {level} • {experience} XP\n\nChoose an action:"
+    },
+    "creation": {
+      "welcome": "🎭 **Hero Creation**\n\nWelcome, brave adventurer! Let's create your hero.\n\nWhat would you like to name your hero?",
+      "new_hero_warning": "🎭 **Create New Hero**\n\n⚠️ **Warning**: This will replace your current hero!\n\nWhat would you like to name your new hero?",
+      "name_prompt": "What would you like to name your hero?",
+      "name_too_short": "Hero name must be between 2 and 20 characters long.",
+      "class_selection": "Great! Your hero will be named **{name}**.\n\nNow choose your hero's class:",
+      "class_descriptions": {
+        "warrior": "⚔️ **Warrior** - Strong and resilient fighters",
+        "rogue": "🗡️ **Rogue** - Agile and lucky adventurers",
+        "mage": "🔮 **Mage** - Intelligent spellcasters",
+        "cleric": "⛑️ **Cleric** - Divine healers and protectors",
+        "ranger": "🏹 **Ranger** - Versatile hunters and scouts"
+      },
+      "summary": "**Hero Summary**\n\nName: {name}\nClass: {class_name}\n\nDescription: {description}\n\n**Starting Bonuses:**\n• Strength: +{strength}\n• Agility: +{agility}\n• Intelligence: +{intelligence}\n• Vitality: +{vitality}\n• Luck: +{luck}\n\nAre you ready to create this hero?",
+      "created": "🎉 **Hero Created!**\n\nWelcome, **{name}** the {class_name}!\n\n**Starting Stats:**\n• HP: {hp}\n• Attack: {attack}\n• Magic: {magic}\n• Crit Chance: {crit_chance:.1f}%\n• Dodge: {dodge:.1f}%\n\nYour adventure begins now! Choose your next action:",
+      "cancelled": "Hero creation cancelled."
+    },
+    "info": {
+      "title": "ℹ️ **About Heroes**",
+      "description": "Heroes are your characters in this fantasy world. Each hero belongs to a class that determines their strengths and abilities.\n\n**Available Classes:**\n\n⚔️ **Warrior**\nStrong and resilient fighters who excel in close combat.\n• High Strength and Vitality\n• Great for tanking and dealing physical damage\n\n🗡️ **Rogue**\nAgile and lucky adventurers who rely on speed and fortune.\n• High Agility and Luck\n• Great for critical hits and finding treasures\n\n🔮 **Mage**\nIntelligent spellcasters who wield powerful magic.\n• High Intelligence and Agility\n• Great for magical damage and spell effects\n\n⛑️ **Cleric**\nDivine healers and protectors.\n• High Vitality and Intelligence\n• Great for healing and support\n\n🏹 **Ranger**\nVersatile hunters and scouts.\n• High Agility and Strength\n• Great for balanced combat and exploration\n\n**Getting Started:**\n1. Choose a name for your hero\n2. Select a class that matches your playstyle\n3. Start your adventure and gain experience\n4. Level up and distribute stat points to customize your hero"
+    },
+    "stats": {
+      "title": "📊 **Hero Stats**",
+      "detailed_title": "🦸 **Hero Details**",
+      "compact": "**{name}** (Level {level})\n{class_name}\n\n**Attributes:**\n💪{strength} 🏃{agility} 🧠{intelligence} ❤️{vitality} 🍀{luck}\n\n**Combat:**\n⚔️{attack} 🔮{magic} 💥{crit_chance:.0f}% 🛡️{dodge:.0f}%\n\n**Progress:**\nXP: {xp_current}/{xp_required} • Points: {available_points}\nHP: {health}/{max_health} • Energy: {energy}/{max_energy}",
+      "detailed": "**{name}** the {class_name}\nLevel {level} • {experience} XP\n\n**Base Attributes:**\n• 💪 Strength: {strength} (Attack: {attack})\n• 🏃 Agility: {agility} (Crit: {crit_chance:.1f}%, Dodge: {dodge:.1f}%)\n• 🧠 Intelligence: {intelligence} (Magic: {magic})\n• ❤️ Vitality: {vitality} (HP: {max_health})\n• 🍀 Luck: {luck}\n\n**Combat Stats:**\n• HP: {health}/{max_health}\n• Attack Power: {attack}\n• Magic Power: {magic}\n• Critical Hit Chance: {crit_chance:.1f}%\n• Dodge Chance: {dodge:.1f}%\n\n**Progress:**\n• Experience: {experience}\n• XP to Next Level: {xp_current}/{xp_required}\n• Available Stat Points: {available_points}\n\n**Resources:**\n• Coins: {coins}\n• Gems: {gems}\n• Energy: {energy}/{max_energy}"
+    },
+    "level_up": {
+      "congratulations": "🎉 **Level Up!**\n\nCongratulations! **{name}** has reached level {level}!\n\nYou have {points} stat points to distribute.\nUse the distribute points option to customize your hero!",
+      "not_enough_xp": "You don't have enough XP to level up!",
+      "no_level_up": "No level up available!"
+    },
+    "stat_distribution": {
+      "title": "🎯 **Stat Point Distribution**\n\nAvailable Points: {points}\n\nCurrent Stats:\n• Strength: {strength}\n• Agility: {agility}\n• Intelligence: {intelligence}\n• Vitality: {vitality}\n• Luck: {luck}\n\nChoose which stat to increase:",
+      "no_points": "You don't have any stat points to distribute!",
+      "success": "✅ **Stat points distributed successfully!**\n\nYour hero has been updated. Use /hero to view your updated stats.",
+      "cancelled": "Stat point distribution cancelled.",
+      "point_added": "+1 {stat}!"
+    },
+    "errors": {
+      "user_not_found": "Please use /start first to register.",
+      "hero_not_found": "Hero not found!",
+      "not_enough_xp": "You don't have enough XP to level up!",
+      "no_level_up": "No level up available!",
+      "no_points": "You don't have any stat points to distribute!",
+      "no_more_points": "No more points to distribute!",
+      "failed_distribute": "Failed to distribute point!"
+    }
+  },
+  "start": {
+    "new_user": "🦸 **To begin your adventure, you need a hero!**\nCreate your hero to start your epic journey.",
+    "returning_no_hero": "🦸 **Welcome back!**\nYou still need to create a hero to begin your adventure.",
+    "returning_with_hero": "🦸 **Welcome back, {hero_name}!**\nYour {hero_class} is ready for adventure.\nLevel {level} • {experience} XP"
   }
 }

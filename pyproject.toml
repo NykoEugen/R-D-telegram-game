@@ -67,3 +67,6 @@ namespace_packages = true
 explicit_package_bases = true
 # aiogram is async; allow partial strictness for now:
 strict_optional = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

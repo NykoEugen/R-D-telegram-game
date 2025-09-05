@@ -8,6 +8,8 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.models.player import Player
 from app.models.character import CharacterClass, CharacterProgression
@@ -41,24 +43,24 @@ async def cmd_create_character(message: Message, state: FSMContext, db_session: 
     from sqlalchemy import select
     
     result = await db_session.execute(
-        select(User).where(User.telegram_id == user_id)
+        select(User)
+        .where(User.telegram_id == user_id)
+        .options(selectinload(User.player))
     )
     user = result.scalar_one_or_none()
     
     if not user:
-        await message.answer("Please use /start first to register.")
+        await message.answer(i18n_service.get_text(user_id, 'character.errors.user_not_found'))
         return
     
     if user.player:
-        await message.answer("You already have a character! Use /character to view your stats.")
+        await message.answer(i18n_service.get_text(user_id, 'character.errors.already_has_character'))
         return
     
     # Start character creation
     await state.set_state(CharacterCreationStates.WAITING_FOR_NAME)
     await message.answer(
-        "🎭 **Character Creation**\n\n"
-        "Welcome to the world of adventure! Let's create your character.\n\n"
-        "What would you like to name your character?",
+        i18n_service.get_text(user_id, 'character.creation.welcome'),
         parse_mode="Markdown"
     )
 
@@ -66,10 +68,11 @@ async def cmd_create_character(message: Message, state: FSMContext, db_session: 
 @router.message(CharacterCreationStates.WAITING_FOR_NAME)
 async def process_character_name(message: Message, state: FSMContext):
     """Process character name input."""
+    user_id = message.from_user.id
     character_name = message.text.strip()
     
     if len(character_name) < 2 or len(character_name) > 20:
-        await message.answer("Character name must be between 2 and 20 characters long.")
+        await message.answer(i18n_service.get_text(user_id, 'character.creation.name_too_short'))
         return
     
     # Store name and show class selection
@@ -80,40 +83,39 @@ async def process_character_name(message: Message, state: FSMContext):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
-                text="⚔️ Warrior", 
+                text=i18n_service.get_text(user_id, 'btn.warrior'), 
                 callback_data="class_warrior"
             ),
             InlineKeyboardButton(
-                text="🗡️ Rogue", 
+                text=i18n_service.get_text(user_id, 'btn.rogue'), 
                 callback_data="class_rogue"
             )
         ],
         [
             InlineKeyboardButton(
-                text="🔮 Mage", 
+                text=i18n_service.get_text(user_id, 'btn.mage'), 
                 callback_data="class_mage"
             ),
             InlineKeyboardButton(
-                text="⛑️ Cleric", 
+                text=i18n_service.get_text(user_id, 'btn.cleric'), 
                 callback_data="class_cleric"
             )
         ],
         [
             InlineKeyboardButton(
-                text="🏹 Ranger", 
+                text=i18n_service.get_text(user_id, 'btn.ranger'), 
                 callback_data="class_ranger"
             )
         ]
     ])
     
     await message.answer(
-        f"Great! Your character will be named **{character_name}**.\n\n"
-        "Now choose your character class:\n\n"
-        "⚔️ **Warrior** - Strong and resilient fighters\n"
-        "🗡️ **Rogue** - Agile and lucky adventurers\n"
-        "🔮 **Mage** - Intelligent spellcasters\n"
-        "⛑️ **Cleric** - Divine healers and protectors\n"
-        "🏹 **Ranger** - Versatile hunters and scouts",
+        i18n_service.get_text(user_id, 'character.creation.class_selection', name=character_name) + '\n\n' +
+        i18n_service.get_text(user_id, 'character.creation.class_descriptions.warrior') + '\n' +
+        i18n_service.get_text(user_id, 'character.creation.class_descriptions.rogue') + '\n' +
+        i18n_service.get_text(user_id, 'character.creation.class_descriptions.mage') + '\n' +
+        i18n_service.get_text(user_id, 'character.creation.class_descriptions.cleric') + '\n' +
+        i18n_service.get_text(user_id, 'character.creation.class_descriptions.ranger'),
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
@@ -136,22 +138,21 @@ async def process_character_class(callback: CallbackQuery, state: FSMContext):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
-                text="✅ Create Character", 
+                text=i18n_service.get_text(callback.from_user.id, 'btn.create_character'), 
                 callback_data="confirm_creation"
             ),
             InlineKeyboardButton(
-                text="❌ Cancel", 
+                text=i18n_service.get_text(callback.from_user.id, 'btn.cancel'), 
                 callback_data="cancel_creation"
             )
         ]
     ])
     
     await callback.message.edit_text(
-        f"**Character Summary**\n\n"
-        f"Name: {character_name}\n"
-        f"Class: {character_class.value.title()}\n\n"
-        f"Description: {class_description}\n\n"
-        f"Are you sure you want to create this character?",
+        i18n_service.get_text(callback.from_user.id, 'character.creation.summary', 
+                             name=character_name, 
+                             class_name=character_class.value.title(),
+                             description=class_description),
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
@@ -172,12 +173,14 @@ async def confirm_character_creation(callback: CallbackQuery, state: FSMContext,
     from sqlalchemy import select
     
     result = await db_session.execute(
-        select(User).where(User.telegram_id == callback.from_user.id)
+        select(User)
+        .where(User.telegram_id == callback.from_user.id)
+        .options(selectinload(User.player))
     )
     user = result.scalar_one_or_none()
     
     if not user:
-        await callback.answer("Error: User not found. Please use /start first.")
+        await callback.answer(i18n_service.get_text(callback.from_user.id, 'character.errors.user_not_found'))
         return
     
     # Create player
@@ -204,9 +207,9 @@ async def confirm_character_creation(callback: CallbackQuery, state: FSMContext,
     await db_session.commit()
     
     await callback.message.edit_text(
-        f"🎉 **Character Created!**\n\n"
-        f"Welcome, **{character_name}** the {character_class.value.title()}!\n\n"
-        f"Your adventure begins now. Use /character to view your stats or /adventure to start exploring!",
+        i18n_service.get_text(callback.from_user.id, 'character.creation.created',
+                             name=character_name, 
+                             class_name=character_class.value.title()),
         parse_mode="Markdown"
     )
     
@@ -216,7 +219,7 @@ async def confirm_character_creation(callback: CallbackQuery, state: FSMContext,
 @router.callback_query(F.data == "cancel_creation")
 async def cancel_character_creation(callback: CallbackQuery, state: FSMContext):
     """Cancel character creation."""
-    await callback.message.edit_text("Character creation cancelled.")
+    await callback.message.edit_text(i18n_service.get_text(callback.from_user.id, 'character.creation.cancelled'))
     await state.clear()
 
 
@@ -230,15 +233,17 @@ async def cmd_character_stats(message: Message, db_session: AsyncSession):
     from sqlalchemy import select
     
     result = await db_session.execute(
-        select(User).where(User.telegram_id == user_id)
+        select(User)
+        .where(User.telegram_id == user_id)
+        .options(selectinload(User.player))
     )
     user = result.scalar_one_or_none()
     
     if not user or not user.player:
         await message.answer(
-            "You don't have a character yet! Use /create_character to create one.",
+            i18n_service.get_text(user_id, 'character.stats.no_character'),
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="Create Character", callback_data="start_creation")]
+                [InlineKeyboardButton(text=i18n_service.get_text(user_id, 'btn.create_character'), callback_data="start_creation")]
             ])
         )
         return
@@ -282,12 +287,14 @@ async def view_detailed_stats(callback: CallbackQuery, db_session: AsyncSession)
     from sqlalchemy import select
     
     result = await db_session.execute(
-        select(User).where(User.telegram_id == user_id)
+        select(User)
+        .where(User.telegram_id == user_id)
+        .options(selectinload(User.player))
     )
     user = result.scalar_one_or_none()
     
     if not user or not user.player:
-        await callback.answer("Character not found!")
+        await callback.answer(i18n_service.get_text(user_id, 'character.errors.hero_not_found'))
         return
     
     player = user.player
@@ -295,36 +302,29 @@ async def view_detailed_stats(callback: CallbackQuery, db_session: AsyncSession)
     xp_current, xp_required = player.get_xp_progress()
     
     # Create detailed stats message
-    stats_message = f"""
-**📊 Detailed Character Stats**
-
-**{player.character_name}** (Level {player.level})
-Class: {player.character_class.value.title() if player.character_class else 'None'}
-
-**Base Attributes:**
-• 💪 Strength: {player.strength} (Attack: {derived_stats.attack})
-• 🏃 Agility: {player.agility} (Crit: {derived_stats.crit_chance:.1f}%, Dodge: {derived_stats.dodge:.1f}%)
-• 🧠 Intelligence: {player.intelligence} (Magic: {derived_stats.magic})
-• ❤️ Vitality: {player.vitality} (HP: {derived_stats.hp_max})
-• 🍀 Luck: {player.luck}
-
-**Combat Stats:**
-• HP: {player.health}/{derived_stats.hp_max}
-• Attack Power: {derived_stats.attack}
-• Magic Power: {derived_stats.magic}
-• Critical Hit Chance: {derived_stats.crit_chance:.1f}%
-• Dodge Chance: {derived_stats.dodge:.1f}%
-
-**Progress:**
-• Experience: {player.experience}
-• XP to Next Level: {xp_current}/{xp_required}
-• Available Stat Points: {player.available_stat_points}
-
-**Resources:**
-• Coins: {player.coins}
-• Gems: {player.gems}
-• Energy: {player.energy}/{player.max_energy}
-"""
+    stats_message = i18n_service.get_text(user_id, 'character.stats.detailed',
+                                        name=player.character_name,
+                                        level=player.level,
+                                        class_name=player.get_character_class_name(),
+                                        strength=player.strength,
+                                        agility=player.agility,
+                                        intelligence=player.intelligence,
+                                        vitality=player.vitality,
+                                        luck=player.luck,
+                                        attack=derived_stats.attack,
+                                        crit_chance=derived_stats.crit_chance,
+                                        dodge=derived_stats.dodge,
+                                        magic=derived_stats.magic,
+                                        max_health=derived_stats.hp_max,
+                                        health=player.health,
+                                        experience=player.experience,
+                                        xp_current=xp_current,
+                                        xp_required=xp_required,
+                                        available_points=player.available_stat_points,
+                                        coins=player.coins,
+                                        gems=player.gems,
+                                        energy=player.energy,
+                                        max_energy=player.max_energy)
     
     await callback.message.edit_text(
         stats_message,
@@ -342,18 +342,20 @@ async def handle_level_up(callback: CallbackQuery, db_session: AsyncSession):
     from sqlalchemy import select
     
     result = await db_session.execute(
-        select(User).where(User.telegram_id == user_id)
+        select(User)
+        .where(User.telegram_id == user_id)
+        .options(selectinload(User.player))
     )
     user = result.scalar_one_or_none()
     
     if not user or not user.player:
-        await callback.answer("Character not found!")
+        await callback.answer(i18n_service.get_text(user_id, 'character.errors.hero_not_found'))
         return
     
     player = user.player
     
     if not player.can_level_up():
-        await callback.answer("You don't have enough XP to level up!")
+        await callback.answer(i18n_service.get_text(user_id, 'character.level_up.not_enough_xp'))
         return
     
     # Level up the player
@@ -379,14 +381,12 @@ async def handle_level_up(callback: CallbackQuery, db_session: AsyncSession):
         await db_session.commit()
         
         await callback.message.edit_text(
-            f"🎉 **Level Up!**\n\n"
-            f"Congratulations! You've reached level {player.level}!\n\n"
-            f"You have {player.available_stat_points} stat points to distribute.\n"
-            f"Use /character to view your updated stats.",
+            i18n_service.get_text(user_id, 'character.level_up.congratulations',
+                                 level=player.level, points=player.available_stat_points),
             parse_mode="Markdown"
         )
     else:
-        await callback.answer("No level up available!")
+        await callback.answer(i18n_service.get_text(user_id, 'character.level_up.no_level_up'))
 
 
 @router.callback_query(F.data == "distribute_points")
@@ -399,18 +399,20 @@ async def start_point_distribution(callback: CallbackQuery, state: FSMContext, d
     from sqlalchemy import select
     
     result = await db_session.execute(
-        select(User).where(User.telegram_id == user_id)
+        select(User)
+        .where(User.telegram_id == user_id)
+        .options(selectinload(User.player))
     )
     user = result.scalar_one_or_none()
     
     if not user or not user.player:
-        await callback.answer("Character not found!")
+        await callback.answer(i18n_service.get_text(user_id, 'character.errors.hero_not_found'))
         return
     
     player = user.player
     
     if player.available_stat_points <= 0:
-        await callback.answer("You don't have any stat points to distribute!")
+        await callback.answer(i18n_service.get_text(user_id, 'character.stat_distribution.no_points'))
         return
     
     await state.set_state(CharacterManagementStates.DISTRIBUTING_POINTS)
@@ -419,32 +421,30 @@ async def start_point_distribution(callback: CallbackQuery, state: FSMContext, d
     # Create point distribution keyboard
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="💪 +STR", callback_data="dist_str"),
-            InlineKeyboardButton(text="🏃 +AGI", callback_data="dist_agi")
+            InlineKeyboardButton(text=i18n_service.get_text(user_id, 'btn.add_str'), callback_data="dist_str"),
+            InlineKeyboardButton(text=i18n_service.get_text(user_id, 'btn.add_agi'), callback_data="dist_agi")
         ],
         [
-            InlineKeyboardButton(text="🧠 +INT", callback_data="dist_int"),
-            InlineKeyboardButton(text="❤️ +VIT", callback_data="dist_vit")
+            InlineKeyboardButton(text=i18n_service.get_text(user_id, 'btn.add_int'), callback_data="dist_int"),
+            InlineKeyboardButton(text=i18n_service.get_text(user_id, 'btn.add_vit'), callback_data="dist_vit")
         ],
         [
-            InlineKeyboardButton(text="🍀 +LUK", callback_data="dist_luk"),
-            InlineKeyboardButton(text="✅ Confirm", callback_data="confirm_dist")
+            InlineKeyboardButton(text=i18n_service.get_text(user_id, 'btn.add_luk'), callback_data="dist_luk"),
+            InlineKeyboardButton(text=i18n_service.get_text(user_id, 'btn.confirm'), callback_data="confirm_dist")
         ],
         [
-            InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_dist")
+            InlineKeyboardButton(text=i18n_service.get_text(user_id, 'btn.cancel'), callback_data="cancel_dist")
         ]
     ])
     
     await callback.message.edit_text(
-        f"🎯 **Stat Point Distribution**\n\n"
-        f"Available Points: {player.available_stat_points}\n\n"
-        f"Current Stats:\n"
-        f"• Strength: {player.strength}\n"
-        f"• Agility: {player.agility}\n"
-        f"• Intelligence: {player.intelligence}\n"
-        f"• Vitality: {player.vitality}\n"
-        f"• Luck: {player.luck}\n\n"
-        f"Choose which stat to increase:",
+        i18n_service.get_text(user_id, 'character.stat_distribution.title',
+                             points=player.available_stat_points,
+                             strength=player.strength,
+                             agility=player.agility,
+                             intelligence=player.intelligence,
+                             vitality=player.vitality,
+                             luck=player.luck),
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
@@ -458,7 +458,7 @@ async def distribute_stat_point(callback: CallbackQuery, state: FSMContext, db_s
     available_points = data.get("available_points", 0)
     
     if available_points <= 0:
-        await callback.answer("No more points to distribute!")
+        await callback.answer(i18n_service.get_text(callback.from_user.id, 'character.stat_distribution.no_more_points'))
         return
     
     # Get player
@@ -469,7 +469,7 @@ async def distribute_stat_point(callback: CallbackQuery, state: FSMContext, db_s
     player = result.scalar_one_or_none()
     
     if not player:
-        await callback.answer("Player not found!")
+        await callback.answer(i18n_service.get_text(callback.from_user.id, 'character.errors.player_not_found'))
         return
     
     # Distribute point
@@ -492,47 +492,44 @@ async def distribute_stat_point(callback: CallbackQuery, state: FSMContext, db_s
         # Update keyboard
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [
-                InlineKeyboardButton(text="💪 +STR", callback_data="dist_str"),
-                InlineKeyboardButton(text="🏃 +AGI", callback_data="dist_agi")
+                InlineKeyboardButton(text=i18n_service.get_text(callback.from_user.id, 'btn.add_str'), callback_data="dist_str"),
+                InlineKeyboardButton(text=i18n_service.get_text(callback.from_user.id, 'btn.add_agi'), callback_data="dist_agi")
             ],
             [
-                InlineKeyboardButton(text="🧠 +INT", callback_data="dist_int"),
-                InlineKeyboardButton(text="❤️ +VIT", callback_data="dist_vit")
+                InlineKeyboardButton(text=i18n_service.get_text(callback.from_user.id, 'btn.add_int'), callback_data="dist_int"),
+                InlineKeyboardButton(text=i18n_service.get_text(callback.from_user.id, 'btn.add_vit'), callback_data="dist_vit")
             ],
             [
-                InlineKeyboardButton(text="🍀 +LUK", callback_data="dist_luk"),
-                InlineKeyboardButton(text="✅ Confirm", callback_data="confirm_dist")
+                InlineKeyboardButton(text=i18n_service.get_text(callback.from_user.id, 'btn.add_luk'), callback_data="dist_luk"),
+                InlineKeyboardButton(text=i18n_service.get_text(callback.from_user.id, 'btn.confirm'), callback_data="confirm_dist")
             ],
             [
-                InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_dist")
+                InlineKeyboardButton(text=i18n_service.get_text(callback.from_user.id, 'btn.cancel'), callback_data="cancel_dist")
             ]
         ])
         
         await callback.message.edit_text(
-            f"🎯 **Stat Point Distribution**\n\n"
-            f"Available Points: {player.available_stat_points}\n\n"
-            f"Current Stats:\n"
-            f"• Strength: {player.strength}\n"
-            f"• Agility: {player.agility}\n"
-            f"• Intelligence: {player.intelligence}\n"
-            f"• Vitality: {player.vitality}\n"
-            f"• Luck: {player.luck}\n\n"
-            f"Choose which stat to increase:",
+            i18n_service.get_text(callback.from_user.id, 'character.stat_distribution.title',
+                                 points=player.available_stat_points,
+                                 strength=player.strength,
+                                 agility=player.agility,
+                                 intelligence=player.intelligence,
+                                 vitality=player.vitality,
+                                 luck=player.luck),
             reply_markup=keyboard,
             parse_mode="Markdown"
         )
         
-        await callback.answer(f"+1 {stat_type.upper()}!")
+        await callback.answer(i18n_service.get_text(callback.from_user.id, 'character.stat_distribution.point_added', stat=stat_type.upper()))
     else:
-        await callback.answer("Failed to distribute point!")
+        await callback.answer(i18n_service.get_text(callback.from_user.id, 'character.stat_distribution.failed_distribute'))
 
 
 @router.callback_query(F.data == "confirm_dist", CharacterManagementStates.DISTRIBUTING_POINTS)
 async def confirm_distribution(callback: CallbackQuery, state: FSMContext):
     """Confirm stat point distribution."""
     await callback.message.edit_text(
-        "✅ **Stat points distributed successfully!**\n\n"
-        "Use /character to view your updated stats.",
+        i18n_service.get_text(callback.from_user.id, 'character.stat_distribution.success'),
         parse_mode="Markdown"
     )
     await state.clear()
@@ -555,7 +552,7 @@ async def cancel_distribution(callback: CallbackQuery, state: FSMContext, db_ses
         player.available_stat_points = data.get("available_points", 0)
         await db_session.commit()
     
-    await callback.message.edit_text("Stat point distribution cancelled.")
+    await callback.message.edit_text(i18n_service.get_text(callback.from_user.id, 'character.stat_distribution.cancelled'))
     await state.clear()
 
 
@@ -564,8 +561,6 @@ async def start_creation_from_button(callback: CallbackQuery, state: FSMContext)
     """Start character creation from button press."""
     await state.set_state(CharacterCreationStates.WAITING_FOR_NAME)
     await callback.message.edit_text(
-        "🎭 **Character Creation**\n\n"
-        "Welcome to the world of adventure! Let's create your character.\n\n"
-        "What would you like to name your character?",
+        i18n_service.get_text(callback.from_user.id, 'character.creation.welcome'),
         parse_mode="Markdown"
     )

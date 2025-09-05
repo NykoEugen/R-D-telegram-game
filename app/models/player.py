@@ -83,7 +83,7 @@ class Player(Base):
     last_played: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="player")
+    user: Mapped["User"] = relationship("User", back_populates="player", lazy="selectin")
     inventory_items: Mapped[List["InventoryItem"]] = relationship("InventoryItem", back_populates="player")
     quest_progress: Mapped[List["QuestProgress"]] = relationship("QuestProgress", back_populates="player")
     game_sessions: Mapped[List["GameSession"]] = relationship("GameSession", back_populates="player")
@@ -193,12 +193,21 @@ class Player(Base):
         
         return True
     
+    def get_character_class_name(self) -> str:
+        """Get character class name safely handling both enum and string types."""
+        if self.character_class:
+            if hasattr(self.character_class, 'value'):
+                return self.character_class.value.title()
+            else:
+                return str(self.character_class).title()
+        return "None"
+    
     def get_character_summary(self) -> str:
         """Get a formatted summary of character stats."""
         derived = self.get_derived_stats()
         xp_current, xp_required = self.get_xp_progress()
         
-        class_name = self.character_class.value.title() if self.character_class else "None"
+        class_name = self.get_character_class_name()
         
         return f"""
 **{self.character_name or 'Unnamed'}** (Level {self.level})
