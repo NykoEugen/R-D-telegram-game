@@ -115,5 +115,40 @@
     "experience_gained": "• Experience gained: {xp}",
     "reason_ending": "🏁 **Reason for ending:** {reason}",
     "welcome_back": "Welcome back to the city! Use /adventure to start a new adventure."
+  },
+  "character": {
+    "creation": {
+      "welcome": "🎭 **Character Creation**\n\nWelcome to the world of adventure! Let's create your character.\n\nWhat would you like to name your character?",
+      "name_prompt": "What would you like to name your character?",
+      "name_too_short": "Character name must be between 2 and 20 characters long.",
+      "class_selection": "Now choose your character class:",
+      "class_descriptions": {
+        "warrior": "⚔️ **Warrior** - Strong and resilient fighters who excel in close combat. High strength and vitality.",
+        "rogue": "🗡️ **Rogue** - Agile and lucky adventurers who rely on speed and fortune. High agility and luck.",
+        "mage": "🔮 **Mage** - Intelligent spellcasters who wield powerful magic. High intelligence and agility.",
+        "cleric": "⛑️ **Cleric** - Divine healers and protectors. Balanced intelligence and vitality.",
+        "ranger": "🏹 **Ranger** - Versatile hunters and scouts. Balanced strength and agility."
+      },
+      "summary": "**Character Summary**\n\nName: {name}\nClass: {class}\n\nDescription: {description}\n\nAre you sure you want to create this character?",
+      "created": "🎉 **Character Created!**\n\nWelcome, **{name}** the {class}!\n\nYour adventure begins now. Use /character to view your stats or /adventure to start exploring!",
+      "cancelled": "Character creation cancelled."
+    },
+    "stats": {
+      "no_character": "You don't have a character yet! Use /create_character to create one.",
+      "summary": "**{name}** (Level {level})\nClass: {class}\n\n**Base Attributes:**\n• Strength: {strength}\n• Agility: {agility}\n• Intelligence: {intelligence}\n• Vitality: {vitality}\n• Luck: {luck}\n\n**Derived Stats:**\n• HP: {health}/{max_health}\n• Attack: {attack}\n• Magic: {magic}\n• Crit Chance: {crit_chance:.1f}%\n• Dodge: {dodge:.1f}%\n\n**Progress:**\n• XP: {experience} ({xp_current}/{xp_required} to next level)\n• Available Stat Points: {available_points}",
+      "detailed": "**📊 Detailed Character Stats**\n\n**{name}** (Level {level})\nClass: {class}\n\n**Base Attributes:**\n• 💪 Strength: {strength} (Attack: {attack})\n• 🏃 Agility: {agility} (Crit: {crit_chance:.1f}%, Dodge: {dodge:.1f}%)\n• 🧠 Intelligence: {intelligence} (Magic: {magic})\n• ❤️ Vitality: {vitality} (HP: {max_health})\n• 🍀 Luck: {luck}\n\n**Combat Stats:**\n• HP: {health}/{max_health}\n• Attack Power: {attack}\n• Magic Power: {magic}\n• Critical Hit Chance: {crit_chance:.1f}%\n• Dodge Chance: {dodge:.1f}%\n\n**Progress:**\n• Experience: {experience}\n• XP to Next Level: {xp_current}/{xp_required}\n• Available Stat Points: {available_points}\n\n**Resources:**\n• Coins: {coins}\n• Gems: {gems}\n• Energy: {energy}/{max_energy}"
+    },
+    "level_up": {
+      "congratulations": "🎉 **Level Up!**\n\nCongratulations! You've reached level {level}!\n\nYou have {points} stat points to distribute.\nUse /character to view your updated stats.",
+      "not_enough_xp": "You don't have enough XP to level up!",
+      "no_level_up": "No level up available!"
+    },
+    "stat_distribution": {
+      "title": "🎯 **Stat Point Distribution**\n\nAvailable Points: {points}\n\nCurrent Stats:\n• Strength: {strength}\n• Agility: {agility}\n• Intelligence: {intelligence}\n• Vitality: {vitality}\n• Luck: {luck}\n\nChoose which stat to increase:",
+      "no_points": "You don't have any stat points to distribute!",
+      "success": "✅ **Stat points distributed successfully!**\n\nUse /character to view your updated stats.",
+      "cancelled": "Stat point distribution cancelled.",
+      "point_added": "+1 {stat}!"
+    }
   }
 }
