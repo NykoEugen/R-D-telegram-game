@@ -57,7 +57,12 @@
     "accept": "Accept",
     "investigate": "Investigate",
     "prepare": "Prepare",
-    "run_ai": "AI Action"
+    "run_ai": "AI Action",
+    "continue": "Continue",
+    "rest": "Rest",
+    "explore": "Explore",
+    "negotiate": "Negotiate",
+    "retreat": "Retreat"
   },
   "action": {
     "attack": "Engage in combat or strike. Generate contextual action like 'Strike', 'Charge', 'Ambush' based on situation.",
@@ -73,6 +78,42 @@
     "accept": "Accept a quest, challenge, or offer. Generate contextual action like 'Accept', 'Agree', 'Take On' based on situation.",
     "investigate": "Gather information or examine something. Generate contextual action like 'Investigate', 'Examine', 'Research' based on situation.",
     "prepare": "Get ready for action or battle. Generate contextual action like 'Prepare', 'Ready', 'Gear Up' based on situation.",
-    "run_ai": "Use AI to generate dynamic content or responses. Generate contextual action like 'AI Generate', 'Smart Action', 'AI Response' based on situation."
+    "run_ai": "Use AI to generate dynamic content or responses. Generate contextual action like 'AI Generate', 'Smart Action', 'AI Response' based on situation.",
+    "continue": "Continue forward or proceed with the current situation. Generate contextual action like 'Continue', 'Proceed', 'Move Forward' based on situation.",
+    "rest": "Take a break to recover energy and reduce risk. Generate contextual action like 'Rest', 'Relax', 'Recover' based on situation.",
+    "explore": "Investigate and discover new areas or information. Generate contextual action like 'Explore', 'Search', 'Discover' based on situation.",
+    "negotiate": "Engage in diplomatic or social interaction. Generate contextual action like 'Negotiate', 'Bargain', 'Persuade' based on situation.",
+    "retreat": "Withdraw from a dangerous situation. Generate contextual action like 'Retreat', 'Withdraw', 'Fall Back' based on situation."
+  },
+  "adventure": {
+    "start": "⚔️ **ADVENTURE BEGINS!** ⚔️",
+    "scene": "🌍 **Scene:** {scene}",
+    "type": "📖 **Type:** {type}",
+    "energy": "⚡ **Energy:** {energy}/100",
+    "risk_level": "⚠️ **Risk Level:** {risk}",
+    "steps": "📊 **Steps:** {steps}",
+    "what_will_you_do": "🎯 **What will you do?**",
+    "action_result": "🎮 **Action:** {action}",
+    "result": "✅ **Result:** {result}",
+    "not_enough_energy": "⚡ **Not Enough Energy**",
+    "energy_too_low": "Your energy is too low to start an adventure.",
+    "current_energy": "Current energy: {energy}/100",
+    "rest_hint": "💡 *Rest or wait for energy to regenerate.*",
+    "adventure_error": "❌ **Adventure Error**",
+    "no_starting_scenes": "No starting scenes available. Please try again later.",
+    "error_starting": "There was an error starting your adventure. Please try again later."
+  },
+  "adventure_end": {
+    "complete": "🏰 **ADVENTURE COMPLETE!** 🏰",
+    "summary": "📊 **Adventure Summary:**",
+    "scenes_visited": "• Scenes visited: {count}",
+    "steps_taken": "• Steps taken: {steps}",
+    "final_energy": "• Final energy: {energy}/100",
+    "final_risk": "• Final risk level: {risk}",
+    "rewards": "💰 **Rewards:**",
+    "gold_earned": "• Gold earned: {gold}",
+    "experience_gained": "• Experience gained: {xp}",
+    "reason_ending": "🏁 **Reason for ending:** {reason}",
+    "welcome_back": "Welcome back to the city! Use /adventure to start a new adventure."
   }
 }

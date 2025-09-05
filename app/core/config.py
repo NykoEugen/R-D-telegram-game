@@ -73,6 +73,15 @@ class Settings(BaseSettings):
     game_name: str = Field(default="Fantasy RPG Adventure", description="Name of the game")
     game_description: str = Field(default="Embark on epic quests in a medieval fantasy world!", description="Game description")
     
+    # Scene graph configuration
+    scenes_file: str = Field(default="app/game/scenes.yaml", description="Path to scenes YAML file")
+    default_energy: int = Field(default=100, description="Default player energy")
+    max_energy: int = Field(default=100, description="Maximum player energy")
+    energy_regeneration_rate: int = Field(default=10, description="Energy regeneration per hour")
+    default_risk_threshold: int = Field(default=10, description="Default risk threshold for ending adventures")
+    default_step_budget: int = Field(default=4, description="Default step budget for adventures")
+    scene_seed: Optional[int] = Field(default=None, env="SCENE_SEED", description="Random seed for scene generation")
+    
     @property
     def webhook_url(self) -> str:
         """Generate webhook URL from ngrok URL and webhook path."""
@@ -146,3 +155,12 @@ class Config:
     # Game configuration
     GAME_NAME = settings.game_name
     GAME_DESCRIPTION = settings.game_description
+    
+    # Scene graph configuration
+    SCENES_FILE = settings.scenes_file
+    DEFAULT_ENERGY = settings.default_energy
+    MAX_ENERGY = settings.max_energy
+    ENERGY_REGENERATION_RATE = settings.energy_regeneration_rate
+    DEFAULT_RISK_THRESHOLD = settings.default_risk_threshold
+    DEFAULT_STEP_BUDGET = settings.default_step_budget
+    SCENE_SEED = settings.scene_seed

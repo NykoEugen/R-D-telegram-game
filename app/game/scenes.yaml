@@ -1,0 +1,321 @@
+scenes:
+  - id: "tavern_intro"
+    kind: "story"
+    weight: 1.0
+    once: true
+    requires: []
+    blocks: []
+    transitions:
+      - to: "rumors_board"
+        weight: 0.7
+        requires: []
+      - to: "mysterious_stranger"
+        weight: 0.3
+        requires: []
+
+  - id: "rumors_board"
+    kind: "choice"
+    weight: 1.0
+    once: false
+    requires: ["visited:tavern_intro"]
+    blocks: []
+    transitions:
+      - to: "forest_encounter"
+        weight: 0.6
+        requires: ["stat:bravery>=2"]
+      - to: "city_patrol"
+        weight: 0.4
+        requires: []
+
+  - id: "forest_encounter"
+    kind: "encounter"
+    weight: 0.9
+    once: false
+    cooldown: 2
+    risk_delta: 2
+    reward:
+      gold: "1d6+2"
+      xp: "1d4"
+    transitions:
+      - to: "campfire_rest"
+        weight: 0.5
+      - to: "ancient_ruins"
+        weight: 0.5
+
+  - id: "mysterious_stranger"
+    kind: "dialogue"
+    weight: 0.8
+    once: true
+    requires: []
+    blocks: []
+    transitions:
+      - to: "stranger_quest"
+        weight: 0.6
+        requires: ["stat:charisma>=3"]
+      - to: "stranger_warning"
+        weight: 0.4
+        requires: []
+
+  - id: "city_patrol"
+    kind: "encounter"
+    weight: 0.7
+    once: false
+    cooldown: 1
+    risk_delta: 1
+    reward:
+      gold: "1d4+1"
+      xp: "1d2"
+    transitions:
+      - to: "tavern_return"
+        weight: 0.6
+      - to: "market_square"
+        weight: 0.4
+
+  - id: "campfire_rest"
+    kind: "rest"
+    weight: 0.6
+    once: false
+    cooldown: 3
+    risk_delta: -1
+    reward:
+      stamina: "1d3+1"
+    transitions:
+      - to: "forest_deeper"
+        weight: 0.5
+      - to: "tavern_return"
+        weight: 0.5
+
+  - id: "ancient_ruins"
+    kind: "exploration"
+    weight: 0.5
+    once: false
+    cooldown: 5
+    risk_delta: 3
+    reward:
+      gold: "2d6+3"
+      xp: "1d6+2"
+      items: ["ancient_artifact"]
+    transitions:
+      - to: "ruins_treasure"
+        weight: 0.3
+        requires: ["stat:intellect>=4"]
+      - to: "ruins_trap"
+        weight: 0.4
+      - to: "tavern_return"
+        weight: 0.3
+
+  - id: "stranger_quest"
+    kind: "quest"
+    weight: 0.4
+    once: true
+    requires: []
+    blocks: []
+    transitions:
+      - to: "quest_accept"
+        weight: 0.7
+      - to: "quest_decline"
+        weight: 0.3
+
+  - id: "stranger_warning"
+    kind: "story"
+    weight: 0.3
+    once: true
+    requires: []
+    blocks: []
+    transitions:
+      - to: "tavern_return"
+        weight: 1.0
+
+  - id: "tavern_return"
+    kind: "story"
+    weight: 0.8
+    once: false
+    cooldown: 1
+    risk_delta: 0
+    transitions:
+      - to: "rumors_board"
+        weight: 0.4
+      - to: "mysterious_stranger"
+        weight: 0.2
+      - to: "end_adventure"
+        weight: 0.4
+
+  - id: "market_square"
+    kind: "choice"
+    weight: 0.6
+    once: false
+    cooldown: 2
+    risk_delta: 0
+    transitions:
+      - to: "shop_visit"
+        weight: 0.5
+      - to: "tavern_return"
+        weight: 0.5
+
+  - id: "forest_deeper"
+    kind: "encounter"
+    weight: 0.4
+    once: false
+    cooldown: 3
+    risk_delta: 4
+    reward:
+      gold: "1d8+3"
+      xp: "1d6+1"
+    transitions:
+      - to: "boss_encounter"
+        weight: 0.2
+        requires: ["stat:level>=3"]
+      - to: "tavern_return"
+        weight: 0.8
+
+  - id: "ruins_treasure"
+    kind: "loot"
+    weight: 0.3
+    once: true
+    requires: []
+    blocks: []
+    reward:
+      gold: "3d10+5"
+      xp: "2d6+3"
+      items: ["magic_sword", "treasure_map"]
+    transitions:
+      - to: "tavern_return"
+        weight: 1.0
+
+  - id: "ruins_trap"
+    kind: "encounter"
+    weight: 0.4
+    once: false
+    cooldown: 2
+    risk_delta: 2
+    reward:
+      gold: "1d4+1"
+      xp: "1d3"
+    transitions:
+      - to: "tavern_return"
+        weight: 1.0
+
+  - id: "quest_accept"
+    kind: "story"
+    weight: 0.3
+    once: true
+    requires: []
+    blocks: []
+    transitions:
+      - to: "quest_objective"
+        weight: 1.0
+
+  - id: "quest_decline"
+    kind: "story"
+    weight: 0.2
+    once: true
+    requires: []
+    blocks: []
+    transitions:
+      - to: "tavern_return"
+        weight: 1.0
+
+  - id: "quest_objective"
+    kind: "quest"
+    weight: 0.3
+    once: true
+    requires: []
+    blocks: []
+    transitions:
+      - to: "quest_complete"
+        weight: 0.8
+      - to: "quest_failed"
+        weight: 0.2
+
+  - id: "shop_visit"
+    kind: "choice"
+    weight: 0.4
+    once: false
+    cooldown: 2
+    risk_delta: 0
+    transitions:
+      - to: "tavern_return"
+        weight: 1.0
+
+  - id: "boss_encounter"
+    kind: "combat"
+    weight: 0.2
+    once: true
+    requires: []
+    blocks: []
+    risk_delta: 5
+    reward:
+      gold: "5d10+10"
+      xp: "3d8+5"
+      items: ["boss_trophy"]
+    transitions:
+      - to: "victory_celebration"
+        weight: 0.7
+      - to: "defeat_retreat"
+        weight: 0.3
+
+  - id: "victory_celebration"
+    kind: "story"
+    weight: 0.2
+    once: true
+    requires: []
+    blocks: []
+    transitions:
+      - to: "tavern_return"
+        weight: 1.0
+
+  - id: "defeat_retreat"
+    kind: "story"
+    weight: 0.2
+    once: true
+    requires: []
+    blocks: []
+    transitions:
+      - to: "tavern_return"
+        weight: 1.0
+
+  - id: "quest_complete"
+    kind: "story"
+    weight: 0.2
+    once: true
+    requires: []
+    blocks: []
+    reward:
+      gold: "2d8+4"
+      xp: "1d8+2"
+    transitions:
+      - to: "tavern_return"
+        weight: 1.0
+
+  - id: "quest_failed"
+    kind: "story"
+    weight: 0.1
+    once: true
+    requires: []
+    blocks: []
+    transitions:
+      - to: "tavern_return"
+        weight: 1.0
+
+  - id: "end_adventure"
+    kind: "story"
+    weight: 0.5
+    once: false
+    risk_delta: 0
+    transitions: []
+
+end_conditions:
+  - kind: "goal_reached"
+    goal: "got_map_piece"
+  - kind: "risk_threshold"
+    threshold: 10
+  - kind: "step_budget"
+    dynamic: true
+    base: 4
+    bonus_by_stat:
+      intellect: 0.5
+      stamina: 0.5
+  - kind: "energy_depleted"
+    threshold: 0
+  - kind: "quest_completed"
+    quest_id: "stranger_quest"
