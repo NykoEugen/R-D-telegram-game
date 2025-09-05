@@ -14,14 +14,13 @@ from app.models.combat import EnemyGenerator
 from app.models.player import Player
 from app.handlers.combat import CombatHandler
 from app.services.i18n_service import I18nService
-from app.services.fsm_service import FSMService
-from app.core.utils import get_user_language
+from app.services.fsm_service import FSMStateService
 
 
 class CombatCommandHandler:
     """Handles combat-related commands."""
     
-    def __init__(self, i18n_service: I18nService, fsm_service: FSMService):
+    def __init__(self, i18n_service: I18nService, fsm_service: FSMStateService):
         self.i18n_service = i18n_service
         self.fsm_service = fsm_service
         self.combat_handler = CombatHandler(i18n_service, fsm_service)
@@ -45,7 +44,7 @@ class CombatCommandHandler:
     
     async def handle_combat_command(self, message: Message, context: FSMContext) -> None:
         """Handle /combat command."""
-        language = await get_user_language(message.from_user.id)
+        language = self.i18n_service.get_user_language(message.from_user.id)
         
         # Get player data
         player_data = await self._get_player_data(message.from_user.id)
@@ -111,6 +110,9 @@ class CombatCommandHandler:
 
 
 # Factory function to create the handler
-def create_combat_command_handler(i18n_service: I18nService, fsm_service: FSMService) -> CombatCommandHandler:
+def create_combat_command_handler(i18n_service: I18nService, fsm_service: FSMStateService) -> CombatCommandHandler:
     """Create and return a combat command handler instance."""
     return CombatCommandHandler(i18n_service, fsm_service)
+
+# Create a router instance for dependency injection
+router = Router()

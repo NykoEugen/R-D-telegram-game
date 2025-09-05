@@ -4,6 +4,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.redis import RedisStorage
 from app.core.config import Config
 from app.core.redis import init_redis, close_redis, get_redis
+from app.core.db import init_db, close_db
 from app.handlers.commands import start_router, game_router, language_router, character_router
 from app.handlers.commands.regions import router as regions_router
 from app.handlers.game import router as adventure_router
@@ -25,6 +26,11 @@ async def main():
     
     logger = get_logger(__name__)
     logger.info("🚀 Starting Fantasy RPG Adventure Bot...")
+    
+    # Initialize database connection
+    logger.info("🗄️ Initializing database connection...")
+    await init_db()
+    logger.info("✅ Database connection initialized")
     
     # Initialize Redis connection
     logger.info("🔗 Initializing Redis connection...")
@@ -75,10 +81,11 @@ async def main():
         logger.error("❌ Fatal error occurred", error_type=type(e).__name__, error_message=str(e))
         raise
     finally:
-        # Cleanup Redis connection
-        logger.info("🧹 Cleaning up Redis connection...")
+        # Cleanup connections
+        logger.info("🧹 Cleaning up connections...")
         await close_redis()
-        logger.info("✅ Redis connection closed")
+        await close_db()
+        logger.info("✅ All connections closed")
 
 if __name__ == "__main__":
     asyncio.run(main())

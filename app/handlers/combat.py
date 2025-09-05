@@ -17,8 +17,7 @@ from app.models.combat import (
 )
 from app.models.character import CharacterClass
 from app.services.i18n_service import I18nService
-from app.services.fsm_service import FSMService
-from app.core.utils import get_user_language
+from app.services.fsm_service import FSMStateService
 
 
 class CombatStates(StatesGroup):
@@ -32,7 +31,7 @@ class CombatStates(StatesGroup):
 class CombatHandler:
     """Handles combat interactions and flow."""
     
-    def __init__(self, i18n_service: I18nService, fsm_service: FSMService):
+    def __init__(self, i18n_service: I18nService, fsm_service: FSMStateService):
         self.i18n_service = i18n_service
         self.fsm_service = fsm_service
         self.router = Router()
@@ -58,10 +57,11 @@ class CombatHandler:
         message: Message, 
         context: FSMContext, 
         player_data: Dict,
+        i18n_service: I18nService,
         enemy_type: str = "goblin"
     ) -> None:
         """Start a combat encounter."""
-        language = await get_user_language(message.from_user.id)
+        language = i18n_service.get_user_language(message.from_user.id)
         
         # Generate enemy
         enemy = EnemyGenerator.generate_enemy(player_data["level"], enemy_type)
@@ -102,7 +102,7 @@ class CombatHandler:
             await callback.message.edit_text("Combat state not found!")
             return
         
-        language = await get_user_language(callback.from_user.id)
+        language = self.i18n_service.get_user_language(callback.from_user.id)
         action = callback.data.split("_")[1]
         
         if action == "attack":
@@ -126,7 +126,7 @@ class CombatHandler:
             await callback.message.edit_text("Combat state not found!")
             return
         
-        language = await get_user_language(callback.from_user.id)
+        language = self.i18n_service.get_user_language(callback.from_user.id)
         skill_name = callback.data.split("_")[1]
         
         try:
