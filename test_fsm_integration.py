@@ -12,7 +12,7 @@ import os
 # Add the app directory to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
 
-from app.core.db import get_async_session
+from app.core.db import get_db_session
 from app.services.fsm_service import FSMStateService
 from app.game.states import GameStates
 from app.models.telemetry import SessionStatus
@@ -32,7 +32,7 @@ async def test_fsm_integration():
     test_user_id = 12345
     
     try:
-        async with get_async_session() as session:
+        async with get_db_session() as session:
             fsm_service = FSMStateService(session)
             
             # Test 1: Create a new session

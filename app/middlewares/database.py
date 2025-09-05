@@ -9,7 +9,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, Update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.db import get_async_session
+from app.core.db import get_db_session
 from app.services.fsm_service import FSMStateService
 from app.services.logging_service import get_logger
 
@@ -38,7 +38,7 @@ class DatabaseMiddleware(BaseMiddleware):
             user_id = event.callback_query.from_user.id
         
         # Create database session
-        async with get_async_session() as session:
+        async with get_db_session() as session:
             # Add session to data for handlers to use
             data["db_session"] = session
             

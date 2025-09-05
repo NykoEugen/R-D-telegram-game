@@ -6,6 +6,7 @@ This script provides clear instructions and handles common setup issues.
 
 import os
 import sys
+import asyncio
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -129,7 +130,7 @@ def main():
     try:
         # Import and run the main bot
         from app.main import main as bot_main
-        bot_main()
+        asyncio.run(bot_main())
     except KeyboardInterrupt:
         print("\n👋 Bot stopped by user")
     except Exception as e:
