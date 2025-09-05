@@ -5,6 +5,7 @@ from aiogram.fsm.storage.redis import RedisStorage
 from app.core.config import Config
 from app.core.redis import init_redis, close_redis, get_redis
 from app.handlers.commands import start_router, game_router, language_router, character_router
+from app.handlers.commands.regions import router as regions_router
 from app.handlers.game import router as adventure_router
 from app.handlers.errors import setup_error_handlers, GlobalErrorHandler
 from app.middlewares.correlation import CorrelationMiddleware
@@ -58,6 +59,7 @@ async def main():
     dp.include_router(game_router)
     dp.include_router(language_router)
     dp.include_router(character_router)
+    dp.include_router(regions_router)
     dp.include_router(adventure_router)
     
     logger.info("✅ Bot initialized successfully")

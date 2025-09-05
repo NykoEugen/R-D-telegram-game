@@ -14,6 +14,7 @@ from .items import Item, InventoryItem, ItemRarity, ItemType
 from .lore import Scene, Action, Quest, QuestProgress, SceneType, ActionType, QuestStatus, QuestType
 from .telemetry import GameSession, MessageLog, AIGeneration, SessionStatus, MessageType, AIGenerationType
 from .i18n import I18nString, I18nCategory
+from .player_progress import PlayerProgress, ExplorationSession, RegionUnlock, PlayerStats
 
 __all__ = [
     "Base",
@@ -45,4 +46,9 @@ __all__ = [
     # I18n models
     "I18nString",
     "I18nCategory",
+    # Player progress models
+    "PlayerProgress",
+    "ExplorationSession", 
+    "RegionUnlock",
+    "PlayerStats",
 ]
