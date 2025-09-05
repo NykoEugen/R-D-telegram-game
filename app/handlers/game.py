@@ -34,6 +34,12 @@ async def cmd_adventure(message: Message, state: FSMContext, db_session: AsyncSe
     try:
         user_id = message.from_user.id
         
+        # Check if user has a hero first
+        from app.handlers.utils import check_hero_required
+        has_hero, user = await check_hero_required(message, db_session)
+        if not has_hero:
+            return
+        
         # Set FSM state to adventure active
         await state.set_state(GameStates.QUEST_ACTIVE)
         

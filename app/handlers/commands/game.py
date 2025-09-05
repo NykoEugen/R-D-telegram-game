@@ -23,6 +23,12 @@ async def cmd_quest(message: Message, state: FSMContext, db_session: AsyncSessio
     try:
         user_id = message.from_user.id
         
+        # Check if user has a hero first
+        from app.handlers.utils import check_hero_required
+        has_hero, user = await check_hero_required(message, db_session)
+        if not has_hero:
+            return
+        
         # Set FSM state to quest active
         await state.set_state(GameStates.QUEST_ACTIVE)
         
@@ -104,6 +110,12 @@ async def cmd_status(message: Message, state: FSMContext, db_session: AsyncSessi
     """Handle the /status command - show game status and current FSM state."""
     try:
         user_id = message.from_user.id
+        
+        # Check if user has a hero first
+        from app.handlers.utils import check_hero_required
+        has_hero, user = await check_hero_required(message, db_session)
+        if not has_hero:
+            return
         
         # Get current FSM state
         current_state = await state.get_state()

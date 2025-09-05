@@ -29,6 +29,12 @@ async def cmd_regions(message: Message, state: FSMContext, db_session: AsyncSess
     """Show available regions for exploration."""
     user_id = message.from_user.id
     
+    # Check if user has a hero first
+    from app.handlers.utils import check_hero_required
+    has_hero, user = await check_hero_required(message, db_session)
+    if not has_hero:
+        return
+    
     # Get player progress
     progress = await fsm_service.get_player_progress(db_session, user_id)
     if not progress:
@@ -413,6 +419,12 @@ async def cmd_world(message: Message, state: FSMContext, db_session: AsyncSessio
                    fsm_service: FSMStateService, i18n: I18nService):
     """Show world overview and player progress."""
     user_id = message.from_user.id
+    
+    # Check if user has a hero first
+    from app.handlers.utils import check_hero_required
+    has_hero, user = await check_hero_required(message, db_session)
+    if not has_hero:
+        return
     
     # Get player progress
     progress = await fsm_service.get_player_progress(db_session, user_id)

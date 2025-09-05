@@ -16,6 +16,7 @@ from app.models.telemetry import GameSession, SessionStatus
 from app.models.player import Player
 from app.services.repositories.session_repo import SessionRepository
 from app.services.repositories.player_repo import PlayerRepository
+from app.services.repositories.user_repo import UserRepository
 from app.services.logging_service import get_logger
 
 logger = get_logger(__name__)
@@ -28,6 +29,7 @@ class FSMStateService:
         self.session = session
         self.session_repo = SessionRepository(session)
         self.player_repo = PlayerRepository(session)
+        self.user_repo = UserRepository(session)
     
     async def sync_fsm_to_postgres(
         self,
@@ -55,10 +57,27 @@ class FSMStateService:
             fsm_data = await fsm_context.get_data()
             current_state = await fsm_context.get_state()
             
-            # Get or create player
-            player = await self.player_repo.get_player_by_user_id(user_id)
+            # Get or create user first
+            user = await self.user_repo.get_user_by_telegram_id(user_id)
+            if not user:
+                # Create user if they don't exist (this shouldn't happen in normal flow)
+                logger.info("Creating new user for telegram_id", telegram_id=user_id)
+                user = await self.user_repo.create_user(
+                    telegram_id=user_id,
+                    first_name="Unknown",  # We don't have user info in FSM context
+                    language="en"
+                )
+            
+            # Get player by user ID (optional for basic FSM sync)
+            player = await self.player_repo.get_player_by_user_id(user.id)
             if not player:
-                logger.warning("Player not found for user_id", user_id=user_id)
+                # For users without a player (e.g., during hero creation), 
+                # we can still sync basic FSM state without a game session
+                logger.info("No player found for user_id, syncing basic FSM state only", 
+                           user_id=user.id, telegram_id=user_id)
+                
+                # Store basic FSM data without creating a game session
+                await self.session.commit()
                 return None
             
             # Get or create active game session
@@ -131,10 +150,16 @@ class FSMStateService:
             GameSession if restoration was successful, None otherwise
         """
         try:
-            # Get player
-            player = await self.player_repo.get_player_by_user_id(user_id)
+            # Get or create user first
+            user = await self.user_repo.get_user_by_telegram_id(user_id)
+            if not user:
+                logger.warning("User not found for telegram_id", telegram_id=user_id)
+                return None
+            
+            # Get player by user ID
+            player = await self.player_repo.get_player_by_user_id(user.id)
             if not player:
-                logger.warning("Player not found for user_id", user_id=user_id)
+                logger.warning("Player not found for user_id", user_id=user.id, telegram_id=user_id)
                 return None
             
             # Get active game session
@@ -191,10 +216,16 @@ class FSMStateService:
             GameSession instance
         """
         try:
-            # Get or create player
-            player = await self.player_repo.get_player_by_user_id(user_id)
+            # Get or create user first
+            user = await self.user_repo.get_user_by_telegram_id(user_id)
+            if not user:
+                logger.warning("User not found for telegram_id", telegram_id=user_id)
+                return None
+            
+            # Get player by user ID
+            player = await self.player_repo.get_player_by_user_id(user.id)
             if not player:
-                logger.warning("Player not found for user_id", user_id=user_id)
+                logger.warning("Player not found for user_id", user_id=user.id, telegram_id=user_id)
                 return None
             
             # Check for existing active session
@@ -245,10 +276,16 @@ class FSMStateService:
             True if session was ended successfully
         """
         try:
-            # Get player
-            player = await self.player_repo.get_player_by_user_id(user_id)
+            # Get or create user first
+            user = await self.user_repo.get_user_by_telegram_id(user_id)
+            if not user:
+                logger.warning("User not found for telegram_id", telegram_id=user_id)
+                return False
+            
+            # Get player by user ID
+            player = await self.player_repo.get_player_by_user_id(user.id)
             if not player:
-                logger.warning("Player not found for user_id", user_id=user_id)
+                logger.warning("Player not found for user_id", user_id=user.id, telegram_id=user_id)
                 return False
             
             # Get active session
@@ -292,8 +329,13 @@ class FSMStateService:
             Session state data or None if not found
         """
         try:
-            # Get player
-            player = await self.player_repo.get_player_by_user_id(user_id)
+            # Get or create user first
+            user = await self.user_repo.get_user_by_telegram_id(user_id)
+            if not user:
+                return None
+            
+            # Get player by user ID
+            player = await self.player_repo.get_player_by_user_id(user.id)
             if not player:
                 return None
             

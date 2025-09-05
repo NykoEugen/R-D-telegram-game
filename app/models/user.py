@@ -38,7 +38,13 @@ class User(Base):
     last_activity: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     # Relationships
-    player: Mapped[Optional["Player"]] = relationship("Player", back_populates="user", uselist=False)
+    player: Mapped[Optional["Player"]] = relationship(
+        "Player", 
+        back_populates="user", 
+        uselist=False,
+        lazy="selectin",
+        cascade="all, delete-orphan"
+    )
     
     def __repr__(self) -> str:
         return f"<User(id={self.id}, telegram_id={self.telegram_id}, username={self.username})>"
