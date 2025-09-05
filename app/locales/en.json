@@ -150,5 +150,77 @@
       "cancelled": "Stat point distribution cancelled.",
       "point_added": "+1 {stat}!"
     }
+  },
+  "combat": {
+    "start": "⚔️ **Combat Begins!** ⚔️",
+    "enemy_appears": "A {enemy_name} (Level {level}) appears!",
+    "turn_order": "Initiative: {order}",
+    "status": "⚔️ **Combat**\n\n**{enemy_name}** (Level {level})\nHP: {enemy_hp_bar} {enemy_hp}/{enemy_max_hp}\n\n**You**\nHP: {player_hp_bar} {player_hp}/{player_max_hp}\n\n{effects}\n**Recent Actions:**\n{recent_actions}",
+    "hp_bar_full": "██████████",
+    "hp_bar_empty": "░░░░░░░░░░",
+    "effects": {
+      "player": "**Your effects:** {effects}",
+      "enemy": "**Enemy effects:** {effects}",
+      "bleed": "Bleeding",
+      "weaken": "Weakened",
+      "stun": "Stunned"
+    },
+    "actions": {
+      "attack": "⚔️ Attack",
+      "skill": "🎯 Skill",
+      "item": "🧪 Item",
+      "run": "🏃 Run",
+      "back": "Back"
+    },
+    "skills": {
+      "power_strike": "Power Strike",
+      "backstab": "Backstab",
+      "arcane_bolt": "Arcane Bolt",
+      "smite": "Smite",
+      "aimed_shot": "Aimed Shot"
+    },
+    "results": {
+      "hit": "You deal {damage} damage!",
+      "crit": "Critical hit! You deal {damage} damage!",
+      "miss": "You miss your attack!",
+      "enemy_hit": "Enemy deals {damage} damage!",
+      "enemy_crit": "Enemy critical hit! You take {damage} damage!",
+      "enemy_miss": "Enemy misses their attack!",
+      "skill_hit": "{skill} deals {damage} damage!",
+      "skill_crit": "Critical {skill}! You deal {damage} damage!",
+      "skill_miss": "{skill} misses!",
+      "effect_applied": "Enemy is affected by {effect}!",
+      "healed": "You are healed for {amount} HP!",
+      "stunned": "Enemy is stunned and skips turn!",
+      "bleeding": "Bleeding deals {damage} damage!",
+      "enemy_bleeding": "Enemy bleeding deals {damage} damage!"
+    },
+    "escape": {
+      "success": "You successfully escape from combat!",
+      "failed": "Escape attempt failed!"
+    },
+    "victory": {
+      "title": "🎉 **Victory!**",
+      "defeated": "You defeated the {enemy_name}!",
+      "rewards": "**Rewards:**",
+      "xp": "• XP: +{xp}",
+      "gold": "• Gold: +{gold}",
+      "level_up": "\n🎉 Level up! You are now level {level}!"
+    },
+    "defeat": {
+      "title": "💀 **Defeat!**",
+      "defeated_by": "You were defeated by the {enemy_name}!",
+      "penalties": "**Penalties:**",
+      "gold_lost": "• Gold lost: -{gold}",
+      "hp_penalty": "• HP: Set to 1",
+      "return_town": "You return to town to recover..."
+    },
+    "cooldown": "Skill is on cooldown for {turns} turns!",
+    "no_skills": "No skills available!",
+    "no_items": "No items available!",
+    "combat_log": {
+      "begins": "Combat begins!",
+      "separator": "\n"
+    }
   }
 }
