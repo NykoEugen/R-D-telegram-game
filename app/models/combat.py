@@ -379,8 +379,8 @@ class EnemyGenerator:
     """Generates enemies for combat encounters."""
     
     @staticmethod
-    def generate_enemy(level: int, enemy_type: str = "goblin") -> Enemy:
-        """Generate an enemy based on level and type."""
+    def generate_enemy(level: int, enemy_type: str = "goblin", region_multiplier: float = 1.0) -> Enemy:
+        """Generate an enemy based on level, type, and region difficulty multiplier."""
         base_stats = {
             "goblin": {
                 "name": "Goblin",
@@ -411,19 +411,100 @@ class EnemyGenerator:
                 "armor": 1,
                 "gold_base": 3,
                 "xp_base": 8
+            },
+            "wolf": {
+                "name": "Wild Wolf",
+                "hp_multiplier": 7,
+                "attack_multiplier": 1.3,
+                "magic_multiplier": 0.2,
+                "agi_multiplier": 1.8,
+                "armor": 0,
+                "gold_base": 4,
+                "xp_base": 8
+            },
+            "spider": {
+                "name": "Giant Spider",
+                "hp_multiplier": 5,
+                "attack_multiplier": 1.1,
+                "magic_multiplier": 0.6,
+                "agi_multiplier": 2.0,
+                "armor": 0,
+                "gold_base": 3,
+                "xp_base": 6
+            },
+            "ghost": {
+                "name": "Wailing Ghost",
+                "hp_multiplier": 4,
+                "attack_multiplier": 0.8,
+                "magic_multiplier": 1.5,
+                "agi_multiplier": 1.3,
+                "armor": 0,
+                "gold_base": 2,
+                "xp_base": 12
+            },
+            "gargoyle": {
+                "name": "Stone Gargoyle",
+                "hp_multiplier": 15,
+                "attack_multiplier": 1.8,
+                "magic_multiplier": 0.4,
+                "agi_multiplier": 0.6,
+                "armor": 3,
+                "gold_base": 12,
+                "xp_base": 20
+            },
+            "cave_troll": {
+                "name": "Cave Troll",
+                "hp_multiplier": 20,
+                "attack_multiplier": 2.0,
+                "magic_multiplier": 0.2,
+                "agi_multiplier": 0.5,
+                "armor": 2,
+                "gold_base": 15,
+                "xp_base": 25
+            },
+            "earth_elemental": {
+                "name": "Earth Elemental",
+                "hp_multiplier": 18,
+                "attack_multiplier": 1.6,
+                "magic_multiplier": 1.2,
+                "agi_multiplier": 0.4,
+                "armor": 4,
+                "gold_base": 10,
+                "xp_base": 22
+            },
+            "dragon": {
+                "name": "Ancient Dragon",
+                "hp_multiplier": 30,
+                "attack_multiplier": 3.0,
+                "magic_multiplier": 2.5,
+                "agi_multiplier": 1.0,
+                "armor": 5,
+                "gold_base": 50,
+                "xp_base": 100
+            },
+            "dark_dwarf": {
+                "name": "Corrupted Dwarf",
+                "hp_multiplier": 12,
+                "attack_multiplier": 1.7,
+                "magic_multiplier": 1.0,
+                "agi_multiplier": 0.7,
+                "armor": 3,
+                "gold_base": 8,
+                "xp_base": 18
             }
         }
         
         stats = base_stats.get(enemy_type, base_stats["goblin"])
         
+        # Apply region difficulty multiplier
         return Enemy(
             name=stats["name"],
             level=level,
-            hp_max=int(stats["hp_multiplier"] * level),
-            attack=int(stats["attack_multiplier"] * level + 2),
-            magic=int(stats["magic_multiplier"] * level + 1),
-            agility=int(stats["agi_multiplier"] * level + 8),
-            armor=stats["armor"],
-            gold_reward=int(stats["gold_base"] * level),
-            xp_reward=int(stats["xp_base"] * level)
+            hp_max=int(stats["hp_multiplier"] * level * region_multiplier),
+            attack=int((stats["attack_multiplier"] * level + 2) * region_multiplier),
+            magic=int((stats["magic_multiplier"] * level + 1) * region_multiplier),
+            agility=int((stats["agi_multiplier"] * level + 8) * region_multiplier),
+            armor=int(stats["armor"] * region_multiplier),
+            gold_reward=int(stats["gold_base"] * level * region_multiplier),
+            xp_reward=int(stats["xp_base"] * level * region_multiplier)
         )

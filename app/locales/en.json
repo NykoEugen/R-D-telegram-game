@@ -222,5 +222,43 @@
       "begins": "Combat begins!",
       "separator": "\n"
     }
+  },
+  "regions": {
+    "available_regions": "🌍 **Available Regions** 🌍",
+    "no_regions": "No regions are currently available. Complete more quests to unlock new areas!",
+    "region_not_available": "This region is not available yet!",
+    "region_not_found": "Region not found!",
+    "level_requirement": "You need to be at least level {min_level} to explore this region!",
+    "exploration": {
+      "combat": "⚔️ **{event_name}** ⚔️",
+      "treasure": "💰 **{event_name}** 💰",
+      "story": "📖 **{event_name}** 📖",
+      "trap": "⚠️ **{event_name}** ⚠️",
+      "merchant": "🏪 **{event_name}** 🏪"
+    },
+    "rewards": "**Rewards:**",
+    "experience_gained": "• Experience: +{xp}",
+    "gold_gained": "• Gold: +{gold}",
+    "items_found": "• Items found:",
+    "level_up": "🎉 **Level Up!** You are now level {level}! 🎉",
+    "damage_taken": "**You take {damage} damage!**",
+    "current_hp": "Current HP: {current}/{max}",
+    "continue_exploring": "Continue Exploring",
+    "return_to_regions": "Return to Regions",
+    "world_overview": "🌍 **World Overview** 🌍",
+    "your_progress": "**Your Progress:**",
+    "level": "• Level: {level}",
+    "experience": "• Experience: {xp}",
+    "regions_unlocked": "• Regions Unlocked: {count}",
+    "quests_completed": "• Quests Completed: {count}",
+    "all_regions": "**All Regions:**",
+    "requires": "Requires:",
+    "level_requirement": "Level {level}",
+    "quest_requirement": "Quest '{quest}'",
+    "explore_area": "You explore the area but nothing of interest happens this time.",
+    "no_enemies": "No enemies found in this region!",
+    "error_player_data": "Error: Player data not found!",
+    "character_data_not_found": "Character data not found!",
+    "start_adventure_first": "You need to start your adventure first! Use /start to begin."
   }
 }
