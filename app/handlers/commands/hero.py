@@ -81,62 +81,68 @@ async def cmd_hero_menu(message: Message, state: FSMContext, db_session: AsyncSe
         )
 
 
-async def show_hero_creation_menu(message: Message):
+async def show_hero_creation_menu(message: Message, user_id: int = None):
     """Show hero creation menu."""
+    if user_id is None:
+        user_id = message.from_user.id
+    
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
-                text=i18n_service.get_text(message.from_user.id, 'btn.create_new_hero'), 
+                text=i18n_service.get_text(user_id, 'btn.create_new_hero'), 
                 callback_data="create_hero"
             )
         ],
         [
             InlineKeyboardButton(
-                text=i18n_service.get_text(message.from_user.id, 'btn.about_heroes'), 
+                text=i18n_service.get_text(user_id, 'btn.about_heroes'), 
                 callback_data="hero_info"
             )
         ]
     ])
     
     await message.answer(
-        i18n_service.get_text(message.from_user.id, 'hero.management.no_hero_menu'),
+        i18n_service.get_text(user_id, 'hero.management.no_hero_menu'),
         reply_markup=keyboard,
         parse_mode="Markdown"
     )
 
 
-async def show_hero_management_menu(message: Message, player: Player):
+async def show_hero_management_menu(message: Message, player: Player, user_id: int = None):
     """Show hero management menu for existing heroes."""
+    if user_id is None:
+        user_id = message.from_user.id
+    
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
-                text=i18n_service.get_text(message.from_user.id, 'btn.view_hero'), 
+                text=i18n_service.get_text(user_id, 'btn.view_hero'), 
                 callback_data="view_hero"
             ),
             InlineKeyboardButton(
-                text=i18n_service.get_text(message.from_user.id, 'btn.hero_stats'), 
+                text=i18n_service.get_text(user_id, 'btn.hero_stats'), 
                 callback_data="hero_stats"
             )
         ],
         [
             InlineKeyboardButton(
-                text=i18n_service.get_text(message.from_user.id, 'btn.level_up'), 
+                text=i18n_service.get_text(user_id, 'btn.level_up'), 
                 callback_data="hero_level_up"
             ),
             InlineKeyboardButton(
-                text=i18n_service.get_text(message.from_user.id, 'btn.distribute_points'), 
+                text=i18n_service.get_text(user_id, 'btn.distribute_points'), 
                 callback_data="hero_distribute"
             )
         ],
         [
             InlineKeyboardButton(
-                text=i18n_service.get_text(message.from_user.id, 'btn.create_new_hero'), 
+                text=i18n_service.get_text(user_id, 'btn.create_new_hero'), 
                 callback_data="create_new_hero"
             )
         ],
         [
             InlineKeyboardButton(
-                text=i18n_service.get_text(message.from_user.id, 'btn.exit_menu'), 
+                text=i18n_service.get_text(user_id, 'btn.exit_menu'), 
                 callback_data="exit_hero_menu"
             )
         ]
@@ -145,7 +151,7 @@ async def show_hero_management_menu(message: Message, player: Player):
     class_name = player.get_character_class_name()
     
     await message.answer(
-        i18n_service.get_text(message.from_user.id, 'hero.management.has_hero_menu',
+        i18n_service.get_text(user_id, 'hero.management.has_hero_menu',
                              hero_name=player.character_name, 
                              hero_class=class_name,
                              level=player.level,
@@ -872,9 +878,9 @@ async def back_to_hero_menu(callback: CallbackQuery, db_session: AsyncSession):
         return
     
     if user.player:
-        await show_hero_management_menu(callback.message, user.player)
+        await show_hero_management_menu(callback.message, user.player, user_id)
     else:
-        await show_hero_creation_menu(callback.message)
+        await show_hero_creation_menu(callback.message, user_id)
 
 
 @router.callback_query(F.data == "exit_hero_menu")
