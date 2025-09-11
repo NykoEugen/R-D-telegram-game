@@ -28,6 +28,7 @@ class SceneType(StrEnum):
     LOOT = "loot"
     COMBAT = "combat"
     INVENTORY = "inventory"
+    AI_GENERATED = "ai_generated"
 
 
 @dataclass
@@ -323,6 +324,24 @@ class SceneGraphManager:
                     return f"Step budget exceeded: {player_state.step_count}/{max_steps}"
         
         return None
+    
+    async def generate_ai_scene(self, language: str = "en"):
+        """Generate an AI-powered scene with dynamic content and choices."""
+        try:
+            # Import here to avoid circular import
+            from app.services.ai.scene_generation_service import AISceneGenerationService
+            
+            ai_scene = await AISceneGenerationService.generate_scene(language)
+            if not ai_scene:
+                logger.error("Failed to generate AI scene")
+                return None
+            
+            logger.info(f"Generated AI scene with {len(ai_scene.choices)} choices")
+            return ai_scene
+            
+        except Exception as e:
+            logger.error(f"Error generating AI scene: {e}", exc_info=True)
+            return None
 
 
 # Global scene graph manager instance

@@ -15,6 +15,7 @@ class GameStates(StatesGroup):
     MENU = State()  # Player is in main menu
     
     # Quest states
+    QUEST_PROPOSAL = State()  # Player is being offered a quest
     QUEST_ACTIVE = State()  # Player is in an active quest
     QUEST_CHOICE = State()  # Player needs to make a quest choice
     QUEST_DIALOGUE = State()  # Player is in dialogue during quest

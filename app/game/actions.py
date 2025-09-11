@@ -29,6 +29,16 @@ class Action(StrEnum):
     EXPLORE = "explore"
     NEGOTIATE = "negotiate"
     RETREAT = "retreat"
+    # AI Scene System Actions
+    SCOUT = "scout"
+    FIGHT = "fight"
+    PICKLOCK = "picklock"
+    # Quest Proposal Actions
+    ACCEPT_QUEST = "accept_quest"
+    REFUSE_QUEST = "refuse_quest"
+    ASK_QUEST_INFO = "ask_quest_info"
+    # Quest Actions
+    COMPLETE_QUEST = "complete_quest"
 
 
 @dataclass(frozen=True)
@@ -57,6 +67,16 @@ ACTION_META: dict[Action, ActionMeta] = {
     Action.EXPLORE:  ActionMeta("action.explore", "btn.explore"),
     Action.NEGOTIATE: ActionMeta("action.negotiate", "btn.negotiate"),
     Action.RETREAT:  ActionMeta("action.retreat", "btn.retreat"),
+    # AI Scene System Actions
+    Action.SCOUT:    ActionMeta("action.scout", "btn.scout"),
+    Action.FIGHT:    ActionMeta("action.fight", "btn.fight"),
+    Action.PICKLOCK: ActionMeta("action.picklock", "btn.picklock"),
+    # Quest Proposal Actions
+    Action.ACCEPT_QUEST: ActionMeta("action.accept_quest", "btn.accept_quest"),
+    Action.REFUSE_QUEST: ActionMeta("action.refuse_quest", "btn.refuse_quest"),
+    Action.ASK_QUEST_INFO: ActionMeta("action.ask_quest_info", "btn.ask_quest_info"),
+    # Quest Actions
+    Action.COMPLETE_QUEST: ActionMeta("action.complete_quest", "btn.complete_quest"),
 }
 
 
@@ -193,6 +213,44 @@ class ActionProcessor:
                 risk_change=-2,
                 success_probability=0.9
             ),
+            # AI Scene System Actions
+            Action.SCOUT: ActionConsequence(
+                stat_changes={"intellect": 1},
+                energy_cost=8,
+                risk_change=-1,
+                success_probability=0.8
+            ),
+            Action.FIGHT: ActionConsequence(
+                stat_changes={"bravery": 1},
+                energy_cost=15,
+                risk_change=2,
+                success_probability=0.7
+            ),
+            Action.PICKLOCK: ActionConsequence(
+                stat_changes={"intellect": 1},
+                energy_cost=10,
+                risk_change=1,
+                success_probability=0.6
+            ),
+            # Quest Proposal Actions
+            Action.ACCEPT_QUEST: ActionConsequence(
+                stat_changes={"charisma": 1},
+                energy_cost=5,
+                risk_change=1,
+                success_probability=1.0
+            ),
+            Action.REFUSE_QUEST: ActionConsequence(
+                stat_changes={"charisma": -1},
+                energy_cost=0,
+                risk_change=0,
+                success_probability=1.0
+            ),
+            Action.ASK_QUEST_INFO: ActionConsequence(
+                stat_changes={"intellect": 1},
+                energy_cost=2,
+                risk_change=0,
+                success_probability=1.0
+            ),
         }
         
         return base_consequences.get(action, ActionConsequence())
@@ -291,7 +349,9 @@ def get_available_actions(scene_type: str, player_state) -> List[Action]:
         "dialogue": [Action.TALK, Action.NEGOTIATE, Action.INVESTIGATE, Action.RUN_AI],
         "rest": [Action.REST, Action.WAIT, Action.CONTINUE],
         "exploration": [Action.EXPLORE, Action.INVESTIGATE, Action.LOOT, Action.RETREAT, Action.RUN_AI],
-        "quest": [Action.ACCEPT, Action.INVESTIGATE, Action.PREPARE, Action.RUN_AI],
+        "quest": [Action.EXPLORE, Action.INVESTIGATE, Action.FIGHT, Action.NEGOTIATE, Action.COMPLETE_QUEST],
+        "quest_start": [Action.EXPLORE, Action.INVESTIGATE, Action.FIGHT, Action.NEGOTIATE],
+        "quest_proposal": [Action.ACCEPT_QUEST, Action.REFUSE_QUEST, Action.ASK_QUEST_INFO],
         "loot": [Action.LOOT, Action.INVESTIGATE, Action.CONTINUE],
         "combat": [Action.ATTACK, Action.DEFEND, Action.CAST, Action.USE_ITEM, Action.FLEE],
     }

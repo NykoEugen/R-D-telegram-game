@@ -28,6 +28,38 @@ DEFAULT_PROMPTS = {
             "Describe a medieval fantasy world with magic, dragons, and epic adventures. "
             "Make it sound exciting and immersive."
         )
+    },
+    "scene": {
+        "system": (
+            "You are a master storyteller creating dynamic fantasy scenes for a medieval RPG game. "
+            "Create immersive 3-5 sentence descriptions that set the scene and atmosphere. "
+            "Include environmental details, potential dangers, and opportunities for the player. "
+            "Make each scene feel unique and engaging."
+        ),
+        "user": (
+            "Generate a fantasy scene description for a medieval RPG adventure. "
+            "The scene should be 3-5 sentences long and include: "
+            "1. Environmental setting and atmosphere "
+            "2. Potential dangers or challenges "
+            "3. Opportunities or interesting elements "
+            "4. A sense of mystery or adventure "
+            "Make it immersive and engaging for the player."
+        )
+    },
+    "choices": {
+        "system": (
+            "You are creating choice options for a fantasy RPG game. "
+            "Generate exactly 3 diverse and interesting choice options that fit the scene context. "
+            "Each choice should be 2-4 words maximum and represent different approaches: "
+            "aggressive, cautious, diplomatic, investigative, or tactical. "
+            "Make choices feel natural and exciting for the player."
+        ),
+        "user": (
+            "Based on this fantasy scene, generate exactly 3 choice options for the player. "
+            "Each choice should be 2-4 words maximum and represent different approaches. "
+            "Make them diverse and interesting. "
+            "Scene: {scene_description}"
+        )
     }
 }
 
@@ -54,6 +86,38 @@ LOCALIZED_PROMPTS: Dict[str, Dict[str, Dict[str, str]]] = {
                 "Опишіть середньовічний фентезійний світ з магією, драконами та епічними пригодами. "
                 "Зробіть його захоплюючим та іммерсивним."
             )
+        },
+        "scene": {
+            "system": (
+                "Ви майстер оповідач, який створює динамічні фентезійні сцени для середньовічної RPG гри. "
+                "Створюйте іммерсивні описи на 3-5 речень, які задають сцену та атмосферу. "
+                "Включіть деталі навколишнього середовища, потенційні небезпеки та можливості для гравця. "
+                "Зробіть кожну сцену унікальною та захоплюючою."
+            ),
+            "user": (
+                "Створіть опис фентезійної сцени для середньовічної RPG пригоди. "
+                "Сцена має бути 3-5 речень і включати: "
+                "1. Навколишнє середовище та атмосферу "
+                "2. Потенційні небезпеки або виклики "
+                "3. Можливості або цікаві елементи "
+                "4. Відчуття таємниці або пригоди "
+                "Зробіть її іммерсивною та захоплюючою для гравця."
+            )
+        },
+        "choices": {
+            "system": (
+                "Ви створюєте варіанти вибору для фентезійної RPG гри. "
+                "Створіть рівно 3 різноманітні та цікаві варіанти вибору, які підходять до контексту сцени. "
+                "Кожен вибір має бути максимум 2-4 слова і представляти різні підходи: "
+                "агресивний, обережний, дипломатичний, розвідувальний або тактичний. "
+                "Зробіть вибори природними та захоплюючими для гравця."
+            ),
+            "user": (
+                "На основі цієї фентезійної сцени створіть рівно 3 варіанти вибору для гравця. "
+                "Кожен вибір має бути максимум 2-4 слова і представляти різні підходи. "
+                "Зробіть їх різноманітними та цікавими. "
+                "Сцена: {scene_description}"
+            )
         }
     }
 }
@@ -66,6 +130,14 @@ PROMPT_CONFIG = {
     },
     "world": {
         "max_tokens": 120,
+        "temperature": 0.7
+    },
+    "scene": {
+        "max_tokens": 200,
+        "temperature": 0.8
+    },
+    "choices": {
+        "max_tokens": 100,
         "temperature": 0.7
     }
 }

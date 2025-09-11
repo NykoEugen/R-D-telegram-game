@@ -179,6 +179,8 @@ async def cmd_help(message: Message, state: FSMContext, db_session: AsyncSession
             f"{i18n_service.get_text(user_id, 'game_commands')}\n"
             f"{i18n_service.get_text(user_id, 'start_command')}\n"
             f"{i18n_service.get_text(user_id, 'quest_command')}\n"
+            f"• /adventure - Start a dynamic adventure\n"
+            f"• /ai_scene - Generate AI-powered scenes with choices\n"
             f"{i18n_service.get_text(user_id, 'help_command')}\n"
             f"{i18n_service.get_text(user_id, 'language_command')}\n\n"
             f"{i18n_service.get_text(user_id, 'about_game')}\n"
@@ -186,7 +188,7 @@ async def cmd_help(message: Message, state: FSMContext, db_session: AsyncSession
             f"{i18n_service.get_text(user_id, 'getting_started')}\n"
             f"{i18n_service.get_text(user_id, 'getting_started_1')}\n"
             f"{i18n_service.get_text(user_id, 'getting_started_2')}\n"
-            f"{i18n_service.get_text(user_id, 'getting_started_3')}\n\n"
+            f"3. Use /ai_scene for AI-generated adventures!\n\n"
             f"{i18n_service.get_text(user_id, 'adventure_legendary')}"
         )
         
