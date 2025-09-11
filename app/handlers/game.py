@@ -22,6 +22,7 @@ from app.game.scenes import (
     SceneGraphManager, PlayerState, SceneContext, SceneType, 
     scene_graph, create_quest_scene, create_demo_scene
 )
+from app.services.ai.scene_generation_service import AISceneGenerationService
 from app.core.config import settings
 
 router = Router()
@@ -85,9 +86,19 @@ async def cmd_adventure(message: Message, state: FSMContext, db_session: AsyncSe
             row_width=2
         )
         
-        # Store adventure data in FSM
+        # Store adventure data in FSM (convert PlayerState to dict for JSON serialization)
         await state.update_data(
-            player_state=player_state,
+            player_state_dict={
+                "user_id": player_state.user_id,
+                "energy": player_state.energy,
+                "risk_level": player_state.risk_level,
+                "stats": player_state.stats,
+                "current_scene": player_state.current_scene,
+                "visited_scenes": list(player_state.visited_scenes),
+                "scene_cooldowns": player_state.scene_cooldowns,
+                "goals": list(player_state.goals),
+                "step_count": player_state.step_count
+            },
             current_scene=starting_scene.id,
             scene_description=scene_description,
             available_actions=available_actions,
@@ -152,9 +163,15 @@ async def on_adventure_action(cb: CallbackQuery, callback_data: ActionCB, state:
         fsm_data = await state.get_data()
         player_state = fsm_data.get("player_state")
         current_scene_id = fsm_data.get("current_scene")
+        ai_scene = fsm_data.get("ai_scene")
         
         if not player_state or not current_scene_id:
             await cb.answer("❌ Adventure state not found", show_alert=True)
+            return
+        
+        # Handle AI scene actions
+        if current_scene_id == "ai_generated" and ai_scene:
+            await _handle_ai_scene_action(cb, action, ai_scene, player_state, state, fsm_service)
             return
         
         # Get current scene
@@ -210,9 +227,19 @@ async def on_adventure_action(cb: CallbackQuery, callback_data: ActionCB, state:
             row_width=2
         )
         
-        # Update FSM data
+        # Update FSM data (convert PlayerState to dict for JSON serialization)
         await state.update_data(
-            player_state=player_state,
+            player_state_dict={
+                "user_id": player_state.user_id,
+                "energy": player_state.energy,
+                "risk_level": player_state.risk_level,
+                "stats": player_state.stats,
+                "current_scene": player_state.current_scene,
+                "visited_scenes": list(player_state.visited_scenes),
+                "scene_cooldowns": player_state.scene_cooldowns,
+                "goals": list(player_state.goals),
+                "step_count": player_state.step_count
+            },
             current_scene=next_scene.id,
             scene_description=scene_description,
             available_actions=available_actions
@@ -267,9 +294,9 @@ async def on_adventure_action(cb: CallbackQuery, callback_data: ActionCB, state:
 async def _get_or_create_player_state(user_id: int, state: FSMContext) -> PlayerState:
     """Get or create player state from FSM data."""
     fsm_data = await state.get_data()
-    player_state = fsm_data.get("player_state")
+    player_state_dict = fsm_data.get("player_state_dict")
     
-    if not player_state:
+    if not player_state_dict:
         # Create new player state
         player_state = PlayerState(
             user_id=user_id,
@@ -281,6 +308,19 @@ async def _get_or_create_player_state(user_id: int, state: FSMContext) -> Player
             }
         )
     else:
+        # Recreate PlayerState from dict
+        player_state = PlayerState(
+            user_id=player_state_dict["user_id"],
+            energy=player_state_dict["energy"],
+            risk_level=player_state_dict["risk_level"],
+            stats=player_state_dict["stats"],
+            current_scene=player_state_dict.get("current_scene"),
+            visited_scenes=set(player_state_dict.get("visited_scenes", [])),
+            scene_cooldowns=player_state_dict.get("scene_cooldowns", {}),
+            goals=set(player_state_dict.get("goals", [])),
+            step_count=player_state_dict.get("step_count", 0)
+        )
+        
         # Ensure energy doesn't exceed maximum
         player_state.energy = min(player_state.energy, settings.max_energy)
     
@@ -380,7 +420,17 @@ async def _end_adventure(cb: CallbackQuery, player_state: PlayerState, end_reaso
         # Reset adventure state
         await state.set_state(GameStates.MENU)
         await state.update_data(
-            player_state=player_state,
+            player_state_dict={
+                "user_id": player_state.user_id,
+                "energy": player_state.energy,
+                "risk_level": player_state.risk_level,
+                "stats": player_state.stats,
+                "current_scene": player_state.current_scene,
+                "visited_scenes": list(player_state.visited_scenes),
+                "scene_cooldowns": player_state.scene_cooldowns,
+                "goals": list(player_state.goals),
+                "step_count": player_state.step_count
+            },
             adventure_active=False,
             current_scene=None
         )
@@ -429,3 +479,303 @@ async def _end_adventure(cb: CallbackQuery, player_state: PlayerState, end_reaso
     except Exception as e:
         logger.error(f"Error ending adventure: {e}")
         await cb.answer("❌ Error ending adventure", show_alert=True)
+
+
+@router.message(Command("ai_scene"))
+async def cmd_ai_scene(message: Message, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
+    """Generate and play an AI-powered scene with dynamic choices."""
+    try:
+        user_id = message.from_user.id
+        
+        # Check if user has a hero first
+        from app.handlers.utils import check_hero_required
+        has_hero, user = await check_hero_required(message, db_session)
+        if not has_hero:
+            return
+        
+        # Set FSM state to adventure active
+        await state.set_state(GameStates.QUEST_ACTIVE)
+        
+        # Create or get player state
+        player_state = await _get_or_create_player_state(user_id, state)
+        
+        # Check if player has enough energy
+        if player_state.energy < 15:  # Minimum energy for AI scene
+            await message.answer(
+                f"⚡ **Not Enough Energy**\n\n"
+                f"Your energy is too low to start an AI scene.\n"
+                f"Current energy: {player_state.energy}/100\n\n"
+                f"💡 *Rest or wait for energy to regenerate.*"
+            )
+            return
+        
+        # Generate AI scene
+        user_language = i18n_service.get_user_language(user_id)
+        ai_scene = await AISceneGenerationService.generate_scene(user_language)
+        
+        if not ai_scene:
+            await message.answer(
+                "❌ **AI Scene Generation Failed**\n\n"
+                "Failed to generate an AI scene. Please try again later."
+            )
+            return
+        
+        # Apply energy cost for AI scene
+        player_state.energy = max(0, player_state.energy - 15)
+        player_state.step_count += 1
+        
+        # Build keyboard with AI choices
+        keyboard = _build_ai_scene_keyboard(ai_scene, user_language)
+        
+        # Store AI scene data in FSM (convert PlayerState to dict for JSON serialization)
+        await state.update_data(
+            player_state_dict={
+                "user_id": player_state.user_id,
+                "energy": player_state.energy,
+                "risk_level": player_state.risk_level,
+                "stats": player_state.stats,
+                "current_scene": player_state.current_scene,
+                "visited_scenes": list(player_state.visited_scenes),
+                "scene_cooldowns": player_state.scene_cooldowns,
+                "goals": list(player_state.goals),
+                "step_count": player_state.step_count
+            },
+            current_scene="ai_generated",
+            scene_description=ai_scene.description,
+            ai_scene=ai_scene,
+            adventure_active=True
+        )
+        
+        # Sync FSM state to PostgreSQL
+        await fsm_service.sync_fsm_to_postgres(
+            state,
+            user_id,
+            action="ai_scene_start",
+            scene_id="ai_generated",
+            additional_data={
+                "scene_type": "ai_generated",
+                "energy": player_state.energy,
+                "risk_level": player_state.risk_level,
+                "ai_choices": [choice[0] for choice in ai_scene.choices]
+            }
+        )
+        
+        # Send AI scene message
+        scene_text = (
+            f"🤖 **AI GENERATED SCENE** 🤖\n\n"
+            f"🌍 **Scene:** Dynamic Adventure\n"
+            f"📖 **Type:** AI Generated\n\n"
+            f"{ai_scene.description}\n\n"
+            f"⚡ **Energy:** {player_state.energy}/100\n"
+            f"⚠️ **Risk Level:** {player_state.risk_level}\n"
+            f"📊 **Steps:** {player_state.step_count}\n\n"
+            f"🎯 **What will you do?**"
+        )
+        
+        await message.answer(scene_text, parse_mode="Markdown", reply_markup=keyboard)
+        
+        logger.info("User started AI scene", 
+                   user_id=user_id,
+                   user_name=message.from_user.first_name,
+                   chat_id=message.chat.id,
+                   choices_count=len(ai_scene.choices))
+        
+    except Exception as e:
+        logger.error("Error in AI scene command", 
+                    user_id=message.from_user.id,
+                    chat_id=message.chat.id,
+                    error_type=type(e).__name__,
+                    error_message=str(e))
+        await message.answer(
+            "❌ **AI Scene Error**\n\n"
+            "There was an error generating your AI scene. Please try again later."
+        )
+
+
+def _build_ai_scene_keyboard(ai_scene, user_language: str):
+    """Build keyboard for AI scene choices."""
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    from app.handlers.callbacks import ActionCB
+    
+    keyboard_buttons = []
+    for i, (choice_text, action) in enumerate(ai_scene.choices):
+        button = InlineKeyboardButton(
+            text=choice_text,
+            callback_data=ActionCB(a=action, s="ai_generated").pack()
+        )
+        keyboard_buttons.append([button])
+    
+    return InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
+
+
+async def _handle_ai_scene_action(cb: CallbackQuery, action: Action, ai_scene, player_state: PlayerState, state: FSMContext, fsm_service: FSMStateService):
+    """Handle action in AI-generated scene."""
+    try:
+        user_id = cb.from_user.id
+        
+        # Process the action
+        scene_context = {
+            "scene_type": "ai_generated",
+            "scene_id": "ai_generated",
+            "risk_level": player_state.risk_level
+        }
+        
+        consequence = ActionProcessor.process_action(action, player_state, scene_context)
+        action_result = ActionProcessor.apply_consequence(consequence, player_state)
+        
+        # Check if adventure should end
+        end_reason = scene_graph.check_end_conditions(player_state)
+        if end_reason:
+            await _end_adventure(cb, player_state, end_reason, state, fsm_service)
+            return
+        
+        # Generate next AI scene
+        user_language = i18n_service.get_user_language(user_id)
+        next_ai_scene = await AISceneGenerationService.generate_scene(user_language)
+        
+        if not next_ai_scene:
+            # Fallback to regular scene if AI generation fails
+            next_scene = scene_graph.get_next_scene(player_state)
+            if not next_scene:
+                await _end_adventure(cb, player_state, "No more scenes available", state, fsm_service)
+                return
+            
+            # Apply next scene consequences
+            scene_graph.apply_scene_consequences(next_scene, player_state)
+            player_state.current_scene = next_scene.id
+            
+            # Generate next scene description
+            scene_description = await _generate_scene_description(next_scene, player_state)
+            
+            # Get available actions for next scene
+            available_actions = get_available_actions(next_scene.kind.value, player_state)
+            
+            # Build keyboard
+            keyboard = build_actions_kb(
+                actions=available_actions,
+                locale=user_language,
+                scene_id=next_scene.id,
+                context_hint=scene_description,
+                row_width=2
+            )
+            
+            # Update FSM data (convert PlayerState to dict for JSON serialization)
+            await state.update_data(
+                player_state_dict={
+                    "user_id": player_state.user_id,
+                    "energy": player_state.energy,
+                    "risk_level": player_state.risk_level,
+                    "stats": player_state.stats,
+                    "current_scene": player_state.current_scene,
+                    "visited_scenes": list(player_state.visited_scenes),
+                    "scene_cooldowns": player_state.scene_cooldowns,
+                    "goals": list(player_state.goals),
+                    "step_count": player_state.step_count
+                },
+                current_scene=next_scene.id,
+                scene_description=scene_description,
+                available_actions=available_actions,
+                ai_scene=None  # Clear AI scene
+            )
+            
+            # Sync FSM state to PostgreSQL
+            await fsm_service.sync_fsm_to_postgres(
+                state,
+                user_id,
+                action=action,
+                scene_id=next_scene.id,
+                additional_data={
+                    "scene_type": next_scene.kind.value,
+                    "energy": player_state.energy,
+                    "risk_level": player_state.risk_level,
+                    "action_result": action_result
+                }
+            )
+            
+            # Send next scene message
+            scene_text = (
+                f"🎮 **Action:** {action.value.title()}\n"
+                f"✅ **Result:** {action_result['message']}\n\n"
+                f"🌍 **Scene:** {next_scene.id.replace('_', ' ').title()}\n"
+                f"📖 **Type:** {next_scene.kind.value.title()}\n\n"
+                f"{scene_description}\n\n"
+                f"⚡ **Energy:** {player_state.energy}/100\n"
+                f"⚠️ **Risk Level:** {player_state.risk_level}\n"
+                f"📊 **Steps:** {player_state.step_count}\n\n"
+                f"🎯 **What will you do?**"
+            )
+            
+            await cb.message.edit_text(scene_text, parse_mode="Markdown", reply_markup=keyboard)
+            await cb.answer()
+            return
+        
+        # Apply energy cost for next AI scene
+        player_state.energy = max(0, player_state.energy - 10)
+        player_state.step_count += 1
+        
+        # Build keyboard with AI choices
+        keyboard = _build_ai_scene_keyboard(next_ai_scene, user_language)
+        
+        # Update FSM data (convert PlayerState to dict for JSON serialization)
+        await state.update_data(
+            player_state_dict={
+                "user_id": player_state.user_id,
+                "energy": player_state.energy,
+                "risk_level": player_state.risk_level,
+                "stats": player_state.stats,
+                "current_scene": player_state.current_scene,
+                "visited_scenes": list(player_state.visited_scenes),
+                "scene_cooldowns": player_state.scene_cooldowns,
+                "goals": list(player_state.goals),
+                "step_count": player_state.step_count
+            },
+            current_scene="ai_generated",
+            scene_description=next_ai_scene.description,
+            ai_scene=next_ai_scene
+        )
+        
+        # Sync FSM state to PostgreSQL
+        await fsm_service.sync_fsm_to_postgres(
+            state,
+            user_id,
+            action=action,
+            scene_id="ai_generated",
+            additional_data={
+                "scene_type": "ai_generated",
+                "energy": player_state.energy,
+                "risk_level": player_state.risk_level,
+                "action_result": action_result,
+                "ai_choices": [choice[0] for choice in next_ai_scene.choices]
+            }
+        )
+        
+        # Send next AI scene message
+        scene_text = (
+            f"🎮 **Action:** {action.value.title()}\n"
+            f"✅ **Result:** {action_result['message']}\n\n"
+            f"🤖 **AI GENERATED SCENE** 🤖\n\n"
+            f"🌍 **Scene:** Dynamic Adventure\n"
+            f"📖 **Type:** AI Generated\n\n"
+            f"{next_ai_scene.description}\n\n"
+            f"⚡ **Energy:** {player_state.energy}/100\n"
+            f"⚠️ **Risk Level:** {player_state.risk_level}\n"
+            f"📊 **Steps:** {player_state.step_count}\n\n"
+            f"🎯 **What will you do?**"
+        )
+        
+        await cb.message.edit_text(scene_text, parse_mode="Markdown", reply_markup=keyboard)
+        await cb.answer()
+        
+        logger.info("User took action in AI scene", 
+                   user_id=user_id,
+                   action=action,
+                   energy=player_state.energy,
+                   risk_level=player_state.risk_level)
+        
+    except Exception as e:
+        logger.error("Error in AI scene action", 
+                    user_id=cb.from_user.id,
+                    chat_id=cb.message.chat.id,
+                    error_type=type(e).__name__,
+                    error_message=str(e))
+        await cb.answer("❌ Error processing AI scene action", show_alert=True)

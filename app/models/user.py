@@ -5,12 +5,15 @@ This model represents a user in the game system with basic Telegram information.
 """
 
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 
 from sqlalchemy import String, Integer, DateTime, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
+
+if TYPE_CHECKING:
+    from app.models.player_progress import PlayerProgress
 
 
 class User(Base):
@@ -40,6 +43,13 @@ class User(Base):
     # Relationships
     player: Mapped[Optional["Player"]] = relationship(
         "Player", 
+        back_populates="user", 
+        uselist=False,
+        lazy="selectin",
+        cascade="all, delete-orphan"
+    )
+    progress: Mapped[Optional["PlayerProgress"]] = relationship(
+        "PlayerProgress", 
         back_populates="user", 
         uselist=False,
         lazy="selectin",

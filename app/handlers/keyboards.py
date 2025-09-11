@@ -5,7 +5,7 @@ from app.game.actions import Action
 from app.services.ai import ActionLabelGenerator
 from app.models.world import Region
 from app.models.character import CharacterClass
-from typing import List
+from typing import List, Optional
 
 gen = ActionLabelGenerator()
 
@@ -191,4 +191,35 @@ def build_hero_navigation_keyboard() -> InlineKeyboardMarkup:
     builder.button(text="⬅️ Back to Menu", callback_data="back_to_hero_menu")
     
     builder.adjust(1)  # One button per row
+    return builder.as_markup()
+
+
+def build_quest_proposal_keyboard(
+    can_ask_info: bool = True,
+    locale: str = "en"
+) -> InlineKeyboardMarkup:
+    """Build keyboard for quest proposal actions."""
+    builder = InlineKeyboardBuilder()
+    
+    # Get localized button texts
+    from app.services.i18n_service import i18n_service
+    
+    accept_text = i18n_service.get_text(12345, "btn.accept_quest")
+    refuse_text = i18n_service.get_text(12345, "btn.refuse_quest")
+    ask_info_text = i18n_service.get_text(12345, "btn.ask_quest_info")
+    
+    # Always show accept and refuse buttons
+    builder.button(text=accept_text, callback_data="quest_accept")
+    builder.button(text=refuse_text, callback_data="quest_refuse")
+    
+    # Show ask info button only if player hasn't asked yet
+    if can_ask_info:
+        builder.button(text=ask_info_text, callback_data="quest_ask_info")
+    
+    # Adjust layout: 2 buttons in first row, ask_info in second row if present
+    if can_ask_info:
+        builder.adjust(2, 1)  # 2 buttons, then 1 button
+    else:
+        builder.adjust(2)  # 2 buttons in one row
+    
     return builder.as_markup()

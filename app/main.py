@@ -9,6 +9,7 @@ from app.handlers.commands import start_router, game_router, language_router, ch
 from app.handlers.commands.hero import router as hero_router
 from app.handlers.commands.regions import router as regions_router
 from app.handlers.game import router as adventure_router
+from app.handlers.quest_proposal import router as quest_proposal_router
 from app.handlers.errors import setup_error_handlers, GlobalErrorHandler
 from app.middlewares.correlation import CorrelationMiddleware
 from app.middlewares.database import DatabaseMiddleware
@@ -69,6 +70,7 @@ async def main():
     dp.include_router(hero_router)
     dp.include_router(regions_router)
     dp.include_router(adventure_router)
+    dp.include_router(quest_proposal_router)
     
     logger.info("✅ Bot initialized successfully")
     logger.info("📱 Bot is running in polling mode")

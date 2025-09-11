@@ -6,13 +6,12 @@ completed quests, and exploration history.
 """
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON, ForeignKey, Text
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from typing import Dict, List, Optional, Any
 import json
 
-Base = declarative_base()
+from app.core.db import Base
 
 
 class PlayerProgress(Base):
@@ -301,3 +300,84 @@ class ProgressManager:
             })
         
         return summary
+
+
+class QuestProposal(Base):
+    """Tracks quest proposals and player interactions with them."""
+    __tablename__ = "quest_proposals"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    questgiver_name = Column(String, nullable=False)
+    quest_intro = Column(Text, nullable=False)
+    quest_description = Column(Text, nullable=False)
+    additional_info = Column(Text, nullable=True)
+    faction = Column(String, nullable=True)  # Faction that offered the quest
+    reward_gold = Column(Integer, default=0)
+    reward_xp = Column(Integer, default=0)
+    risk_level = Column(Integer, default=1)  # 1-5 scale
+    info_asked = Column(Boolean, default=False)  # Whether player asked for additional info
+    status = Column(String, default="pending")  # pending, accepted, refused
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    responded_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # Relationship
+    user = relationship("User")
+    
+    def ask_for_info(self):
+        """Mark that player has asked for additional information."""
+        self.info_asked = True
+    
+    def accept_quest(self):
+        """Mark quest as accepted."""
+        self.status = "accepted"
+        self.responded_at = func.now()
+    
+    def refuse_quest(self):
+        """Mark quest as refused."""
+        self.status = "refused"
+        self.responded_at = func.now()
+    
+    def is_pending(self) -> bool:
+        """Check if quest proposal is still pending."""
+        return self.status == "pending"
+    
+    def can_ask_info(self) -> bool:
+        """Check if player can still ask for additional information."""
+        return self.is_pending() and not self.info_asked
+
+
+class PlayerReputation(Base):
+    """Tracks player reputation with different factions."""
+    __tablename__ = "player_reputation"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    faction = Column(String, nullable=False)
+    reputation = Column(Integer, default=0)  # -100 to 100 scale
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationship
+    user = relationship("User")
+    
+    def modify_reputation(self, change: int):
+        """Modify reputation with bounds checking."""
+        self.reputation = max(-100, min(100, self.reputation + change))
+    
+    def get_reputation_level(self) -> str:
+        """Get reputation level as string."""
+        if self.reputation >= 80:
+            return "exalted"
+        elif self.reputation >= 60:
+            return "honored"
+        elif self.reputation >= 40:
+            return "friendly"
+        elif self.reputation >= 20:
+            return "neutral"
+        elif self.reputation >= 0:
+            return "unfriendly"
+        elif self.reputation >= -40:
+            return "hostile"
+        else:
+            return "hated"
