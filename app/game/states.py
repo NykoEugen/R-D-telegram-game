@@ -43,13 +43,13 @@ class GameStates(StatesGroup):
 
 
 class QuestStates(StatesGroup):
-    """Quest-specific state group."""
+    """Quest-specific state group with proper FSM flow."""
     
-    QUEST_START = State()  # Quest is starting
-    QUEST_PROGRESS = State()  # Quest is in progress
-    QUEST_COMPLETE = State()  # Quest is completed
-    QUEST_FAILED = State()  # Quest has failed
-    QUEST_ABANDONED = State()  # Quest was abandoned
+    OFFER = State()  # Quest is offered (buttons: Ask, Accept, Decline)
+    INVESTIGATED = State()  # Player asked for details (only Accept/Decline left)
+    ACTIVE = State()  # Quest accepted, sequential scenes are generated
+    COMBAT = State()  # When a scene triggers combat
+    COMPLETE = State()  # Quest finished or declined
 
 
 class CombatStates(StatesGroup):

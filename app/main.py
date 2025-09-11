@@ -62,15 +62,15 @@ async def main():
     # Setup error handlers
     setup_error_handlers(dp)
     
-    # Register routers
+    # Register routers (order matters - more specific handlers should come first)
     dp.include_router(start_router)
     dp.include_router(game_router)
     dp.include_router(language_router)
     dp.include_router(character_router)
     dp.include_router(hero_router)
     dp.include_router(regions_router)
-    dp.include_router(adventure_router)
-    dp.include_router(quest_proposal_router)
+    dp.include_router(quest_proposal_router)  # Quest-specific handlers first
+    dp.include_router(adventure_router)       # General adventure handlers last
     
     logger.info("✅ Bot initialized successfully")
     logger.info("📱 Bot is running in polling mode")

@@ -11,7 +11,7 @@ from app.services.fsm_service import FSMStateService
 from app.handlers.keyboards import build_actions_kb
 from app.handlers.callbacks import ActionCB
 from app.game.actions import Action, ActionProcessor, get_available_actions
-from app.game.states import GameStates
+from app.game.states import GameStates, QuestStates
 from app.game.scenes import create_quest_scene, create_demo_scene, PlayerState
 from app.core.config import settings
 
@@ -30,8 +30,8 @@ async def cmd_quest(message: Message, state: FSMContext, db_session: AsyncSessio
         if not has_hero:
             return
         
-        # Set FSM state to quest proposal
-        await state.set_state(GameStates.QUEST_PROPOSAL)
+        # Set FSM state to quest offer
+        await state.set_state(QuestStates.OFFER)
         
         # Create or get player state
         player_state = await _get_or_create_player_state(user_id, state)
@@ -275,7 +275,14 @@ async def on_action_press(cb: CallbackQuery, callback_data: ActionCB, state: FSM
         if current_state == GameStates.QUEST_ACTIVE:
             # Import here to avoid circular import
             from app.handlers.quest_proposal import handle_quest_action
-            await handle_quest_action(cb, callback_data, state, db_session, fsm_service)
+            from app.handlers.callbacks import QuestActionCB
+            
+            # Convert ActionCB to QuestActionCB
+            quest_callback_data = QuestActionCB(
+                action=callback_data.a,
+                scene_id=callback_data.s
+            )
+            await handle_quest_action(cb, quest_callback_data, state, db_session, fsm_service)
             return
         
         # Get or create player state

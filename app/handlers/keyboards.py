@@ -1,6 +1,6 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from app.handlers.callbacks import ActionCB
+from app.handlers.callbacks import ActionCB, QuestActionCB
 from app.game.actions import Action
 from app.services.ai import ActionLabelGenerator
 from app.models.world import Region
@@ -15,6 +15,7 @@ def build_actions_kb(
     scene_id: str,
     context_hint: str | None = None,
     row_width: int = 3,
+    use_quest_callback: bool = False,
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     seen: set[str] = set()
@@ -27,7 +28,11 @@ def build_actions_kb(
             label = f"{base[:10]} {n}"
             n += 1
         seen.add(label)
-        cb = ActionCB(a=a.value, s=scene_id).pack()
+        
+        if use_quest_callback:
+            cb = QuestActionCB(action=a.value, scene_id=scene_id).pack()
+        else:
+            cb = ActionCB(a=a.value, s=scene_id).pack()
         builder.button(text=label, callback_data=cb)
 
     builder.adjust(row_width)
@@ -209,17 +214,107 @@ def build_quest_proposal_keyboard(
     ask_info_text = i18n_service.get_text(12345, "btn.ask_quest_info")
     
     # Always show accept and refuse buttons
-    builder.button(text=accept_text, callback_data="quest_accept")
-    builder.button(text=refuse_text, callback_data="quest_refuse")
+    builder.button(text=accept_text, callback_data=QuestActionCB(action="accept").pack())
+    builder.button(text=refuse_text, callback_data=QuestActionCB(action="decline").pack())
     
     # Show ask info button only if player hasn't asked yet
     if can_ask_info:
-        builder.button(text=ask_info_text, callback_data="quest_ask_info")
+        builder.button(text=ask_info_text, callback_data=QuestActionCB(action="ask").pack())
     
     # Adjust layout: 2 buttons in first row, ask_info in second row if present
     if can_ask_info:
         builder.adjust(2, 1)  # 2 buttons, then 1 button
     else:
         builder.adjust(2)  # 2 buttons in one row
+    
+    return builder.as_markup()
+
+
+def kb_offer(locale: str = "en") -> InlineKeyboardMarkup:
+    """Centralized keyboard for quest offer with Ask / Accept / Decline buttons."""
+    builder = InlineKeyboardBuilder()
+    
+    # Get localized button texts
+    from app.services.i18n_service import i18n_service
+    
+    ask_text = i18n_service.get_text(12345, "btn.ask_quest_info", locale=locale)
+    accept_text = i18n_service.get_text(12345, "btn.accept_quest", locale=locale)
+    decline_text = i18n_service.get_text(12345, "btn.refuse_quest", locale=locale)
+    
+    # Add buttons
+    builder.button(text=ask_text, callback_data=QuestActionCB(action="ask").pack())
+    builder.button(text=accept_text, callback_data=QuestActionCB(action="accept").pack())
+    builder.button(text=decline_text, callback_data=QuestActionCB(action="decline").pack())
+    
+    # Layout: Ask on first row, Accept/Decline on second row
+    builder.adjust(1, 2)
+    
+    return builder.as_markup()
+
+
+def kb_after_ask(locale: str = "en") -> InlineKeyboardMarkup:
+    """Centralized keyboard after asking for quest info with Accept / Decline buttons."""
+    builder = InlineKeyboardBuilder()
+    
+    # Get localized button texts
+    from app.services.i18n_service import i18n_service
+    
+    accept_text = i18n_service.get_text(12345, "btn.accept_quest", locale=locale)
+    decline_text = i18n_service.get_text(12345, "btn.refuse_quest", locale=locale)
+    
+    # Add buttons
+    builder.button(text=accept_text, callback_data=QuestActionCB(action="accept").pack())
+    builder.button(text=decline_text, callback_data=QuestActionCB(action="decline").pack())
+    
+    # Layout: 2 buttons in one row
+    builder.adjust(2)
+    
+    return builder.as_markup()
+
+
+def kb_active_scene(has_combat: bool, locale: str = "en") -> InlineKeyboardMarkup:
+    """Centralized keyboard for active scene with combat and continue options."""
+    builder = InlineKeyboardBuilder()
+    
+    # Get localized button texts
+    from app.services.i18n_service import i18n_service
+    
+    if has_combat:
+        # Combat buttons
+        attack_text = i18n_service.get_text(12345, "btn.attack", locale=locale)
+        defend_text = i18n_service.get_text(12345, "btn.defend", locale=locale)
+        flee_text = i18n_service.get_text(12345, "btn.flee", locale=locale)
+        
+        builder.button(text=attack_text, callback_data=QuestActionCB(action="attack").pack())
+        builder.button(text=defend_text, callback_data=QuestActionCB(action="defend").pack())
+        builder.button(text=flee_text, callback_data=QuestActionCB(action="flee").pack())
+        
+        # Layout: Attack/Defend on first row, Flee on second row
+        builder.adjust(2, 1)
+    else:
+        # Continue button for non-combat scenes
+        continue_text = i18n_service.get_text(12345, "btn.continue", locale=locale)
+        builder.button(text=continue_text, callback_data=QuestActionCB(action="continue").pack())
+        
+        # Layout: single button
+        builder.adjust(1)
+    
+    return builder.as_markup()
+
+
+def kb_after_decline(locale: str = "en") -> InlineKeyboardMarkup:
+    """Centralized keyboard after declining quest with Search new quest button."""
+    builder = InlineKeyboardBuilder()
+    
+    # Get localized button texts
+    from app.services.i18n_service import i18n_service
+    
+    search_text = i18n_service.get_text(12345, "btn.search_new_quest", locale=locale)
+    
+    # Add button
+    builder.button(text=search_text, callback_data=QuestActionCB(action="search_new").pack())
+    
+    # Layout: single button
+    builder.adjust(1)
     
     return builder.as_markup()

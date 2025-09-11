@@ -6,6 +6,8 @@ This module contains game logic, actions, and scene management.
 
 from .actions import Action, ActionMeta, ACTION_META
 from .scenes import SceneType, SceneContext, create_quest_scene, create_demo_scene
+from .models import QuestContext, CombatState
+from .engine import QuestEngine, quest_engine
 
 __all__ = [
     'Action',
@@ -14,5 +16,9 @@ __all__ = [
     'SceneType',
     'SceneContext',
     'create_quest_scene',
-    'create_demo_scene'
+    'create_demo_scene',
+    'QuestContext',
+    'CombatState',
+    'QuestEngine',
+    'quest_engine'
 ]

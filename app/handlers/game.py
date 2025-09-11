@@ -9,15 +9,17 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
 
 from app.services.ai import AIGenerationService, ai_action_service
 from app.services.logging_service import get_logger
 from app.services.i18n_service import i18n_service
 from app.services.fsm_service import FSMStateService
-from app.handlers.keyboards import build_actions_kb
-from app.handlers.callbacks import ActionCB
+from app.handlers.keyboards import build_actions_kb, kb_offer, kb_after_ask, kb_active_scene, kb_after_decline
+from app.handlers.callbacks import ActionCB, QuestActionCB
 from app.game.actions import Action, ActionProcessor, get_available_actions
-from app.game.states import GameStates
+from app.game.states import GameStates, QuestStates
+from app.game.engine import quest_engine
 from app.game.scenes import (
     SceneGraphManager, PlayerState, SceneContext, SceneType, 
     scene_graph, create_quest_scene, create_demo_scene
@@ -779,3 +781,90 @@ async def _handle_ai_scene_action(cb: CallbackQuery, action: Action, ai_scene, p
                     error_type=type(e).__name__,
                     error_message=str(e))
         await cb.answer("❌ Error processing AI scene action", show_alert=True)
+
+
+@router.message(Command("quest"))
+async def cmd_quest(message: Message, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
+    """Start a quest offer using the quest engine."""
+    try:
+        user_id = message.from_user.id
+        
+        # Check if user has a hero first
+        from app.handlers.utils import check_hero_required
+        has_hero, user = await check_hero_required(message, db_session)
+        if not has_hero:
+            return
+        
+        # Set FSM state to quest offer
+        await state.set_state(QuestStates.OFFER)
+        
+        # Get user language
+        user_language = i18n_service.get_user_language(user_id)
+        
+        # Start quest offer using engine
+        quest_context = await quest_engine.start_offer(user_id, {
+            "questgiver_name": "Mysterious Stranger",
+            "quest_type": "investigation",
+            "risk_level": 1,
+            "reward_gold": 50,
+            "reward_xp": 25
+        })
+        
+        # Store quest context in FSM
+        await state.update_data(
+            quest_context=quest_context.to_dict(),
+            quest_phase="OFFER"
+        )
+        
+        # Sync FSM state to PostgreSQL
+        await fsm_service.sync_fsm_to_postgres(
+            state,
+            user_id,
+            action="quest_offer_start",
+            scene_id=quest_context.quest_id,
+            additional_data={
+                "quest_title": quest_context.title,
+                "quest_type": quest_context.quest_type,
+                "risk_level": quest_context.risk_level
+            }
+        )
+        
+        # Build quest offer message
+        quest_text = (
+            f"📜 **QUEST OFFER** 📜\n\n"
+            f"**{quest_context.title}**\n\n"
+            f"{quest_context.hook}\n\n"
+            f"🎯 **Quest Type:** {quest_context.quest_type.title()}\n"
+            f"⚠️ **Risk Level:** {quest_context.risk_level}\n"
+            f"💰 **Reward:** {quest_context.reward_gold} gold, {quest_context.reward_xp} XP\n\n"
+            f"*What will you do?*"
+        )
+        
+        # Show keyboard with quest options
+        keyboard = kb_offer(user_language)
+        
+        await message.answer(quest_text, parse_mode="Markdown", reply_markup=keyboard)
+        
+        logger.info("Quest offer started", 
+                   user_id=user_id,
+                   user_name=message.from_user.first_name,
+                   chat_id=message.chat.id,
+                   quest_id=quest_context.quest_id,
+                   quest_title=quest_context.title)
+        
+    except Exception as e:
+        logger.error("Error in quest command", 
+                    user_id=message.from_user.id,
+                    chat_id=message.chat.id,
+                    error_type=type(e).__name__,
+                    error_message=str(e))
+        await message.answer(
+            "❌ **Quest Error**\n\n"
+            "There was an error starting your quest. Please try again later."
+        )
+
+
+# All quest action handlers have been moved to quest_proposal.py
+# This avoids conflicts and ensures proper quest handling
+
+

@@ -16,8 +16,8 @@ from app.services.logging_service import get_logger
 from app.services.i18n_service import i18n_service
 from app.services.fsm_service import FSMStateService
 from app.handlers.keyboards import build_quest_proposal_keyboard, build_actions_kb
-from app.handlers.callbacks import ActionCB
-from app.game.states import GameStates
+from app.handlers.callbacks import ActionCB, QuestActionCB
+from app.game.states import GameStates, QuestStates
 from app.game.actions import Action, ActionProcessor, get_available_actions
 from app.models.player_progress import QuestProposal, PlayerReputation
 from app.models.user import User
@@ -27,8 +27,8 @@ router = Router()
 logger = get_logger(__name__)
 
 
-@router.callback_query(F.data == "quest_ask_info")
-async def handle_quest_ask_info(cb: CallbackQuery, state: FSMContext, db_session: AsyncSession):
+@router.callback_query(QuestActionCB.filter(F.action == "ask"), QuestStates.OFFER)
+async def handle_quest_ask_info(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession):
     """Handle asking for additional quest information."""
     try:
         telegram_id = cb.from_user.id
@@ -48,7 +48,7 @@ async def handle_quest_ask_info(cb: CallbackQuery, state: FSMContext, db_session
         quest_proposal = result.scalar_one_or_none()
         
         if not quest_proposal or not quest_proposal.can_ask_info():
-            await cb.answer(i18n_service.get_text(user_id, "quest_proposal.info_used"), show_alert=True)
+            await cb.answer(i18n_service.get_text(telegram_id, "quest_proposal.info_used"), show_alert=True)
             return
         
         # Mark that player has asked for info
@@ -60,7 +60,8 @@ async def handle_quest_ask_info(cb: CallbackQuery, state: FSMContext, db_session
         quest_proposal.additional_info = additional_info
         await db_session.commit()
         
-        # Update FSM data
+        # Update FSM state to INVESTIGATED
+        await state.set_state(QuestStates.INVESTIGATED)
         await state.update_data(quest_proposal_id=quest_proposal_id)
         
         # Get localized text
@@ -96,8 +97,8 @@ async def handle_quest_ask_info(cb: CallbackQuery, state: FSMContext, db_session
         await cb.answer("❌ Error processing request", show_alert=True)
 
 
-@router.callback_query(F.data == "quest_accept")
-async def handle_quest_accept(cb: CallbackQuery, state: FSMContext, db_session: AsyncSession):
+@router.callback_query(QuestActionCB.filter(F.action == "accept"))
+async def handle_quest_accept(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession):
     """Handle accepting a quest proposal."""
     try:
         telegram_id = cb.from_user.id
@@ -125,7 +126,7 @@ async def handle_quest_accept(cb: CallbackQuery, state: FSMContext, db_session: 
         await db_session.commit()
         
         # Update FSM state to quest active
-        await state.set_state(GameStates.QUEST_ACTIVE)
+        await state.set_state(QuestStates.ACTIVE)
         
         # Create initial quest scene and player state
         from app.game.scenes import create_quest_scene, PlayerState
@@ -166,14 +167,15 @@ async def handle_quest_accept(cb: CallbackQuery, state: FSMContext, db_session: 
         # Get available actions for quest start
         available_actions = get_available_actions("quest_start", player_state)
         
-        # Build keyboard
+        # Build keyboard using new quest action system
         user_language = i18n_service.get_user_language(telegram_id)
         keyboard = build_actions_kb(
             actions=available_actions,
             locale=user_language,
             scene_id=quest_scene.scene_id,
-            context_hint=quest_proposal.quest_description,
-            row_width=2
+            context_hint=quest_scene.description,
+            row_width=2,
+            use_quest_callback=True
         )
         
         # Update FSM data
@@ -233,8 +235,8 @@ async def handle_quest_accept(cb: CallbackQuery, state: FSMContext, db_session: 
         await cb.answer("❌ Error processing request", show_alert=True)
 
 
-@router.callback_query(F.data == "quest_refuse")
-async def handle_quest_refuse(cb: CallbackQuery, state: FSMContext, db_session: AsyncSession):
+@router.callback_query(QuestActionCB.filter(F.action == "decline"))
+async def handle_quest_refuse(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession):
     """Handle refusing a quest proposal."""
     try:
         telegram_id = cb.from_user.id
@@ -264,15 +266,17 @@ async def handle_quest_refuse(cb: CallbackQuery, state: FSMContext, db_session: 
         # Generate refusal consequence
         consequence = _generate_refusal_consequence(quest_proposal)
         
-        # Apply reputation changes if any
-        if consequence.get("reputation_change") and quest_proposal.faction:
+        # Always apply -1 reputation penalty for declining quests
+        if quest_proposal.faction:
             await _apply_reputation_change(
-                db_session, user_id, quest_proposal.faction, 
-                consequence["reputation_change"]
+                db_session, telegram_id, quest_proposal.faction, 
+                -1  # Always -1 reputation for declining
             )
+            # Update consequence to reflect the reputation change
+            consequence["reputation_change"] = -1
         
-        # Update FSM state back to menu
-        await state.set_state(GameStates.MENU)
+        # Update FSM state to complete
+        await state.set_state(QuestStates.COMPLETE)
         
         # Clear quest proposal data from FSM
         await state.update_data(quest_proposal_id=None)
@@ -294,6 +298,10 @@ async def handle_quest_refuse(cb: CallbackQuery, state: FSMContext, db_session: 
             )
         elif consequence["type"] == "warning":
             response_text += i18n_service.get_text(telegram_id, "quest_proposal.refused_warning").format(
+                questgiver_name=questgiver_name
+            )
+        elif consequence["type"] == "disappointed":
+            response_text += i18n_service.get_text(telegram_id, "quest_proposal.refused_disappointed").format(
                 questgiver_name=questgiver_name
             )
         
@@ -351,19 +359,25 @@ def _generate_additional_info(quest_proposal: QuestProposal) -> str:
 def _generate_refusal_consequence(quest_proposal: QuestProposal) -> dict:
     """Generate consequences for refusing a quest."""
     # Weighted random selection of consequence types
+    # All consequences now have -1 reputation (applied separately)
     consequences = [
-        {"type": "insult", "weight": 40, "reputation_change": -5},
-        {"type": "insist", "weight": 30, "reputation_change": 0},
-        {"type": "warning", "weight": 30, "reputation_change": 0},
+        {"type": "insult", "weight": 35, "reputation_change": -1},
+        {"type": "insist", "weight": 30, "reputation_change": -1},
+        {"type": "warning", "weight": 25, "reputation_change": -1},
+        {"type": "disappointed", "weight": 10, "reputation_change": -1},
     ]
     
     # Adjust weights based on quest characteristics
     if quest_proposal.risk_level >= 4:
-        # High risk quests are more likely to get warning
-        consequences[2]["weight"] += 20
+        # High risk quests are more likely to get warning or disappointed reaction
+        consequences[2]["weight"] += 15  # warning
+        consequences[3]["weight"] += 10  # disappointed
     elif quest_proposal.reward_gold >= 100:
         # High reward quests are more likely to get insult
-        consequences[0]["weight"] += 20
+        consequences[0]["weight"] += 15  # insult
+    elif quest_proposal.risk_level <= 2:
+        # Low risk quests are more likely to get insist reaction
+        consequences[1]["weight"] += 15  # insist
     
     # Select consequence based on weights
     total_weight = sum(c["weight"] for c in consequences)
@@ -480,18 +494,18 @@ async def create_quest_proposal(
     return quest_proposal
 
 
-@router.callback_query(ActionCB.filter(), GameStates.QUEST_ACTIVE)
-async def handle_quest_action_callback(cb: CallbackQuery, callback_data: ActionCB, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
+@router.callback_query(QuestActionCB.filter(), QuestStates.ACTIVE)
+async def handle_quest_action_callback(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
     """Handle quest action callbacks."""
     await handle_quest_action(cb, callback_data, state, db_session, fsm_service)
 
 
-async def handle_quest_action(cb: CallbackQuery, callback_data: ActionCB, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
+async def handle_quest_action(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
     """Handle action button presses during active quest."""
     try:
         user_id = cb.from_user.id
-        action = callback_data.a
-        scene_id = callback_data.s
+        action = callback_data.action
+        scene_id = callback_data.scene_id
         
         # Get current FSM data
         fsm_data = await state.get_data()
@@ -539,7 +553,8 @@ async def handle_quest_action(cb: CallbackQuery, callback_data: ActionCB, state:
             locale=user_language,
             scene_id=next_scene["scene_id"],
             context_hint=next_scene["description"],
-            row_width=2
+            row_width=2,
+            use_quest_callback=True
         )
         
         # Update FSM data
@@ -602,8 +617,8 @@ async def _complete_quest_with_rewards(cb: CallbackQuery, completion_data: dict,
         rewards = completion_data["rewards"]
         efficiency = completion_data["efficiency"]
         
-        # Update FSM state back to menu
-        await state.set_state(GameStates.MENU)
+        # Update FSM state to complete
+        await state.set_state(QuestStates.COMPLETE)
         await state.update_data(
             player_state_dict=None,
             current_scene=None,
@@ -659,8 +674,8 @@ async def _fail_quest_with_reason(cb: CallbackQuery, failure_data: dict, state: 
     try:
         user_id = cb.from_user.id
         
-        # Update FSM state back to menu
-        await state.set_state(GameStates.MENU)
+        # Update FSM state to complete
+        await state.set_state(QuestStates.COMPLETE)
         await state.update_data(
             player_state_dict=None,
             current_scene=None,
@@ -693,6 +708,399 @@ async def _fail_quest_with_reason(cb: CallbackQuery, failure_data: dict, state: 
                     user_id=cb.from_user.id,
                     error=str(e))
         await cb.answer("❌ Error processing quest failure", show_alert=True)
+
+
+# Combat action handlers
+@router.callback_query(QuestActionCB.filter(F.action == "attack"), QuestStates.COMBAT)
+async def handle_quest_attack(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession):
+    """Handle attack action in combat."""
+    await _handle_combat_action(cb, "attack", state, db_session)
+
+
+@router.callback_query(QuestActionCB.filter(F.action == "defend"), QuestStates.COMBAT)
+async def handle_quest_defend(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession):
+    """Handle defend action in combat."""
+    await _handle_combat_action(cb, "defend", state, db_session)
+
+
+@router.callback_query(QuestActionCB.filter(F.action == "flee"), QuestStates.COMBAT)
+async def handle_quest_flee(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession):
+    """Handle flee action in combat."""
+    await _handle_combat_action(cb, "flee", state, db_session)
+
+
+# Quest progression handlers
+@router.callback_query(QuestActionCB.filter(F.action == "continue"), QuestStates.ACTIVE)
+async def handle_quest_continue(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession):
+    """Handle continue action in active quest."""
+    await _handle_quest_progression(cb, "continue", state, db_session)
+
+
+@router.callback_query(QuestActionCB.filter(F.action == "next"), QuestStates.ACTIVE)
+async def handle_quest_next(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession):
+    """Handle next action in active quest."""
+    await _handle_quest_progression(cb, "next", state, db_session)
+
+
+@router.callback_query(QuestActionCB.filter(F.action == "loot"), QuestStates.ACTIVE)
+async def handle_quest_loot(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession):
+    """Handle loot action in active quest."""
+    await _handle_quest_progression(cb, "loot", state, db_session)
+
+
+@router.callback_query(QuestActionCB.filter(F.action == "search_new"), QuestStates.ACTIVE)
+async def handle_quest_search_new(cb: CallbackQuery, callback_data: QuestActionCB, state: FSMContext, db_session: AsyncSession):
+    """Handle search new action in active quest."""
+    await _handle_quest_progression(cb, "search_new", state, db_session)
+
+
+async def _handle_combat_action(cb: CallbackQuery, action: str, state: FSMContext, db_session: AsyncSession):
+    """Handle combat actions with real consequences."""
+    try:
+        user_id = cb.from_user.id
+        
+        # Get current FSM data
+        fsm_data = await state.get_data()
+        player_state_dict = fsm_data.get("player_state_dict")
+        quest_data = fsm_data.get("quest_data")
+        
+        if not player_state_dict or not quest_data:
+            await cb.answer("❌ Quest state not found", show_alert=True)
+            return
+        
+        # Recreate player state
+        player_state = await _get_or_create_player_state(user_id, state)
+        
+        # Process combat action with consequences
+        combat_result = _process_combat_action(action, player_state, quest_data)
+        
+        # Update player state
+        player_state.energy += combat_result["energy_change"]
+        player_state.risk_level += combat_result["risk_change"]
+        
+        # Check if combat is over
+        if combat_result["combat_ended"]:
+            if combat_result["victory"]:
+                # Return to active quest state
+                await state.set_state(QuestStates.ACTIVE)
+                response_text = f"🎉 {combat_result['message']}\n\nYou have defeated the enemy and can continue your quest!"
+            else:
+                # Quest failed due to combat loss
+                await state.set_state(QuestStates.COMPLETE)
+                response_text = f"💀 {combat_result['message']}\n\nYour quest has failed due to defeat in combat."
+        else:
+            # Combat continues
+            response_text = f"⚔️ {combat_result['message']}\n\nCombat continues! Choose your next action."
+        
+        # Update FSM data
+        await state.update_data(
+            player_state_dict={
+                "user_id": player_state.user_id,
+                "energy": player_state.energy,
+                "risk_level": player_state.risk_level,
+                "stats": player_state.stats,
+                "current_scene": player_state.current_scene,
+                "visited_scenes": list(player_state.visited_scenes),
+                "scene_cooldowns": player_state.scene_cooldowns,
+                "goals": list(player_state.goals),
+                "step_count": player_state.step_count
+            }
+        )
+        
+        # Build keyboard based on combat state
+        if combat_result["combat_ended"]:
+            if combat_result["victory"]:
+                keyboard = _build_quest_continue_keyboard()
+            else:
+                keyboard = None
+        else:
+            keyboard = _build_combat_keyboard()
+        
+        if keyboard:
+            await cb.message.edit_text(response_text, reply_markup=keyboard, parse_mode="HTML")
+        else:
+            await cb.message.edit_text(response_text, parse_mode="HTML")
+        
+        await cb.answer()
+        
+        logger.info("Player made combat action", 
+                   user_id=user_id,
+                   action=action,
+                   energy=player_state.energy,
+                   risk_level=player_state.risk_level,
+                   combat_ended=combat_result["combat_ended"],
+                   victory=combat_result.get("victory", False))
+        
+    except Exception as e:
+        logger.error("Error in combat action handler", 
+                    user_id=cb.from_user.id,
+                    error_type=type(e).__name__,
+                    error_message=str(e))
+        await cb.answer("❌ Error processing combat action", show_alert=True)
+
+
+async def _handle_quest_progression(cb: CallbackQuery, action: str, state: FSMContext, db_session: AsyncSession):
+    """Handle quest progression actions with real consequences."""
+    try:
+        user_id = cb.from_user.id
+        
+        # Get current FSM data
+        fsm_data = await state.get_data()
+        player_state_dict = fsm_data.get("player_state_dict")
+        quest_data = fsm_data.get("quest_data")
+        
+        if not player_state_dict or not quest_data:
+            await cb.answer("❌ Quest state not found", show_alert=True)
+            return
+        
+        # Recreate player state
+        player_state = await _get_or_create_player_state(user_id, state)
+        
+        # Process quest progression action
+        progression_result = _process_quest_progression(action, player_state, quest_data)
+        
+        # Update player state
+        player_state.energy += progression_result["energy_change"]
+        player_state.risk_level += progression_result["risk_change"]
+        player_state.step_count += 1
+        
+        # Check if quest should transition to combat
+        if progression_result["triggers_combat"]:
+            await state.set_state(QuestStates.COMBAT)
+            response_text = f"⚔️ {progression_result['message']}\n\nCombat has begun! Choose your action."
+            keyboard = _build_combat_keyboard()
+        elif progression_result["quest_completed"]:
+            await state.set_state(QuestStates.COMPLETE)
+            response_text = f"🎉 {progression_result['message']}\n\nQuest completed successfully!"
+            keyboard = None
+        else:
+            # Continue quest
+            response_text = f"📜 {progression_result['message']}\n\nContinue your quest adventure."
+            keyboard = _build_quest_continue_keyboard()
+        
+        # Update FSM data
+        await state.update_data(
+            player_state_dict={
+                "user_id": player_state.user_id,
+                "energy": player_state.energy,
+                "risk_level": player_state.risk_level,
+                "stats": player_state.stats,
+                "current_scene": player_state.current_scene,
+                "visited_scenes": list(player_state.visited_scenes),
+                "scene_cooldowns": player_state.scene_cooldowns,
+                "goals": list(player_state.goals),
+                "step_count": player_state.step_count
+            }
+        )
+        
+        if keyboard:
+            await cb.message.edit_text(response_text, reply_markup=keyboard, parse_mode="HTML")
+        else:
+            await cb.message.edit_text(response_text, parse_mode="HTML")
+        
+        await cb.answer()
+        
+        logger.info("Player made quest progression action", 
+                   user_id=user_id,
+                   action=action,
+                   energy=player_state.energy,
+                   risk_level=player_state.risk_level,
+                   step_count=player_state.step_count,
+                   triggers_combat=progression_result["triggers_combat"],
+                   quest_completed=progression_result["quest_completed"])
+        
+    except Exception as e:
+        logger.error("Error in quest progression handler", 
+                    user_id=cb.from_user.id,
+                    error_type=type(e).__name__,
+                    error_message=str(e))
+        await cb.answer("❌ Error processing quest action", show_alert=True)
+
+
+def _process_combat_action(action: str, player_state, quest_data: dict) -> dict:
+    """Process combat action with real consequences."""
+    import random
+    
+    # Base combat mechanics
+    base_energy_cost = 15
+    base_risk_increase = 2
+    
+    if action == "attack":
+        # Attack has high energy cost but good chance of victory
+        energy_cost = base_energy_cost + random.randint(5, 15)
+        risk_increase = base_risk_increase + random.randint(1, 3)
+        victory_chance = 0.6 + (player_state.stats.get("bravery", 1) * 0.1)
+        
+        if random.random() < victory_chance:
+            return {
+                "message": "Your attack was successful! The enemy is defeated!",
+                "energy_change": -energy_cost,
+                "risk_change": risk_increase,
+                "combat_ended": True,
+                "victory": True
+            }
+        else:
+            return {
+                "message": "Your attack missed! The enemy counterattacks!",
+                "energy_change": -energy_cost - 10,
+                "risk_change": risk_increase + 2,
+                "combat_ended": False,
+                "victory": False
+            }
+    
+    elif action == "defend":
+        # Defend has lower energy cost and reduces risk
+        energy_cost = base_energy_cost - 5
+        risk_increase = max(0, base_risk_increase - 1)
+        
+        return {
+            "message": "You defend against the enemy's attack, reducing damage taken.",
+            "energy_change": -energy_cost,
+            "risk_change": risk_increase,
+            "combat_ended": False,
+            "victory": False
+        }
+    
+    elif action == "flee":
+        # Flee has moderate energy cost but ends combat
+        energy_cost = base_energy_cost - 5
+        risk_increase = base_risk_increase + 3  # Fleeing increases risk
+        
+        return {
+            "message": "You successfully flee from combat, but your reputation suffers.",
+            "energy_change": -energy_cost,
+            "risk_change": risk_increase,
+            "combat_ended": True,
+            "victory": False
+        }
+    
+    return {
+        "message": "Unknown combat action.",
+        "energy_change": 0,
+        "risk_change": 0,
+        "combat_ended": False,
+        "victory": False
+    }
+
+
+def _process_quest_progression(action: str, player_state, quest_data: dict) -> dict:
+    """Process quest progression action with real consequences."""
+    import random
+    
+    # Base progression mechanics
+    base_energy_cost = 10
+    base_risk_increase = 1
+    
+    if action == "continue":
+        energy_cost = base_energy_cost + random.randint(0, 10)
+        risk_increase = base_risk_increase + random.randint(0, 2)
+        combat_chance = 0.3 + (quest_data.get("risk_level", 1) * 0.1)
+        
+        if random.random() < combat_chance:
+            return {
+                "message": "As you continue your quest, you encounter hostile creatures!",
+                "energy_change": -energy_cost,
+                "risk_change": risk_increase,
+                "triggers_combat": True,
+                "quest_completed": False
+            }
+        else:
+            return {
+                "message": "You make progress on your quest without incident.",
+                "energy_change": -energy_cost,
+                "risk_change": risk_increase,
+                "triggers_combat": False,
+                "quest_completed": False
+            }
+    
+    elif action == "next":
+        energy_cost = base_energy_cost + random.randint(5, 15)
+        risk_increase = base_risk_increase + random.randint(1, 3)
+        
+        # Check if quest should be completed
+        if player_state.step_count >= 5:  # Simple completion condition
+            return {
+                "message": "You have successfully completed your quest objectives!",
+                "energy_change": -energy_cost,
+                "risk_change": risk_increase,
+                "triggers_combat": False,
+                "quest_completed": True
+            }
+        else:
+            return {
+                "message": "You advance further in your quest, discovering new challenges.",
+                "energy_change": -energy_cost,
+                "risk_change": risk_increase,
+                "triggers_combat": False,
+                "quest_completed": False
+            }
+    
+    elif action == "loot":
+        energy_cost = base_energy_cost - 5
+        risk_increase = base_risk_increase + random.randint(0, 2)
+        
+        # Loot can provide benefits but also risks
+        loot_benefit = random.randint(5, 15)
+        player_state.energy += loot_benefit
+        
+        return {
+            "message": f"You find valuable loot that restores {loot_benefit} energy!",
+            "energy_change": loot_benefit - energy_cost,
+            "risk_change": risk_increase,
+            "triggers_combat": False,
+            "quest_completed": False
+        }
+    
+    elif action == "search_new":
+        energy_cost = base_energy_cost + random.randint(0, 5)
+        risk_increase = base_risk_increase + random.randint(0, 1)
+        
+        return {
+            "message": "You search for new paths and opportunities in your quest.",
+            "energy_change": -energy_cost,
+            "risk_change": risk_increase,
+            "triggers_combat": False,
+            "quest_completed": False
+        }
+    
+    return {
+        "message": "Unknown quest action.",
+        "energy_change": 0,
+        "risk_change": 0,
+        "triggers_combat": False,
+        "quest_completed": False
+    }
+
+
+def _build_combat_keyboard():
+    """Build keyboard for combat actions."""
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⚔️ Attack", callback_data=QuestActionCB(action="attack").pack()),
+            InlineKeyboardButton(text="🛡️ Defend", callback_data=QuestActionCB(action="defend").pack())
+        ],
+        [
+            InlineKeyboardButton(text="🏃 Flee", callback_data=QuestActionCB(action="flee").pack())
+        ]
+    ])
+
+
+def _build_quest_continue_keyboard():
+    """Build keyboard for quest continuation actions."""
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="➡️ Continue", callback_data=QuestActionCB(action="continue").pack()),
+            InlineKeyboardButton(text="🔍 Search New", callback_data=QuestActionCB(action="search_new").pack())
+        ],
+        [
+            InlineKeyboardButton(text="📦 Loot", callback_data=QuestActionCB(action="loot").pack()),
+            InlineKeyboardButton(text="⏭️ Next", callback_data=QuestActionCB(action="next").pack())
+        ]
+    ])
 
 
 async def _generate_quest_scene_description(action: str, quest_data: dict, player_state) -> str:
