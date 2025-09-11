@@ -39,6 +39,35 @@ class Action(StrEnum):
     ASK_QUEST_INFO = "ask_quest_info"
     # Quest Actions
     COMPLETE_QUEST = "complete_quest"
+    # Extended Quest Actions
+    SEARCH = "search"
+    HIDE = "hide"
+    CHARM = "charm"
+    INTIMIDATE = "intimidate"
+    HEAL = "heal"
+    MEDITATE = "meditate"
+    CRAFT = "craft"
+    TRADE = "trade"
+    BEFRIEND = "befriend"
+    SABOTAGE = "sabotage"
+    INFILTRATE = "infiltrate"
+    NEGOTIATE_PEACE = "negotiate_peace"
+    DECEIVE = "deceive"
+    INSPIRE = "inspire"
+    LEAD = "lead"
+    FOLLOW = "follow"
+    OBSERVE = "observe"
+    LEARN = "learn"
+    TEACH = "teach"
+    PROTECT = "protect"
+    SACRIFICE = "sacrifice"
+    ESCAPE = "escape"
+    PURSUE = "pursue"
+    AMBUSH = "ambush"
+    SURRENDER = "surrender"
+    CHALLENGE = "challenge"
+    ACCEPT_CHALLENGE = "accept_challenge"
+    DECLINE_CHALLENGE = "decline_challenge"
 
 
 @dataclass(frozen=True)
@@ -77,6 +106,35 @@ ACTION_META: dict[Action, ActionMeta] = {
     Action.ASK_QUEST_INFO: ActionMeta("action.ask_quest_info", "btn.ask_quest_info"),
     # Quest Actions
     Action.COMPLETE_QUEST: ActionMeta("action.complete_quest", "btn.complete_quest"),
+    # Extended Quest Actions
+    Action.SEARCH: ActionMeta("action.search", "btn.search"),
+    Action.HIDE: ActionMeta("action.hide", "btn.hide"),
+    Action.CHARM: ActionMeta("action.charm", "btn.charm"),
+    Action.INTIMIDATE: ActionMeta("action.intimidate", "btn.intimidate"),
+    Action.HEAL: ActionMeta("action.heal", "btn.heal"),
+    Action.MEDITATE: ActionMeta("action.meditate", "btn.meditate"),
+    Action.CRAFT: ActionMeta("action.craft", "btn.craft"),
+    Action.TRADE: ActionMeta("action.trade", "btn.trade"),
+    Action.BEFRIEND: ActionMeta("action.befriend", "btn.befriend"),
+    Action.SABOTAGE: ActionMeta("action.sabotage", "btn.sabotage"),
+    Action.INFILTRATE: ActionMeta("action.infiltrate", "btn.infiltrate"),
+    Action.NEGOTIATE_PEACE: ActionMeta("action.negotiate_peace", "btn.negotiate_peace"),
+    Action.DECEIVE: ActionMeta("action.deceive", "btn.deceive"),
+    Action.INSPIRE: ActionMeta("action.inspire", "btn.inspire"),
+    Action.LEAD: ActionMeta("action.lead", "btn.lead"),
+    Action.FOLLOW: ActionMeta("action.follow", "btn.follow"),
+    Action.OBSERVE: ActionMeta("action.observe", "btn.observe"),
+    Action.LEARN: ActionMeta("action.learn", "btn.learn"),
+    Action.TEACH: ActionMeta("action.teach", "btn.teach"),
+    Action.PROTECT: ActionMeta("action.protect", "btn.protect"),
+    Action.SACRIFICE: ActionMeta("action.sacrifice", "btn.sacrifice"),
+    Action.ESCAPE: ActionMeta("action.escape", "btn.escape"),
+    Action.PURSUE: ActionMeta("action.pursue", "btn.pursue"),
+    Action.AMBUSH: ActionMeta("action.ambush", "btn.ambush"),
+    Action.SURRENDER: ActionMeta("action.surrender", "btn.surrender"),
+    Action.CHALLENGE: ActionMeta("action.challenge", "btn.challenge"),
+    Action.ACCEPT_CHALLENGE: ActionMeta("action.accept_challenge", "btn.accept_challenge"),
+    Action.DECLINE_CHALLENGE: ActionMeta("action.decline_challenge", "btn.decline_challenge"),
 }
 
 
@@ -251,6 +309,174 @@ class ActionProcessor:
                 risk_change=0,
                 success_probability=1.0
             ),
+            # Extended Quest Actions
+            Action.SEARCH: ActionConsequence(
+                stat_changes={"intellect": 1},
+                energy_cost=8,
+                risk_change=1,
+                success_probability=0.7
+            ),
+            Action.HIDE: ActionConsequence(
+                stat_changes={"stamina": 1},
+                energy_cost=6,
+                risk_change=-1,
+                success_probability=0.6
+            ),
+            Action.CHARM: ActionConsequence(
+                stat_changes={"charisma": 1},
+                energy_cost=10,
+                risk_change=0,
+                success_probability=0.7
+            ),
+            Action.INTIMIDATE: ActionConsequence(
+                stat_changes={"bravery": 1},
+                energy_cost=8,
+                risk_change=2,
+                success_probability=0.6
+            ),
+            Action.HEAL: ActionConsequence(
+                energy_cost=15,
+                risk_change=-1,
+                success_probability=0.8
+            ),
+            Action.MEDITATE: ActionConsequence(
+                stat_changes={"intellect": 1},
+                energy_cost=-10,  # Restore energy
+                risk_change=-2,
+                success_probability=1.0
+            ),
+            Action.CRAFT: ActionConsequence(
+                stat_changes={"intellect": 1},
+                energy_cost=12,
+                risk_change=0,
+                success_probability=0.6
+            ),
+            Action.TRADE: ActionConsequence(
+                stat_changes={"charisma": 1},
+                energy_cost=5,
+                risk_change=0,
+                success_probability=0.8
+            ),
+            Action.BEFRIEND: ActionConsequence(
+                stat_changes={"charisma": 1},
+                energy_cost=8,
+                risk_change=-1,
+                success_probability=0.7
+            ),
+            Action.SABOTAGE: ActionConsequence(
+                stat_changes={"intellect": 1},
+                energy_cost=15,
+                risk_change=3,
+                success_probability=0.5
+            ),
+            Action.INFILTRATE: ActionConsequence(
+                stat_changes={"stamina": 1},
+                energy_cost=12,
+                risk_change=2,
+                success_probability=0.6
+            ),
+            Action.NEGOTIATE_PEACE: ActionConsequence(
+                stat_changes={"charisma": 1},
+                energy_cost=10,
+                risk_change=-2,
+                success_probability=0.6
+            ),
+            Action.DECEIVE: ActionConsequence(
+                stat_changes={"intellect": 1},
+                energy_cost=8,
+                risk_change=1,
+                success_probability=0.6
+            ),
+            Action.INSPIRE: ActionConsequence(
+                stat_changes={"charisma": 1},
+                energy_cost=10,
+                risk_change=-1,
+                success_probability=0.7
+            ),
+            Action.LEAD: ActionConsequence(
+                stat_changes={"charisma": 1, "bravery": 1},
+                energy_cost=15,
+                risk_change=1,
+                success_probability=0.7
+            ),
+            Action.FOLLOW: ActionConsequence(
+                stat_changes={"stamina": 1},
+                energy_cost=5,
+                risk_change=0,
+                success_probability=0.8
+            ),
+            Action.OBSERVE: ActionConsequence(
+                stat_changes={"intellect": 1},
+                energy_cost=3,
+                risk_change=0,
+                success_probability=0.9
+            ),
+            Action.LEARN: ActionConsequence(
+                stat_changes={"intellect": 1},
+                energy_cost=8,
+                risk_change=0,
+                success_probability=0.8
+            ),
+            Action.TEACH: ActionConsequence(
+                stat_changes={"charisma": 1},
+                energy_cost=6,
+                risk_change=0,
+                success_probability=0.8
+            ),
+            Action.PROTECT: ActionConsequence(
+                stat_changes={"bravery": 1, "stamina": 1},
+                energy_cost=12,
+                risk_change=1,
+                success_probability=0.7
+            ),
+            Action.SACRIFICE: ActionConsequence(
+                stat_changes={"bravery": 2},
+                energy_cost=20,
+                risk_change=2,
+                success_probability=0.8
+            ),
+            Action.ESCAPE: ActionConsequence(
+                stat_changes={"stamina": 1},
+                energy_cost=10,
+                risk_change=-2,
+                success_probability=0.7
+            ),
+            Action.PURSUE: ActionConsequence(
+                stat_changes={"stamina": 1},
+                energy_cost=12,
+                risk_change=1,
+                success_probability=0.6
+            ),
+            Action.AMBUSH: ActionConsequence(
+                stat_changes={"bravery": 1},
+                energy_cost=8,
+                risk_change=2,
+                success_probability=0.7
+            ),
+            Action.SURRENDER: ActionConsequence(
+                stat_changes={"charisma": -1},
+                energy_cost=0,
+                risk_change=-3,
+                success_probability=1.0
+            ),
+            Action.CHALLENGE: ActionConsequence(
+                stat_changes={"bravery": 1},
+                energy_cost=10,
+                risk_change=2,
+                success_probability=0.6
+            ),
+            Action.ACCEPT_CHALLENGE: ActionConsequence(
+                stat_changes={"bravery": 1},
+                energy_cost=15,
+                risk_change=2,
+                success_probability=0.7
+            ),
+            Action.DECLINE_CHALLENGE: ActionConsequence(
+                stat_changes={"charisma": -1},
+                energy_cost=0,
+                risk_change=-1,
+                success_probability=1.0
+            ),
         }
         
         return base_consequences.get(action, ActionConsequence())
@@ -349,8 +575,43 @@ def get_available_actions(scene_type: str, player_state) -> List[Action]:
         "dialogue": [Action.TALK, Action.NEGOTIATE, Action.INVESTIGATE, Action.RUN_AI],
         "rest": [Action.REST, Action.WAIT, Action.CONTINUE],
         "exploration": [Action.EXPLORE, Action.INVESTIGATE, Action.LOOT, Action.RETREAT, Action.RUN_AI],
-        "quest": [Action.EXPLORE, Action.INVESTIGATE, Action.FIGHT, Action.NEGOTIATE, Action.COMPLETE_QUEST],
-        "quest_start": [Action.EXPLORE, Action.INVESTIGATE, Action.FIGHT, Action.NEGOTIATE],
+        "quest": [
+            Action.EXPLORE, Action.INVESTIGATE, Action.FIGHT, Action.NEGOTIATE, 
+            Action.SEARCH, Action.HIDE, Action.CHARM, Action.INTIMIDATE,
+            Action.HEAL, Action.MEDITATE, Action.CRAFT, Action.TRADE,
+            Action.BEFRIEND, Action.SABOTAGE, Action.INFILTRATE, Action.NEGOTIATE_PEACE,
+            Action.DECEIVE, Action.INSPIRE, Action.LEAD, Action.FOLLOW,
+            Action.OBSERVE, Action.LEARN, Action.TEACH, Action.PROTECT,
+            Action.SACRIFICE, Action.ESCAPE, Action.PURSUE, Action.AMBUSH,
+            Action.SURRENDER, Action.CHALLENGE, Action.ACCEPT_CHALLENGE, Action.DECLINE_CHALLENGE,
+            Action.COMPLETE_QUEST
+        ],
+        "quest_start": [
+            Action.EXPLORE, Action.INVESTIGATE, Action.FIGHT, Action.NEGOTIATE,
+            Action.SEARCH, Action.OBSERVE, Action.LEARN, Action.TRADE
+        ],
+        "quest_exploration": [
+            Action.SEARCH, Action.EXPLORE, Action.OBSERVE, Action.HIDE,
+            Action.INVESTIGATE, Action.LEARN, Action.ESCAPE, Action.RETREAT
+        ],
+        "quest_social": [
+            Action.TALK, Action.NEGOTIATE, Action.CHARM, Action.INTIMIDATE,
+            Action.BEFRIEND, Action.DECEIVE, Action.INSPIRE, Action.TEACH,
+            Action.TRADE, Action.NEGOTIATE_PEACE
+        ],
+        "quest_combat": [
+            Action.FIGHT, Action.ATTACK, Action.DEFEND, Action.AMBUSH,
+            Action.CHALLENGE, Action.ACCEPT_CHALLENGE, Action.SURRENDER,
+            Action.ESCAPE, Action.PURSUE, Action.PROTECT
+        ],
+        "quest_stealth": [
+            Action.HIDE, Action.SNEAK, Action.INFILTRATE, Action.SABOTAGE,
+            Action.DECEIVE, Action.ESCAPE, Action.AMBUSH
+        ],
+        "quest_leadership": [
+            Action.LEAD, Action.INSPIRE, Action.PROTECT, Action.TEACH,
+            Action.NEGOTIATE_PEACE, Action.CHALLENGE, Action.ACCEPT_CHALLENGE
+        ],
         "quest_proposal": [Action.ACCEPT_QUEST, Action.REFUSE_QUEST, Action.ASK_QUEST_INFO],
         "loot": [Action.LOOT, Action.INVESTIGATE, Action.CONTINUE],
         "combat": [Action.ATTACK, Action.DEFEND, Action.CAST, Action.USE_ITEM, Action.FLEE],

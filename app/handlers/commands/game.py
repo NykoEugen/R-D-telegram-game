@@ -271,6 +271,13 @@ async def on_action_press(cb: CallbackQuery, callback_data: ActionCB, state: FSM
         current_state = await state.get_state()
         fsm_data = await state.get_data()
         
+        # If we're in QUEST_ACTIVE state, let the quest system handle it
+        if current_state == GameStates.QUEST_ACTIVE:
+            # Import here to avoid circular import
+            from app.handlers.quest_proposal import handle_quest_action
+            await handle_quest_action(cb, callback_data, state, db_session, fsm_service)
+            return
+        
         # Get or create player state
         player_state = await _get_or_create_player_state(user_id, state)
         

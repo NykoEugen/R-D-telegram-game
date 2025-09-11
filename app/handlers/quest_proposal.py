@@ -131,9 +131,27 @@ async def handle_quest_accept(cb: CallbackQuery, state: FSMContext, db_session: 
         from app.game.scenes import create_quest_scene, PlayerState
         from app.handlers.keyboards import build_actions_kb
         from app.game.actions import get_available_actions
+        from app.game.quest_system import quest_manager, QuestType
         
         # Create or get player state
         player_state = await _get_or_create_player_state(telegram_id, state)
+        
+        # Create quest using quest manager
+        quest_data = {
+            "user_id": telegram_id,
+            "questgiver_name": quest_proposal.questgiver_name,
+            "quest_intro": quest_proposal.quest_intro,
+            "quest_description": quest_proposal.quest_description,
+            "quest_type": "investigation",  # Default type, could be determined by quest content
+            "risk_level": quest_proposal.risk_level,
+            "reward_gold": quest_proposal.reward_gold,
+            "reward_xp": quest_proposal.reward_xp,
+            "faction": quest_proposal.faction,
+            "additional_info": quest_proposal.additional_info
+        }
+        
+        quest = quest_manager.create_quest(quest_data)
+        quest = quest_manager.start_quest(telegram_id, quest)
         
         # Create quest scene based on the accepted quest
         quest_scene = create_quest_scene(
@@ -463,6 +481,11 @@ async def create_quest_proposal(
 
 
 @router.callback_query(ActionCB.filter(), GameStates.QUEST_ACTIVE)
+async def handle_quest_action_callback(cb: CallbackQuery, callback_data: ActionCB, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
+    """Handle quest action callbacks."""
+    await handle_quest_action(cb, callback_data, state, db_session, fsm_service)
+
+
 async def handle_quest_action(cb: CallbackQuery, callback_data: ActionCB, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
     """Handle action button presses during active quest."""
     try:
@@ -483,40 +506,39 @@ async def handle_quest_action(cb: CallbackQuery, callback_data: ActionCB, state:
         # Recreate player state
         player_state = await _get_or_create_player_state(user_id, state)
         
-        # Process the action
-        scene_context = {
-            "scene_type": "quest",
-            "scene_id": current_scene_id,
-            "risk_level": quest_data["risk_level"],
-            "quest_description": quest_data["quest_description"]
-        }
+        # Process the action using quest manager
+        from app.game.quest_system import quest_manager
         
-        consequence = ActionProcessor.process_action(action, player_state, scene_context)
-        action_result = ActionProcessor.apply_consequence(consequence, player_state)
+        quest_result = quest_manager.process_quest_action(user_id, action, player_state)
+        
+        if "error" in quest_result:
+            await cb.answer("❌ Quest state not found", show_alert=True)
+            return
+        
+        action_result = quest_result["action_result"]
+        next_scene = quest_result["next_scene"]
+        completion_status = quest_result["completion_status"]
         
         # Handle quest completion
-        if action == Action.COMPLETE_QUEST:
-            await _complete_quest(cb, player_state, quest_data, state, fsm_service)
+        if completion_status["completed"]:
+            await _complete_quest_with_rewards(cb, quest_result["quest_completion"], state, fsm_service)
             return
         
         # Handle quest failure
-        if player_state.energy <= 0:
-            await _fail_quest(cb, player_state, quest_data, state, fsm_service)
+        if completion_status["failed"]:
+            await _fail_quest_with_reason(cb, quest_result["quest_failure"], state, fsm_service)
             return
         
-        # Generate next scene based on action
-        next_scene_description = await _generate_quest_scene_description(action, quest_data, player_state)
-        
         # Get available actions for next scene
-        available_actions = get_available_actions("quest", player_state)
+        available_actions = next_scene["available_actions"]
         
         # Build keyboard
         user_language = i18n_service.get_user_language(user_id)
         keyboard = build_actions_kb(
             actions=available_actions,
             locale=user_language,
-            scene_id=current_scene_id,
-            context_hint=next_scene_description,
+            scene_id=next_scene["scene_id"],
+            context_hint=next_scene["description"],
             row_width=2
         )
         
@@ -533,19 +555,24 @@ async def handle_quest_action(cb: CallbackQuery, callback_data: ActionCB, state:
                 "goals": list(player_state.goals),
                 "step_count": player_state.step_count
             },
-            scene_description=next_scene_description,
-            available_actions=available_actions
+            scene_description=next_scene["description"],
+            available_actions=available_actions,
+            quest_progress=quest_result["quest_progress"]
         )
         
         # Build response text
+        quest_progress = quest_result["quest_progress"]
         response_text = (
             f"📜 **Quest Progress**\n\n"
-            f"{next_scene_description}\n\n"
+            f"{next_scene['description']}\n\n"
             f"⚡ **Energy:** {player_state.energy}/100\n"
             f"📊 **Stats:** Bravery: {player_state.stats.get('bravery', 1)}, "
             f"Charisma: {player_state.stats.get('charisma', 1)}, "
             f"Intellect: {player_state.stats.get('intellect', 1)}, "
             f"Stamina: {player_state.stats.get('stamina', 1)}\n\n"
+            f"🎯 **Quest Phase:** {quest_progress['phase']}\n"
+            f"📋 **Objectives:** {quest_progress['objectives_completed']}/{quest_progress['objectives_total']}\n"
+            f"⚡ **Actions Taken:** {quest_progress['actions_taken']}\n\n"
             f"🎯 **What will you do?**"
         )
         
@@ -566,17 +593,14 @@ async def handle_quest_action(cb: CallbackQuery, callback_data: ActionCB, state:
         await cb.answer("❌ Error processing action", show_alert=True)
 
 
-async def _complete_quest(cb: CallbackQuery, player_state, quest_data: dict, state: FSMContext, fsm_service: FSMStateService):
-    """Handle quest completion."""
+async def _complete_quest_with_rewards(cb: CallbackQuery, completion_data: dict, state: FSMContext, fsm_service: FSMStateService):
+    """Handle quest completion with rewards."""
     try:
         user_id = cb.from_user.id
         
-        # Calculate rewards
-        reward_gold = quest_data["reward_gold"]
-        reward_xp = quest_data["reward_xp"]
-        
-        # Apply rewards to player (this would need to be implemented in your player system)
-        # For now, we'll just show the completion message
+        # Get rewards from completion data
+        rewards = completion_data["rewards"]
+        efficiency = completion_data["efficiency"]
         
         # Update FSM state back to menu
         await state.set_state(GameStates.MENU)
@@ -590,12 +614,25 @@ async def _complete_quest(cb: CallbackQuery, player_state, quest_data: dict, sta
         completion_text = i18n_service.get_text(user_id, "quest_proposal.completed")
         reward_text = i18n_service.get_text(user_id, "quest_proposal.rewards_received")
         
+        # Build completion message
         response_text = (
             f"🎉 {completion_text} 🎉\n\n"
-            f"📜 **Quest:** {quest_data['quest_description']}\n\n"
+            f"📜 **Quest:** {completion_data['quest_description']}\n"
+            f"🧙‍♂️ **Questgiver:** {completion_data['questgiver']}\n\n"
             f"🏆 {reward_text}\n"
-            f"💰 **Gold:** +{reward_gold}\n"
-            f"⭐ **XP:** +{reward_xp}\n\n"
+            f"💰 **Gold:** +{rewards['gold']}"
+        )
+        
+        if rewards['gold_bonus'] > 0:
+            response_text += f" (+{rewards['gold_bonus']} efficiency bonus)"
+        
+        response_text += f"\n⭐ **XP:** +{rewards['xp']}"
+        
+        if rewards['xp_bonus'] > 0:
+            response_text += f" (+{rewards['xp_bonus']} efficiency bonus)"
+        
+        response_text += (
+            f"\n\n📊 **Efficiency:** {efficiency['actions_taken']} actions taken\n"
             f"💡 *Use /quest for another adventure!*"
         )
         
@@ -604,9 +641,11 @@ async def _complete_quest(cb: CallbackQuery, player_state, quest_data: dict, sta
         
         logger.info("Player completed quest", 
                    user_id=user_id,
-                   questgiver=quest_data["questgiver_name"],
-                   reward_gold=reward_gold,
-                   reward_xp=reward_xp)
+                   quest_id=completion_data["quest_id"],
+                   questgiver=completion_data["questgiver"],
+                   reward_gold=rewards["gold"],
+                   reward_xp=rewards["xp"],
+                   actions_taken=efficiency["actions_taken"])
         
     except Exception as e:
         logger.error("Error completing quest", 
@@ -615,8 +654,8 @@ async def _complete_quest(cb: CallbackQuery, player_state, quest_data: dict, sta
         await cb.answer("❌ Error completing quest", show_alert=True)
 
 
-async def _fail_quest(cb: CallbackQuery, player_state, quest_data: dict, state: FSMContext, fsm_service: FSMStateService):
-    """Handle quest failure."""
+async def _fail_quest_with_reason(cb: CallbackQuery, failure_data: dict, state: FSMContext, fsm_service: FSMStateService):
+    """Handle quest failure with reason."""
     try:
         user_id = cb.from_user.id
         
@@ -631,10 +670,12 @@ async def _fail_quest(cb: CallbackQuery, player_state, quest_data: dict, state: 
         # Get localized text
         failure_text = i18n_service.get_text(user_id, "quest_proposal.failed")
         
+        # Build failure message
         response_text = (
             f"💀 {failure_text} 💀\n\n"
-            f"📜 **Quest:** {quest_data['quest_description']}\n\n"
-            f"⚡ **Energy:** {player_state.energy}/100\n\n"
+            f"📜 **Quest:** {failure_data['quest_description']}\n"
+            f"🧙‍♂️ **Questgiver:** {failure_data['questgiver']}\n\n"
+            f"❌ **Reason:** {failure_data['failure_reason']}\n\n"
             f"💡 *Rest and try again with /quest!*"
         )
         
@@ -643,8 +684,9 @@ async def _fail_quest(cb: CallbackQuery, player_state, quest_data: dict, state: 
         
         logger.info("Player failed quest", 
                    user_id=user_id,
-                   questgiver=quest_data["questgiver_name"],
-                   energy=player_state.energy)
+                   quest_id=failure_data["quest_id"],
+                   questgiver=failure_data["questgiver"],
+                   reason=failure_data["failure_reason"])
         
     except Exception as e:
         logger.error("Error failing quest", 
