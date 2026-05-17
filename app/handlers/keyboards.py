@@ -1,13 +1,11 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from app.handlers.callbacks import ActionCB
-from app.game.actions import Action
-from app.services.ai import ActionLabelGenerator
+from app.game.actions import Action, ACTION_META
 from app.models.world import Region
-from app.models.character import CharacterClass
+from app.services.i18n_service import t
 from typing import List, Optional
 
-gen = ActionLabelGenerator()
 
 def build_actions_kb(
     actions: list[Action],
@@ -17,19 +15,11 @@ def build_actions_kb(
     row_width: int = 3,
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    seen: set[str] = set()
-
     for a in actions:
-        label = gen.generate_label(a, locale=locale, scene_id=scene_id, context_hint=context_hint)
-        base = label
-        n = 2
-        while label in seen:
-            label = f"{base[:10]} {n}"
-            n += 1
-        seen.add(label)
+        meta = ACTION_META[a]
+        label = t(meta.fallback_key, locale=locale)
         cb = ActionCB(a=a.value, s=scene_id).pack()
         builder.button(text=label, callback_data=cb)
-
     builder.adjust(row_width)
     return builder.as_markup()
 

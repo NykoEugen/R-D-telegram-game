@@ -4,54 +4,23 @@ Core configuration module for the Telegram RPG game bot.
 This module provides a clean, single source of truth for all configuration settings.
 """
 
-import os
-from typing import Optional, Literal
+from typing import Optional
 from pydantic import Field, validator
 from pydantic_settings import BaseSettings
-
-# Available OpenAI models for chat completion
-AVAILABLE_OPENAI_MODELS = [
-    # GPT-4 Models
-    "gpt-4o",
-    "gpt-4o-mini", 
-    "gpt-4-turbo",
-    "gpt-4-turbo-preview",
-    "gpt-4",
-    "gpt-4-32k",
-    
-    # GPT-3.5 Models
-    "gpt-3.5-turbo",
-    "gpt-3.5-turbo-16k",
-    "gpt-3.5-turbo-instruct",
-    
-    # Legacy Models
-    "gpt-3.5-turbo-0613",
-    "gpt-3.5-turbo-16k-0613",
-    "gpt-4-0613",
-    "gpt-4-32k-0613",
-]
 
 
 class Settings(BaseSettings):
     """Configuration class for the Telegram RPG game bot using Pydantic BaseSettings."""
-    
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
-    
+        extra = "ignore"
+
     # Bot configuration
     bot_token: str = Field(..., env="BOT_TOKEN", description="Telegram bot token")
-    
-    # OpenAI configuration
-    openai_enabled: bool = Field(default=True, env="OPENAI_ENABLED", description="Whether OpenAI is enabled")
-    openai_api_key: str = Field(..., env="OPENAI_API_KEY", description="OpenAI API key")
-    openai_model: str = Field(
-        default="gpt-4o-mini", 
-        env="OPENAI_MODEL", 
-        description="OpenAI model to use for chat completion"
-    )
-    
+
     # Ngrok configuration for local testing
     ngrok_url: Optional[str] = Field(default="", env="NGROK_URL", description="Ngrok URL for local testing")
     
@@ -89,20 +58,6 @@ class Settings(BaseSettings):
             return f"{self.ngrok_url}{self.webhook_path}"
         return ""
     
-    @validator("openai_enabled", pre=True)
-    def validate_openai_enabled(cls, v):
-        """Convert string environment variable to boolean."""
-        if isinstance(v, str):
-            return v.lower() in ("1", "true", "yes", "on")
-        return bool(v)
-    
-    @validator("openai_model")
-    def validate_openai_model(cls, v):
-        """Validate OpenAI model is one of the available models."""
-        if v not in AVAILABLE_OPENAI_MODELS:
-            raise ValueError(f"openai_model must be one of {AVAILABLE_OPENAI_MODELS}")
-        return v
-    
     @validator("log_level")
     def validate_log_level(cls, v):
         """Validate log level is one of the standard levels."""
@@ -128,12 +83,7 @@ class Config:
     
     # Bot configuration
     BOT_TOKEN = settings.bot_token
-    
-    # OpenAI configuration
-    OPENAI_ENABLED = settings.openai_enabled
-    OPENAI_API_KEY = settings.openai_api_key
-    OPENAI_MODEL = settings.openai_model
-    
+
     # Ngrok configuration for local testing
     NGROK_URL = settings.ngrok_url
     
