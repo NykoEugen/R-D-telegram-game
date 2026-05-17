@@ -22,8 +22,6 @@ class Action(StrEnum):
     ACCEPT = "accept"
     INVESTIGATE = "investigate"
     PREPARE = "prepare"
-    RUN_AI = "run_ai"
-    # New actions for scene graph system
     CONTINUE = "continue"
     REST = "rest"
     EXPLORE = "explore"
@@ -90,7 +88,6 @@ ACTION_META: dict[Action, ActionMeta] = {
     Action.ACCEPT:   ActionMeta("action.accept", "btn.accept"),
     Action.INVESTIGATE: ActionMeta("action.investigate", "btn.investigate"),
     Action.PREPARE:  ActionMeta("action.prepare", "btn.prepare"),
-    Action.RUN_AI:   ActionMeta("action.run_ai", "btn.run_ai"),
     Action.CONTINUE: ActionMeta("action.continue", "btn.continue"),
     Action.REST:     ActionMeta("action.rest", "btn.rest"),
     Action.EXPLORE:  ActionMeta("action.explore", "btn.explore"),
@@ -569,14 +566,14 @@ class ActionProcessor:
 def get_available_actions(scene_type: str, player_state) -> List[Action]:
     """Get available actions based on scene type and player state."""
     base_actions = {
-        "story": [Action.CONTINUE, Action.INVESTIGATE, Action.RUN_AI],
-        "choice": [Action.ACCEPT, Action.TALK, Action.INVESTIGATE, Action.RUN_AI],
-        "encounter": [Action.ATTACK, Action.DEFEND, Action.TALK, Action.FLEE, Action.RUN_AI],
-        "dialogue": [Action.TALK, Action.NEGOTIATE, Action.INVESTIGATE, Action.RUN_AI],
+        "story": [Action.CONTINUE, Action.INVESTIGATE, Action.CONTINUE],
+        "choice": [Action.ACCEPT, Action.TALK, Action.INVESTIGATE, Action.CONTINUE],
+        "encounter": [Action.ATTACK, Action.DEFEND, Action.TALK, Action.FLEE, Action.CONTINUE],
+        "dialogue": [Action.TALK, Action.NEGOTIATE, Action.INVESTIGATE, Action.CONTINUE],
         "rest": [Action.REST, Action.WAIT, Action.CONTINUE],
-        "exploration": [Action.EXPLORE, Action.INVESTIGATE, Action.LOOT, Action.RETREAT, Action.RUN_AI],
+        "exploration": [Action.EXPLORE, Action.INVESTIGATE, Action.LOOT, Action.RETREAT, Action.CONTINUE],
         "quest": [
-            Action.EXPLORE, Action.INVESTIGATE, Action.FIGHT, Action.NEGOTIATE, 
+            Action.EXPLORE, Action.INVESTIGATE, Action.FIGHT, Action.NEGOTIATE,
             Action.SEARCH, Action.HIDE, Action.CHARM, Action.INTIMIDATE,
             Action.HEAL, Action.MEDITATE, Action.CRAFT, Action.TRADE,
             Action.BEFRIEND, Action.SABOTAGE, Action.INFILTRATE, Action.NEGOTIATE_PEACE,
@@ -617,7 +614,7 @@ def get_available_actions(scene_type: str, player_state) -> List[Action]:
         "combat": [Action.ATTACK, Action.DEFEND, Action.CAST, Action.USE_ITEM, Action.FLEE],
     }
     
-    actions = base_actions.get(scene_type, [Action.CONTINUE, Action.RUN_AI])
+    actions = base_actions.get(scene_type, [Action.CONTINUE, Action.CONTINUE])
     
     # Filter actions based on player state
     filtered_actions = []

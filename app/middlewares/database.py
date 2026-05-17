@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db_session
 from app.services.fsm_service import FSMStateService
+from app.services.quest_loop_service import QuestLoopService
 from app.services.logging_service import get_logger
 
 logger = get_logger(__name__)
@@ -45,6 +46,12 @@ class DatabaseMiddleware(BaseMiddleware):
             # Create FSM service
             fsm_service = FSMStateService(session)
             data["fsm_service"] = fsm_service
+            
+            # Create quest loop service
+            i18n_service = getattr(event.bot, "i18n_service", None)
+            if i18n_service:
+                quest_loop_service = QuestLoopService(event.bot, fsm_service, i18n_service)
+                data["quest_loop_service"] = quest_loop_service
             
             # Restore FSM state if user_id is available
             if user_id:
