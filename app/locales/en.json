@@ -365,6 +365,20 @@
         "cleric": "⛑️ **Cleric** - Divine healers and protectors",
         "ranger": "🏹 **Ranger** - Versatile hunters and scouts"
       },
+      "class_names": {
+        "warrior": "Warrior",
+        "rogue": "Rogue",
+        "mage": "Mage",
+        "cleric": "Cleric",
+        "ranger": "Ranger"
+      },
+      "class_full_descriptions": {
+        "warrior": "Strong and resilient fighters who excel in close combat. High strength and vitality.",
+        "rogue": "Agile and lucky adventurers who rely on speed and fortune. High agility and luck.",
+        "mage": "Intelligent spellcasters who wield powerful magic. High intelligence and agility.",
+        "cleric": "Divine healers and protectors. Balanced intelligence and vitality.",
+        "ranger": "Versatile hunters and scouts. Balanced strength and agility."
+      },
       "summary": "**Hero Summary**\n\nName: {name}\nClass: {class_name}\n\nDescription: {description}\n\n**Starting Bonuses:**\n• Strength: +{strength}\n• Agility: +{agility}\n• Intelligence: +{intelligence}\n• Vitality: +{vitality}\n• Luck: +{luck}\n\nAre you ready to create this hero?",
       "created": "🎉 **Hero Created!**\n\nWelcome, **{name}** the {class_name}!\n\n**Starting Stats:**\n• HP: {hp}\n• Attack: {attack}\n• Magic: {magic}\n• Crit Chance: {crit_chance:.1f}%\n• Dodge: {dodge:.1f}%\n\nYour adventure begins now! Choose your next action:",
       "cancelled": "Hero creation cancelled."
@@ -424,5 +438,21 @@
     "new_user": "🦸 **To begin your adventure, you need a hero!**\nCreate your hero to start your epic journey.",
     "returning_no_hero": "🦸 **Welcome back!**\nYou still need to create a hero to begin your adventure.",
     "returning_with_hero": "🦸 **Welcome back, {hero_name}!**\nYour {hero_class} is ready for adventure.\nLevel {level} • {experience} XP"
+  },
+  "menu": {
+    "title": "🏰 *Main Menu*\n\nChoose an action:",
+    "quest": "⚔️ Quests",
+    "my_hero": "🧙 My Hero",
+    "heroes": "🦸 My Heroes",
+    "settings": "⚙️ Settings",
+    "back": "◀️ Back",
+    "settings_title": "⚙️ *Settings*\n\nChoose an option:",
+    "hero_title": "🦸 *Hero Management*\n\nChoose an action:",
+    "language": "🌐 Language",
+    "no_hero": "You don't have a hero yet. Create your first hero!",
+    "create_hero": "➕ Create Hero",
+    "hero": "🦸 Hero",
+    "hero_stats": "📊 Stats",
+    "distribute": "🎯 Distribute Points"
   }
 }

@@ -8,6 +8,7 @@ from app.core.config import Config
 from app.core.redis import init_redis, close_redis, get_redis
 from app.core.db import init_db, close_db
 from app.handlers.commands import start_router, game_router, language_router, character_router
+from app.handlers.menu import router as menu_router
 from app.handlers.commands.hero import router as hero_router
 from app.handlers.commands.heroes import router as heroes_router
 from app.handlers.commands.regions import router as regions_router
@@ -55,6 +56,7 @@ async def main():
 
     setup_error_handlers(dp)
 
+    dp.include_router(menu_router)
     dp.include_router(start_router)
     dp.include_router(game_router)
     dp.include_router(language_router)

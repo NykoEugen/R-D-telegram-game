@@ -34,6 +34,16 @@ class HeroesCreationStates(StatesGroup):
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _heroes_keyboard_with_back(user_id: int, players: list, lang_user_id: int) -> InlineKeyboardMarkup:
+    kb = _heroes_keyboard(user_id, players, lang_user_id)
+    back_btn = InlineKeyboardButton(
+        text=i18n_service.get_text(lang_user_id, 'menu.back'),
+        callback_data="menu:hero"
+    )
+    kb.inline_keyboard.append([back_btn])
+    return kb
+
+
 def _heroes_keyboard(user_id: int, players: list, lang_user_id: int) -> InlineKeyboardMarkup:
     rows = []
     for p in players:
@@ -139,6 +149,7 @@ async def cmd_create_hero(message: Message, state: FSMContext, db_session: Async
 
 @router.callback_query(F.data == "heroes_create_new")
 async def cb_heroes_create_new(callback: CallbackQuery, state: FSMContext, db_session: AsyncSession):
+    await callback.answer()
     user_id = callback.from_user.id
     user = await _get_user(db_session, user_id)
 
@@ -214,31 +225,33 @@ async def mhero_process_name(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith("mhero_class_"), HeroesCreationStates.WAITING_FOR_CLASS)
 async def mhero_process_class(callback: CallbackQuery, state: FSMContext):
-    class_name = callback.data.split("_")[2]
-    character_class = CharacterClass(class_name)
+    user_id = callback.from_user.id
+    class_raw = callback.data.split("_")[2]
+    character_class = CharacterClass(class_raw)
 
     data = await state.get_data()
     hero_name = data["hero_name"]
 
-    class_description = CharacterProgression.get_class_description(character_class)
+    loc_class_name = i18n_service.get_text(user_id, f'hero.creation.class_names.{class_raw}')
+    loc_description = i18n_service.get_text(user_id, f'hero.creation.class_full_descriptions.{class_raw}')
     class_bonus = CharacterProgression.CLASS_DEFINITIONS[character_class].starting_bonus
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(
-            text=i18n_service.get_text(callback.from_user.id, 'btn.create_hero'),
+            text=i18n_service.get_text(user_id, 'btn.create_hero'),
             callback_data="mhero_confirm"
         ),
         InlineKeyboardButton(
-            text=i18n_service.get_text(callback.from_user.id, 'btn.cancel'),
+            text=i18n_service.get_text(user_id, 'btn.cancel'),
             callback_data="mhero_cancel"
         ),
     ]])
 
     await callback.message.edit_text(
-        i18n_service.get_text(callback.from_user.id, 'hero.creation.summary',
+        i18n_service.get_text(user_id, 'hero.creation.summary',
                               name=hero_name,
-                              class_name=character_class.value.title(),
-                              description=class_description,
+                              class_name=loc_class_name,
+                              description=loc_description,
                               strength=class_bonus.strength,
                               agility=class_bonus.agility,
                               intelligence=class_bonus.intelligence,
@@ -248,7 +261,7 @@ async def mhero_process_class(callback: CallbackQuery, state: FSMContext):
         parse_mode="Markdown"
     )
 
-    await state.update_data(character_class=character_class)
+    await state.update_data(character_class=class_raw)
     await state.set_state(HeroesCreationStates.CONFIRMING_CREATION)
 
 
@@ -261,7 +274,7 @@ async def mhero_confirm(callback: CallbackQuery, state: FSMContext, db_session: 
     user_id = callback.from_user.id
     data = await state.get_data()
     hero_name = data["hero_name"]
-    character_class = data["character_class"]
+    character_class = CharacterClass(data["character_class"])
 
     user = await _get_user(db_session, user_id)
     if not user:
@@ -299,15 +312,36 @@ async def mhero_confirm(callback: CallbackQuery, state: FSMContext, db_session: 
     crit_chance = min(35.0, 5.0 + 0.5 * player.agility)
     dodge = min(25.0, 2.0 + 0.3 * player.agility)
 
+    loc_class_name = i18n_service.get_text(user_id, f'hero.creation.class_names.{character_class.value}')
+
+    from app.handlers.menu import build_hero_menu_kb
+    post_creation_kb = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text=i18n_service.get_text(user_id, 'menu.quest'),
+                callback_data="show_quests"
+            ),
+            InlineKeyboardButton(
+                text=i18n_service.get_text(user_id, 'menu.hero_stats'),
+                callback_data="view_stats"
+            ),
+        ],
+        [InlineKeyboardButton(
+            text=i18n_service.get_text(user_id, 'menu.back'),
+            callback_data="menu:hero"
+        )],
+    ])
+
     await callback.message.edit_text(
         i18n_service.get_text(user_id, 'hero.creation.created',
                               name=hero_name,
-                              class_name=character_class.value.title(),
+                              class_name=loc_class_name,
                               hp=hp_max,
                               attack=attack,
                               magic=magic,
                               crit_chance=crit_chance,
                               dodge=dodge),
+        reply_markup=post_creation_kb,
         parse_mode="Markdown"
     )
     await state.clear()
@@ -321,9 +355,15 @@ async def mhero_confirm(callback: CallbackQuery, state: FSMContext, db_session: 
 
 @router.callback_query(F.data == "mhero_cancel")
 async def mhero_cancel(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await state.clear()
+    from app.handlers.menu import build_main_menu_kb
+    user_id = callback.from_user.id
     await callback.message.edit_text(
-        i18n_service.get_text(callback.from_user.id, 'hero.creation.cancelled')
+        i18n_service.get_text(user_id, 'hero.creation.cancelled') + "\n\n" +
+        i18n_service.get_text(user_id, 'menu.title'),
+        reply_markup=build_main_menu_kb(user_id),
+        parse_mode="Markdown"
     )
 
 
@@ -333,6 +373,7 @@ async def mhero_cancel(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data.startswith("hero:select:"))
 async def cb_hero_select(callback: CallbackQuery, db_session: AsyncSession):
+    await callback.answer()
     user_id = callback.from_user.id
     player_id = int(callback.data.split(":")[2])
 
@@ -354,11 +395,6 @@ async def cb_hero_select(callback: CallbackQuery, db_session: AsyncSession):
     player = next((p for p in user.players if p.id == player_id), None)
     name = player.character_name if player else "?"
 
-    await callback.answer(
-        i18n_service.get_text(user_id, 'heroes.hero_selected', name=name),
-        show_alert=True
-    )
-
     # Refresh the heroes list
     await db_session.refresh(user)
     players = sorted(user.players, key=lambda p: p.slot)
@@ -375,6 +411,7 @@ async def cb_hero_select(callback: CallbackQuery, db_session: AsyncSession):
 
 @router.callback_query(F.data.startswith("hero:delete:") & ~F.data.startswith("hero:delete_confirmed:"))
 async def cb_hero_delete_confirm(callback: CallbackQuery, db_session: AsyncSession):
+    await callback.answer()
     user_id = callback.from_user.id
     player_id = int(callback.data.split(":")[2])
 
@@ -419,6 +456,7 @@ async def cb_hero_delete_confirm(callback: CallbackQuery, db_session: AsyncSessi
 
 @router.callback_query(F.data.startswith("hero:delete_confirmed:"))
 async def cb_hero_delete(callback: CallbackQuery, db_session: AsyncSession):
+    await callback.answer()
     user_id = callback.from_user.id
     player_id = int(callback.data.split(":")[2])
 
@@ -478,6 +516,7 @@ async def cb_hero_delete(callback: CallbackQuery, db_session: AsyncSession):
 
 @router.callback_query(F.data == "heroes_back")
 async def cb_heroes_back(callback: CallbackQuery, db_session: AsyncSession):
+    await callback.answer()
     user_id = callback.from_user.id
     user = await _get_user(db_session, user_id)
 
@@ -492,6 +531,6 @@ async def cb_heroes_back(callback: CallbackQuery, db_session: AsyncSession):
     players = sorted(user.players, key=lambda p: p.slot)
     await callback.message.edit_text(
         i18n_service.get_text(user_id, 'heroes.list_title'),
-        reply_markup=_heroes_keyboard(user_id, players, user_id),
+        reply_markup=_heroes_keyboard_with_back(user_id, players, user_id),
         parse_mode="Markdown"
     )

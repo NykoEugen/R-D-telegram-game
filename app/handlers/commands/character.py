@@ -326,8 +326,11 @@ async def view_detailed_stats(callback: CallbackQuery, db_session: AsyncSession)
                                         energy=player.energy,
                                         max_energy=player.max_energy)
     
+    await callback.answer()
+    from app.handlers.menu import build_stats_kb
     await callback.message.edit_text(
         stats_message,
+        reply_markup=build_stats_kb(user_id, player.available_stat_points > 0),
         parse_mode="Markdown"
     )
 
@@ -527,9 +530,13 @@ async def distribute_stat_point(callback: CallbackQuery, state: FSMContext, db_s
 
 @router.callback_query(F.data == "confirm_dist", CharacterManagementStates.DISTRIBUTING_POINTS)
 async def confirm_distribution(callback: CallbackQuery, state: FSMContext):
-    """Confirm stat point distribution."""
+    await callback.answer()
+    from app.handlers.menu import build_hero_menu_kb
+    user_id = callback.from_user.id
     await callback.message.edit_text(
-        i18n_service.get_text(callback.from_user.id, 'character.stat_distribution.success'),
+        i18n_service.get_text(user_id, 'character.stat_distribution.success') + "\n\n" +
+        i18n_service.get_text(user_id, 'menu.hero_title'),
+        reply_markup=build_hero_menu_kb(user_id),
         parse_mode="Markdown"
     )
     await state.clear()
@@ -537,22 +544,26 @@ async def confirm_distribution(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "cancel_dist", CharacterManagementStates.DISTRIBUTING_POINTS)
 async def cancel_distribution(callback: CallbackQuery, state: FSMContext, db_session: AsyncSession):
-    """Cancel stat point distribution and revert changes."""
-    data = await state.get_data()
-    
-    # Get player and revert changes (this is a simplified approach)
+    await callback.answer()
     from sqlalchemy import select
+    from app.handlers.menu import build_hero_menu_kb
+    user_id = callback.from_user.id
+    data = await state.get_data()
+
     result = await db_session.execute(
         select(Player).where(Player.id == data["player_id"])
     )
     player = result.scalar_one_or_none()
-    
     if player:
-        # Reset available points to original amount
         player.available_stat_points = data.get("available_points", 0)
         await db_session.commit()
-    
-    await callback.message.edit_text(i18n_service.get_text(callback.from_user.id, 'character.stat_distribution.cancelled'))
+
+    await callback.message.edit_text(
+        i18n_service.get_text(user_id, 'character.stat_distribution.cancelled') + "\n\n" +
+        i18n_service.get_text(user_id, 'menu.hero_title'),
+        reply_markup=build_hero_menu_kb(user_id),
+        parse_mode="Markdown"
+    )
     await state.clear()
 
 

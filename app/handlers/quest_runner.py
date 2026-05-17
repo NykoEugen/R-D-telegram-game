@@ -88,10 +88,12 @@ def _phase_kb(actions: list[str], locale: str) -> InlineKeyboardMarkup:
             text=labels.get(a, a.title()),
             callback_data=QuestCB(action="do", data=a).pack(),
         )])
-    abandon = "🏳 Покинути завдання" if locale == "uk" else "🏳 Abandon quest"
-    rows.append([InlineKeyboardButton(
-        text=abandon, callback_data=QuestCB(action="decline").pack(),
-    )])
+    hero_info = "🧙 Герой" if locale == "uk" else "🧙 Hero"
+    abandon = "🏳 Покинути" if locale == "uk" else "🏳 Abandon"
+    rows.append([
+        InlineKeyboardButton(text=hero_info, callback_data=QuestCB(action="hero_info").pack()),
+        InlineKeyboardButton(text=abandon, callback_data=QuestCB(action="decline").pack()),
+    ])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -100,7 +102,7 @@ def _result_kb(locale: str) -> InlineKeyboardMarkup:
     menu = "🏠 Меню" if locale == "uk" else "🏠 Menu"
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=new_q, callback_data=QuestCB(action="list").pack())],
-        [InlineKeyboardButton(text=menu, callback_data=QuestCB(action="decline").pack())],
+        [InlineKeyboardButton(text=menu, callback_data="menu:main")],
     ])
 
 
@@ -162,6 +164,12 @@ async def cb_quest_list(cb: CallbackQuery, state: FSMContext, db_session: AsyncS
     await _show_quest_board(cb, state, db_session, edit=True)
 
 
+@router.callback_query(F.data == "show_quests")
+async def cb_show_quests(cb: CallbackQuery, state: FSMContext, db_session: AsyncSession):
+    await cb.answer()
+    await _show_quest_board(cb, state, db_session, edit=True)
+
+
 @router.callback_query(QuestCB.filter(F.action == "select"))
 async def cb_quest_select(cb: CallbackQuery, callback_data: QuestCB, state: FSMContext):
     await cb.answer()
@@ -212,11 +220,72 @@ async def cb_quest_accept(cb: CallbackQuery, state: FSMContext):
 @router.callback_query(QuestCB.filter(F.action == "decline"))
 async def cb_quest_decline(cb: CallbackQuery, state: FSMContext):
     await cb.answer()
-    locale = _t(cb.from_user.id)
+    from app.handlers.menu import build_main_menu_kb
+    user_id = cb.from_user.id
+    locale = _t(user_id)
     msg = "Ти відмовився від завдання." if locale == "uk" else "You declined the quest."
-    await cb.message.edit_text(msg)
     await state.set_state(GameStates.MENU)
     await state.update_data(quest_id=None, quest_phase=None, obj_progress=None, current_obj_idx=None)
+    from app.services.i18n_service import i18n_service as _i18n
+    await cb.message.edit_text(
+        msg + "\n\n" + _i18n.get_text(user_id, 'menu.title'),
+        reply_markup=build_main_menu_kb(user_id),
+        parse_mode="Markdown"
+    )
+
+
+@router.callback_query(QuestCB.filter(F.action == "hero_info"), GameStates.QUEST_ACTIVE)
+async def cb_quest_hero_info(cb: CallbackQuery, state: FSMContext, db_session: AsyncSession):
+    await cb.answer()
+    user_id = cb.from_user.id
+    locale = _t(user_id)
+
+    player = await PlayerRepository(db_session).get_player_by_telegram_id(user_id)
+    if not player:
+        msg = "Герой не знайдений." if locale == "uk" else "Hero not found."
+        await cb.answer(msg, show_alert=True)
+        return
+
+    derived = player.get_derived_stats()
+    xp_now, xp_need = player.get_xp_progress()
+    from app.services.progression_service import ProgressionService
+    xp_bar = ProgressionService.calc_xp_bar(player)
+
+    class_label = "Клас" if locale == "uk" else "Class"
+    hp_label = "HP" if locale == "uk" else "HP"
+    atk_label = "Атака" if locale == "uk" else "Attack"
+    mag_label = "Магія" if locale == "uk" else "Magic"
+    gold_label = "Золото" if locale == "uk" else "Gold"
+    back_label = "◀️ До квесту" if locale == "uk" else "◀️ Back to quest"
+
+    text = (
+        f"🧙 **{player.character_name}** · Lv.{player.level}\n"
+        f"{class_label}: {player.get_character_class_name()}\n\n"
+        f"❤️ {hp_label}: {player.health}/{derived.hp_max}\n"
+        f"⚔️ {atk_label}: {derived.attack}  🔮 {mag_label}: {derived.magic}\n"
+        f"💰 {gold_label}: {player.coins}\n\n"
+        f"{xp_bar}"
+    )
+
+    back_kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=back_label, callback_data=QuestCB(action="back_to_quest").pack())]
+    ])
+    await cb.message.edit_text(text, reply_markup=back_kb, parse_mode="Markdown")
+
+
+@router.callback_query(QuestCB.filter(F.action == "back_to_quest"), GameStates.QUEST_ACTIVE)
+async def cb_back_to_quest(cb: CallbackQuery, state: FSMContext, db_session: AsyncSession):
+    await cb.answer()
+    fsm = await state.get_data()
+    locale = _t(cb.from_user.id)
+    quest = get_quest_by_id(fsm.get("quest_id", ""))
+    if not quest:
+        await cb.message.edit_text("Quest data lost. Try /quest.")
+        await state.set_state(GameStates.MENU)
+        return
+    obj_idx = fsm.get("current_obj_idx", 0)
+    obj_progress = fsm.get("obj_progress", {})
+    await _render_phase(cb.message, quest, obj_idx, obj_progress, locale, edit=True)
 
 
 @router.callback_query(QuestCB.filter(F.action == "do"), GameStates.QUEST_ACTIVE)

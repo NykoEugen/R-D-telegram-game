@@ -44,11 +44,6 @@ def main():
 
     load_dotenv()
 
-    if not Path(".env").exists():
-        print("❌ .env file not found!")
-        print("💡 Copy .env.example to .env and fill in BOT_TOKEN.")
-        return
-
     if not check_environment():
         return
 
