@@ -1,15 +1,19 @@
 import asyncio
+from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from app.core.config import Config
 from app.core.redis import init_redis, close_redis, get_redis
 from app.core.db import init_db, close_db
 from app.handlers.commands import start_router, game_router, language_router, character_router
 from app.handlers.commands.hero import router as hero_router
+from app.handlers.commands.heroes import router as heroes_router
 from app.handlers.commands.regions import router as regions_router
 from app.handlers.game import router as adventure_router
 from app.handlers.quest_proposal import router as quest_proposal_router
+from app.handlers.quest_runner import router as quest_runner_router
 from app.handlers.quest_handlers import register_quest_handlers
 from app.handlers.errors import setup_error_handlers, GlobalErrorHandler
 from app.middlewares.correlation import CorrelationMiddleware
@@ -56,22 +60,46 @@ async def main():
     dp.include_router(language_router)
     dp.include_router(character_router)
     dp.include_router(hero_router)
+    dp.include_router(heroes_router)
     dp.include_router(regions_router)
     dp.include_router(adventure_router)
+    dp.include_router(quest_runner_router)
     dp.include_router(quest_proposal_router)
     register_quest_handlers(dp)
     logger.info("All routers registered")
 
-    logger.info("Bot is running in polling mode")
-
     try:
-        await dp.start_polling(bot)
+        if Config.NGROK_URL:
+            logger.info("Bot is running in webhook mode", webhook_url=Config.WEBHOOK_URL)
+            await bot.set_webhook(
+                url=Config.WEBHOOK_URL,
+                secret_token=Config.WEBHOOK_SECRET,
+            )
+            app = web.Application()
+            SimpleRequestHandler(
+                dispatcher=dp,
+                bot=bot,
+                secret_token=Config.WEBHOOK_SECRET,
+            ).register(app, path=Config.WEBHOOK_PATH)
+            setup_application(app, dp, bot=bot)
+
+            runner = web.AppRunner(app)
+            await runner.setup()
+            site = web.TCPSite(runner, host="0.0.0.0", port=Config.PORT)
+            await site.start()
+            logger.info("Webhook server started", host="0.0.0.0", port=Config.PORT)
+            await asyncio.Event().wait()
+        else:
+            logger.info("Bot is running in polling mode")
+            await dp.start_polling(bot)
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")
     except Exception as e:
         logger.error("Fatal error occurred", error_type=type(e).__name__, error_message=str(e))
         raise
     finally:
+        if Config.NGROK_URL:
+            await bot.delete_webhook()
         await cache_cleanup_service.stop()
         await close_db()
         await close_redis()

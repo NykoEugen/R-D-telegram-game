@@ -32,7 +32,11 @@ class Player(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     
     # Foreign key to User
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # Multi-hero support
+    slot: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     
     # Player character information
     character_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -83,7 +87,7 @@ class Player(Base):
     last_played: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="player", lazy="selectin")
+    user: Mapped["User"] = relationship("User", back_populates="players", lazy="selectin")
     inventory_items: Mapped[List["InventoryItem"]] = relationship("InventoryItem", back_populates="player")
     quest_progress: Mapped[List["QuestProgress"]] = relationship("QuestProgress", back_populates="player")
     game_sessions: Mapped[List["GameSession"]] = relationship("GameSession", back_populates="player")

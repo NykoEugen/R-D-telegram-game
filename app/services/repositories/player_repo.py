@@ -29,43 +29,50 @@ class PlayerRepository:
         **kwargs
     ) -> Player:
         """
-        Create a new player for a user.
-        
+        Create a new player for a user (up to 3 heroes per user).
+
         Args:
             user_id: ID of the user to create player for
             character_name: Optional character name
             character_class: Optional character class
             **kwargs: Additional player attributes
-            
+
         Returns:
             Player: The created player instance
-            
+
         Raises:
-            ValueError: If user already has a player
+            ValueError: If user already has 3 players
         """
-        # Check if user already has a player
-        existing_player = await self.get_player_by_user_id(user_id)
-        if existing_player:
-            raise ValueError(f"User {user_id} already has a player")
-        
-        # Create new player
+        count = await self.count_players_by_user_id(user_id)
+        if count >= 3:
+            raise ValueError(f"User {user_id} already has 3 players")
+
+        slot = await self._next_free_slot(user_id)
+
+        # Deactivate all existing heroes first
+        await self.session.execute(
+            update(Player)
+            .where(Player.user_id == user_id)
+            .values(is_active=False, updated_at=datetime.utcnow())
+        )
+
         player_data = {
             "user_id": user_id,
             "character_name": character_name,
             "character_class": character_class,
+            "slot": slot,
+            "is_active": True,
             "status": PlayerStatus.ACTIVE,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
         }
-        
-        # Add any additional attributes
         player_data.update(kwargs)
-        
+
         player = Player(**player_data)
         self.session.add(player)
         await self.session.flush()
         await self.session.refresh(player)
-        
+
         return player
     
     async def get_player_by_id(self, player_id: int) -> Optional[Player]:
@@ -83,37 +90,91 @@ class PlayerRepository:
         return result.scalar_one_or_none()
     
     async def get_player_by_user_id(self, user_id: int) -> Optional[Player]:
-        """
-        Get a player by their user ID.
-        
-        Args:
-            user_id: The user ID
-            
-        Returns:
-            Player or None if not found
-        """
-        stmt = select(Player).where(Player.user_id == user_id)
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        """Get active player by user ID (backward compat)."""
+        return await self.get_active_player(user_id)
     
-    async def get_player_by_telegram_id(self, telegram_id: int) -> Optional[Player]:
-        """
-        Get a player by their Telegram ID.
-        
-        Args:
-            telegram_id: The Telegram user ID
-            
-        Returns:
-            Player or None if not found
-        """
-        stmt = (
-            select(Player)
-            .join(User, Player.user_id == User.id)
-            .where(User.telegram_id == telegram_id)
-            .options(selectinload(Player.user))
+    async def get_players_by_user_id(self, user_id: int) -> List[Player]:
+        """Get all players (heroes) for a user, ordered by slot."""
+        stmt = select(Player).where(Player.user_id == user_id).order_by(Player.slot)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_active_player(self, user_id: int) -> Optional[Player]:
+        """Get the active player for a user."""
+        stmt = select(Player).where(
+            and_(Player.user_id == user_id, Player.is_active == True)
+        )
+        result = await self.session.execute(stmt)
+        player = result.scalar_one_or_none()
+        if player is None:
+            # Fallback: return the first hero if none is marked active
+            stmt2 = select(Player).where(Player.user_id == user_id).order_by(Player.slot).limit(1)
+            result2 = await self.session.execute(stmt2)
+            player = result2.scalar_one_or_none()
+        return player
+
+    async def set_active_player(self, player_id: int, user_id: int) -> bool:
+        """Make a specific hero active, deactivate all others for the user."""
+        await self.session.execute(
+            update(Player)
+            .where(Player.user_id == user_id)
+            .values(is_active=False, updated_at=datetime.utcnow())
+        )
+        result = await self.session.execute(
+            update(Player)
+            .where(and_(Player.id == player_id, Player.user_id == user_id))
+            .values(is_active=True, updated_at=datetime.utcnow())
+        )
+        return result.rowcount > 0
+
+    async def count_players_by_user_id(self, user_id: int) -> int:
+        """Count how many heroes a user has."""
+        from sqlalchemy import func
+        stmt = select(func.count()).where(Player.user_id == user_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
+
+    async def get_player_by_slot(self, user_id: int, slot: int) -> Optional[Player]:
+        """Get a hero by slot number."""
+        stmt = select(Player).where(
+            and_(Player.user_id == user_id, Player.slot == slot)
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+
+    async def _next_free_slot(self, user_id: int) -> int:
+        """Find the first free slot (1, 2, or 3) for a user."""
+        stmt = select(Player.slot).where(Player.user_id == user_id)
+        result = await self.session.execute(stmt)
+        used = {row[0] for row in result.fetchall()}
+        for slot in (1, 2, 3):
+            if slot not in used:
+                return slot
+        raise ValueError("No free slots")
+
+    async def get_player_by_telegram_id(self, telegram_id: int) -> Optional[Player]:
+        """Get the active player by Telegram ID."""
+        stmt = (
+            select(Player)
+            .join(User, Player.user_id == User.id)
+            .where(and_(User.telegram_id == telegram_id, Player.is_active == True))
+            .options(selectinload(Player.user))
+        )
+        result = await self.session.execute(stmt)
+        player = result.scalar_one_or_none()
+        if player is None:
+            # Fallback: first player by slot
+            stmt2 = (
+                select(Player)
+                .join(User, Player.user_id == User.id)
+                .where(User.telegram_id == telegram_id)
+                .order_by(Player.slot)
+                .limit(1)
+                .options(selectinload(Player.user))
+            )
+            result2 = await self.session.execute(stmt2)
+            player = result2.scalar_one_or_none()
+        return player
     
     async def get_player_with_user(self, player_id: int) -> Optional[Player]:
         """
@@ -349,15 +410,32 @@ class PlayerRepository:
     async def hard_delete_player(self, player_id: int) -> bool:
         """
         Permanently delete a player from the database.
-        
+        If deleted player was active — make the next one active.
+
         Args:
             player_id: The player ID
-            
+
         Returns:
             True if deleted, False if player not found
         """
+        player = await self.get_player_by_id(player_id)
+        if not player:
+            return False
+
+        user_id = player.user_id
+        was_active = player.is_active
+
         stmt = delete(Player).where(Player.id == player_id)
         result = await self.session.execute(stmt)
+
+        if result.rowcount > 0 and was_active:
+            # Activate the next remaining hero (lowest slot)
+            stmt2 = select(Player).where(Player.user_id == user_id).order_by(Player.slot).limit(1)
+            res2 = await self.session.execute(stmt2)
+            next_player = res2.scalar_one_or_none()
+            if next_player:
+                next_player.is_active = True
+
         return result.rowcount > 0
     
     def _calculate_level(self, experience: int) -> int:

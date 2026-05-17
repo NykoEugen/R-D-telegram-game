@@ -22,51 +22,6 @@ _FALLBACK_QUESTS = [
 ]
 
 
-@router.message(Command("quest"))
-async def cmd_quest(message: Message, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):
-    """Handle the /quest command - provide a quest description."""
-    try:
-        user_id = message.from_user.id
-
-        await state.set_state(GameStates.QUEST_ACTIVE)
-        await message.answer(i18n_service.get_text(user_id, "quest_generating"), parse_mode="HTML")
-
-        import random
-        quest_description = random.choice(_FALLBACK_QUESTS)
-
-        quest_text = (
-            f"{i18n_service.get_text(user_id, 'new_quest')}\n\n"
-            f"{i18n_service.get_text(user_id, 'quest_description', description=quest_description)}\n\n"
-            f"{i18n_service.get_text(user_id, 'what_will_you_do')}\n\n"
-            f"{i18n_service.get_text(user_id, 'quest_hint')}"
-        )
-
-        user_language = i18n_service.get_user_language(user_id)
-        scene_id = f"quest-{user_id}-{message.message_id}"
-        quest_actions = [Action.ACCEPT, Action.INVESTIGATE, Action.PREPARE, Action.TALK, Action.BACK]
-
-        keyboard = build_actions_kb(
-            actions=quest_actions,
-            locale=user_language,
-            scene_id=scene_id,
-            row_width=2,
-        )
-
-        await state.update_data(quest_description=quest_description, scene_id=scene_id)
-
-        await fsm_service.sync_fsm_to_postgres(
-            state, user_id, action="quest_start", scene_id=scene_id,
-            additional_data={"quest_description": quest_description},
-        )
-
-        await message.answer(quest_text, parse_mode="Markdown", reply_markup=keyboard)
-        logger.info("User requested a quest", user_id=user_id)
-
-    except Exception as e:
-        logger.error("Error in quest command", user_id=message.from_user.id,
-                     error_type=type(e).__name__, error_message=str(e))
-        await message.answer("❌ Quest Error\n\nThere was an error. Please try again later.")
-
 
 @router.message(Command("status"))
 async def cmd_status(message: Message, state: FSMContext, db_session: AsyncSession, fsm_service: FSMStateService):

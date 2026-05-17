@@ -327,6 +327,22 @@
     "character_data_not_found": "Character data not found!",
     "start_adventure_first": "You need to start your adventure first! Use /start to begin."
   },
+  "heroes": {
+    "list_title": "🦸 **Your Heroes**",
+    "slot": "Slot {slot}",
+    "active_badge": " ✅",
+    "empty": "You don't have any heroes yet. Create your first one!",
+    "no_free_slots": "❌ You already have 3 heroes. Delete one to create a new hero.",
+    "hero_selected": "✅ **{name}** is now your active hero!",
+    "confirm_delete": "⚠️ Are you sure you want to delete **{name}**? This action cannot be undone.",
+    "hero_deleted": "🗑 Hero **{name}** has been deleted.",
+    "cannot_delete_only": "❌ You cannot delete your only hero.",
+    "btn_select": "🔄 Select",
+    "btn_delete": "🗑 Delete",
+    "btn_create": "➕ Create new",
+    "btn_confirm_delete": "✅ Yes, delete",
+    "btn_cancel": "❌ Cancel"
+  },
   "hero": {
     "required": "🦸 **Hero Required**\n\nYou need a hero to access this feature!\n\nCreate your hero first to begin your epic journey.",
     "management": {

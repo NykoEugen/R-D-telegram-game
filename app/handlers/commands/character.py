@@ -45,7 +45,7 @@ async def cmd_create_character(message: Message, state: FSMContext, db_session: 
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     
@@ -175,7 +175,7 @@ async def confirm_character_creation(callback: CallbackQuery, state: FSMContext,
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == callback.from_user.id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     
@@ -235,7 +235,7 @@ async def cmd_character_stats(message: Message, db_session: AsyncSession):
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     
@@ -289,7 +289,7 @@ async def view_detailed_stats(callback: CallbackQuery, db_session: AsyncSession)
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     
@@ -344,7 +344,7 @@ async def handle_level_up(callback: CallbackQuery, db_session: AsyncSession):
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     
@@ -401,7 +401,7 @@ async def start_point_distribution(callback: CallbackQuery, state: FSMContext, d
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     
