@@ -12,7 +12,10 @@ logger = get_logger(__name__)
 
 def build_main_menu_kb(user_id: int) -> InlineKeyboardMarkup:
     t = lambda key: i18n_service.get_text(user_id, key)
+    locale = i18n_service.get_user_language(user_id)
+    city_label = "🏙 В місто" if locale == "uk" else "🏙 City"
     return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=city_label, callback_data="city:return")],
         [InlineKeyboardButton(text=t('menu.quest'), callback_data="show_quests")],
         [
             InlineKeyboardButton(text=t('menu.hero'), callback_data="menu:hero"),

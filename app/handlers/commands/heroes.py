@@ -385,7 +385,7 @@ async def cb_hero_select(callback: CallbackQuery, db_session: AsyncSession):
     players = sorted(user.players, key=lambda p: p.slot)
     await callback.message.edit_text(
         i18n_service.get_text(user_id, 'heroes.list_title'),
-        reply_markup=_heroes_keyboard(user_id, players, user_id),
+        reply_markup=_heroes_keyboard_with_back(user_id, players, user_id),
         parse_mode="Markdown"
     )
 

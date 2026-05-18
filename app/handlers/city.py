@@ -155,6 +155,35 @@ async def enter_city(message: Message, state: FSMContext) -> None:
 
 # ── handlers ──────────────────────────────────────────────────────────────────
 
+@router.callback_query(F.data == "city:return")
+async def cb_city_return(callback: CallbackQuery, state: FSMContext):
+    """Return to city from any menu — restores CITY_EXPLORATION at last known location."""
+    await callback.answer()
+    fsm = await state.get_data()
+    loc_id = fsm.get("current_location", "tavern")
+    visited = fsm.get("city_visited", [loc_id])
+
+    await state.set_state(GameStates.CITY_EXPLORATION)
+    locale = i18n_service.get_user_language(callback.from_user.id)
+    city = _load()
+    loc = city.get("locations", {}).get(loc_id)
+
+    if loc:
+        name = _t(loc.get("name", {}), locale)
+        description = _t(loc.get("description", {}), locale)
+        npc = _t(loc.get("npc", {}), locale)
+        npc_line = f"\n\n<i>Тут: {npc}</i>" if locale == "uk" else f"\n\n<i>Here: {npc}</i>"
+        text = f"🏛 <b>{name}</b>\n\n{description}{npc_line if npc else ''}"
+        unlocked = _quests_unlocked(visited)
+        kb = _location_kb(callback.from_user.id, loc_id, visited, unlocked)
+    else:
+        unlocked = _quests_unlocked(visited)
+        text = _city_map_text(locale, visited)
+        kb = _city_map_kb(callback.from_user.id, visited, unlocked)
+
+    await callback.message.edit_text(text, reply_markup=kb, parse_mode="HTML")
+
+
 @router.callback_query(CityCB.filter(F.action == "main"), GameStates.CITY_EXPLORATION)
 async def cb_city_main(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
