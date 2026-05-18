@@ -271,6 +271,7 @@ async def mhero_process_class(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "mhero_confirm", HeroesCreationStates.CONFIRMING_CREATION)
 async def mhero_confirm(callback: CallbackQuery, state: FSMContext, db_session: AsyncSession):
+    await callback.answer()
     user_id = callback.from_user.id
     data = await state.get_data()
     hero_name = data["hero_name"]
@@ -314,24 +315,6 @@ async def mhero_confirm(callback: CallbackQuery, state: FSMContext, db_session: 
 
     loc_class_name = i18n_service.get_text(user_id, f'hero.creation.class_names.{character_class.value}')
 
-    from app.handlers.menu import build_hero_menu_kb
-    post_creation_kb = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(
-                text=i18n_service.get_text(user_id, 'menu.quest'),
-                callback_data="show_quests"
-            ),
-            InlineKeyboardButton(
-                text=i18n_service.get_text(user_id, 'menu.hero_stats'),
-                callback_data="view_stats"
-            ),
-        ],
-        [InlineKeyboardButton(
-            text=i18n_service.get_text(user_id, 'menu.back'),
-            callback_data="menu:hero"
-        )],
-    ])
-
     await callback.message.edit_text(
         i18n_service.get_text(user_id, 'hero.creation.created',
                               name=hero_name,
@@ -341,12 +324,14 @@ async def mhero_confirm(callback: CallbackQuery, state: FSMContext, db_session: 
                               magic=magic,
                               crit_chance=crit_chance,
                               dodge=dodge),
-        reply_markup=post_creation_kb,
         parse_mode="Markdown"
     )
     await state.clear()
 
     logger.info("Multi-hero created", user_id=user_id, hero_name=hero_name, slot=player.slot)
+
+    from app.handlers.city import enter_city
+    await enter_city(callback.message, state)
 
 
 # ---------------------------------------------------------------------------
