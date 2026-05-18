@@ -392,37 +392,12 @@ async def confirm_hero_creation(callback: CallbackQuery, state: FSMContext, db_s
         await db_session.commit()
         await db_session.refresh(player)
         
-        # Calculate basic stats for display (avoid potential async issues)
         hp_max = 20 + 4 * player.vitality
         attack = 2 + player.strength
         magic = 2 + player.intelligence
         crit_chance = min(35.0, 5.0 + 0.5 * player.agility)
         dodge = min(25.0, 2.0 + 0.3 * player.agility)
-        
-        # Create keyboard with quest options
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=i18n_service.get_text(user_id, 'btn.start_quest'), 
-                    callback_data="start_quest"
-                ),
-                InlineKeyboardButton(
-                    text=i18n_service.get_text(user_id, 'btn.adventure'), 
-                    callback_data="start_adventure"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text=i18n_service.get_text(user_id, 'btn.view_hero'), 
-                    callback_data="view_hero"
-                ),
-                InlineKeyboardButton(
-                    text=i18n_service.get_text(user_id, 'btn.main_menu'), 
-                    callback_data="back_to_start"
-                )
-            ]
-        ])
-        
+
         await callback.message.edit_text(
             i18n_service.get_text(user_id, 'hero.creation.created',
                                  name=hero_name,
@@ -432,11 +407,13 @@ async def confirm_hero_creation(callback: CallbackQuery, state: FSMContext, db_s
                                  magic=magic,
                                  crit_chance=crit_chance,
                                  dodge=dodge),
-            reply_markup=keyboard,
             parse_mode="Markdown"
         )
-        
+
         await state.clear()
+
+        from app.handlers.city import enter_city
+        await enter_city(callback.message, state)
         
         # Hero creation completed successfully
         

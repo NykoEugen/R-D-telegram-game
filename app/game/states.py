@@ -25,6 +25,9 @@ class GameStates(StatesGroup):
     COMBAT_CHOICE = State()  # Player needs to make combat choice
     COMBAT_RESULT = State()  # Combat result is being processed
     
+    # City exploration (intro)
+    CITY_EXPLORATION = State()  # Player is exploring the starting city
+
     # Exploration states
     EXPLORATION = State()  # Player is exploring
     LOCATION_CHOICE = State()  # Player needs to choose location
