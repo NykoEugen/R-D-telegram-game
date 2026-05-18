@@ -125,14 +125,30 @@ def _city_map_text(locale: str, visited: list[str]) -> str:
 # ── public entry point ────────────────────────────────────────────────────────
 
 async def enter_city(message: Message, state: FSMContext) -> None:
-    """Called after hero creation to start city exploration."""
+    """Called after hero creation — lands player directly in the tavern."""
     await state.set_state(GameStates.CITY_EXPLORATION)
-    await state.update_data(city_visited=[])
+    visited = ["tavern"]
+    await state.update_data(city_visited=visited)
+
     locale = i18n_service.get_user_language(message.from_user.id)
-    text = _city_map_text(locale, [])
+    city = _load()
+    loc = city.get("locations", {}).get("tavern", {})
+    name = _t(loc.get("name", {}), locale)
+    description = _t(loc.get("description", {}), locale)
+    npc = _t(loc.get("npc", {}), locale)
+    city_name = _t(city.get("name", {}), locale)
+
+    arrival = (
+        f"Ти щойно прибув до <b>{city_name}</b>."
+        if locale == "uk"
+        else f"You have just arrived in <b>{city_name}</b>."
+    )
+    npc_line = f"\n\n<i>Тут: {npc}</i>" if locale == "uk" else f"\n\n<i>Here: {npc}</i>"
+    text = f"{arrival}\n\n🏛 <b>{name}</b>\n\n{description}{npc_line}"
+
     await message.answer(
         text,
-        reply_markup=_city_map_kb(message.from_user.id, [], False),
+        reply_markup=_location_kb(message.from_user.id, "tavern", visited, False),
         parse_mode="HTML",
     )
 
