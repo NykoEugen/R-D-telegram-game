@@ -5,6 +5,7 @@ Quest runner — complete quest lifecycle:
 
 import random
 from aiogram import Router, F
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import (
     Message, CallbackQuery,
     InlineKeyboardMarkup, InlineKeyboardButton,
@@ -108,6 +109,15 @@ def _result_kb(locale: str) -> InlineKeyboardMarkup:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+async def _safe_edit(message, text: str, reply_markup=None, parse_mode: str = "Markdown") -> None:
+    """Edit message, silently ignoring 'message is not modified' — it means first click already succeeded."""
+    try:
+        await message.edit_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
+    except TelegramBadRequest as e:
+        if "message is not modified" not in str(e):
+            raise
+
+
 def _success_chance(tier: int, player_level: int, quest_min_level: int) -> int:
     """Base 70% for T1, −10% per tier, +5% per level above minimum."""
     return max(35, min(95, 80 - tier * 10 + (player_level - quest_min_level) * 5))
@@ -199,6 +209,9 @@ async def cb_quest_select(cb: CallbackQuery, callback_data: QuestCB, state: FSMC
 @router.callback_query(QuestCB.filter(F.action == "accept"))
 async def cb_quest_accept(cb: CallbackQuery, state: FSMContext):
     await cb.answer()
+    if await state.get_state() == GameStates.QUEST_ACTIVE:
+        return  # duplicate click — first already succeeded
+
     locale = _t(cb.from_user.id)
 
     fsm = await state.get_data()
@@ -351,7 +364,7 @@ async def _render_phase(
 
     kb = _phase_kb(actions, locale)
     if edit:
-        await message.edit_text(text, reply_markup=kb, parse_mode="Markdown")
+        await _safe_edit(message, text, reply_markup=kb, parse_mode="Markdown")
     else:
         await message.answer(text, reply_markup=kb, parse_mode="Markdown")
 
