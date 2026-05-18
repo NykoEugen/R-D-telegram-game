@@ -30,6 +30,7 @@ class QuestDef:
     confrontation_text: Dict[str, str]
     success_text: Dict[str, str]
     fail_text: Dict[str, str]
+    location: str = "tavern"
     objectives: List[ObjectiveDef] = field(default_factory=list)
 
     def get(self, field_name: str, locale: str) -> str:
@@ -77,6 +78,7 @@ def _load() -> List[QuestDef]:
                 confrontation_text=q["confrontation_text"],
                 success_text=q["success_text"],
                 fail_text=q["fail_text"],
+                location=q.get("location", "tavern"),
                 objectives=objectives,
             )
         )

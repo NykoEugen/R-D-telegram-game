@@ -128,7 +128,7 @@ async def enter_city(message: Message, state: FSMContext) -> None:
     """Called after hero creation — lands player directly in the tavern."""
     await state.set_state(GameStates.CITY_EXPLORATION)
     visited = ["tavern"]
-    await state.update_data(city_visited=visited)
+    await state.update_data(city_visited=visited, current_location="tavern")
 
     locale = i18n_service.get_user_language(message.from_user.id)
     city = _load()
@@ -181,10 +181,11 @@ async def cb_city_location(callback: CallbackQuery, callback_data: CityCB, state
     just_unlocked = False
     if loc_id not in visited:
         visited = visited + [loc_id]
-        await state.update_data(city_visited=visited)
+        await state.update_data(city_visited=visited, current_location=loc_id)
         unlocked = _quests_unlocked(visited)
         just_unlocked = not was_unlocked and unlocked
     else:
+        await state.update_data(current_location=loc_id)
         unlocked = was_unlocked
 
     name = _t(loc.get("name", {}), locale)

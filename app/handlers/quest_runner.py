@@ -206,18 +206,15 @@ async def cb_quest_select(cb: CallbackQuery, callback_data: QuestCB, state: FSMC
     await cb.message.edit_text(text, reply_markup=_proposal_kb(locale), parse_mode="Markdown")
 
 
-@router.callback_query(QuestCB.filter(F.action == "accept"))
-async def cb_quest_accept(cb: CallbackQuery, state: FSMContext):
-    await cb.answer()
-    if await state.get_state() == GameStates.QUEST_ACTIVE:
-        return  # duplicate click — first already succeeded
-
-    locale = _t(cb.from_user.id)
+async def _start_quest_phase(message, state: FSMContext, edit: bool = False) -> None:
+    """Shared entry point used by both cb_quest_accept and travel arrival."""
+    user_id = message.chat.id  # travel calls with message, not callback
+    locale = i18n_service.get_user_language(user_id)
 
     fsm = await state.get_data()
     quest = get_quest_by_id(fsm.get("quest_id", ""))
     if not quest:
-        await cb.message.edit_text("Quest data lost. Try /quest.")
+        await message.answer("Quest data lost. Try /quest.")
         return
 
     obj_progress = {o.id: 0 for o in quest.objectives}
@@ -227,7 +224,29 @@ async def cb_quest_accept(cb: CallbackQuery, state: FSMContext):
         current_obj_idx=0,
     )
     await state.set_state(GameStates.QUEST_ACTIVE)
-    await _render_phase(cb.message, quest, 0, obj_progress, locale, edit=True)
+    await _render_phase(message, quest, 0, obj_progress, locale, edit=edit)
+
+
+@router.callback_query(QuestCB.filter(F.action == "accept"))
+async def cb_quest_accept(cb: CallbackQuery, state: FSMContext):
+    await cb.answer()
+    if await state.get_state() == GameStates.QUEST_ACTIVE:
+        return  # duplicate click — first already succeeded
+
+    fsm = await state.get_data()
+    quest = get_quest_by_id(fsm.get("quest_id", ""))
+    if not quest:
+        await cb.message.edit_text("Quest data lost. Try /quest.")
+        return
+
+    from app.handlers.travel import travel_start
+    await travel_start(
+        message=cb.message,
+        state=state,
+        quest_id=quest.id,
+        quest_location=quest.location,
+        start_quest_fn=_start_quest_phase,
+    )
 
 
 @router.callback_query(QuestCB.filter(F.action == "decline"))

@@ -28,6 +28,9 @@ class GameStates(StatesGroup):
     # City exploration (intro)
     CITY_EXPLORATION = State()  # Player is exploring the starting city
 
+    # Travel between locations
+    QUEST_TRAVEL = State()  # Player is travelling to a quest location
+
     # Exploration states
     EXPLORATION = State()  # Player is exploring
     LOCATION_CHOICE = State()  # Player needs to choose location

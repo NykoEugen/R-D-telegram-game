@@ -5,6 +5,7 @@ quests:
     reward_xp: 60
     reward_gold: 25
     type: "combat"
+    location: "tavern"
     title:
       uk: "Пацюки в льоху"
       en: "Rats in the Cellar"
@@ -43,6 +44,7 @@ quests:
     reward_xp: 65
     reward_gold: 20
     type: "delivery"
+    location: "apothecary"
     title:
       uk: "Загублений лист"
       en: "The Lost Letter"
@@ -81,6 +83,7 @@ quests:
     reward_xp: 90
     reward_gold: 40
     type: "rescue"
+    location: "road"
     title:
       uk: "Зниклий купець"
       en: "The Missing Merchant"
@@ -119,6 +122,7 @@ quests:
     reward_xp: 95
     reward_gold: 45
     type: "combat"
+    location: "night_market"
     title:
       uk: "Нічна варта"
       en: "Night Watch"
@@ -157,6 +161,7 @@ quests:
     reward_xp: 120
     reward_gold: 55
     type: "exploration"
+    location: "ruins"
     title:
       uk: "Таємниця руїн"
       en: "Mystery of the Ruins"
@@ -198,6 +203,7 @@ quests:
     reward_xp: 125
     reward_gold: 60
     type: "diplomacy"
+    location: "forest"
     title:
       uk: "Переговори з розбійниками"
       en: "Negotiating with Bandits"
@@ -236,6 +242,7 @@ quests:
     reward_xp: 145
     reward_gold: 75
     type: "exploration"
+    location: "swamp"
     title:
       uk: "Прокляте болото"
       en: "The Cursed Swamp"
@@ -277,6 +284,7 @@ quests:
     reward_xp: 155
     reward_gold: 85
     type: "combat"
+    location: "beast_lair"
     title:
       uk: "Лігво звіра"
       en: "Lair of the Beast"

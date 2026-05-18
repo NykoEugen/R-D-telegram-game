@@ -17,6 +17,7 @@ from app.handlers.quest_proposal import router as quest_proposal_router
 from app.handlers.quest_runner import router as quest_runner_router
 from app.handlers.quest_handlers import register_quest_handlers
 from app.handlers.city import router as city_router
+from app.handlers.travel import router as travel_router
 from app.handlers.errors import setup_error_handlers, GlobalErrorHandler
 from app.middlewares.correlation import CorrelationMiddleware
 from app.middlewares.database import DatabaseMiddleware
@@ -58,6 +59,7 @@ async def main():
     setup_error_handlers(dp)
 
     dp.include_router(city_router)
+    dp.include_router(travel_router)
     dp.include_router(menu_router)
     dp.include_router(start_router)
     dp.include_router(game_router)
