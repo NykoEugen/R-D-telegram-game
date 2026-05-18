@@ -89,7 +89,7 @@ def _location_kb(user_id: int, loc_id: str, visited: list[str], quests_unlocked:
     back_label = "◀️ В місто" if locale == "uk" else "◀️ Back to city"
     rows.append([InlineKeyboardButton(
         text=back_label,
-        callback_data=CityCB(action="main").pack(),
+        callback_data=CityCB(action="main", sub="map").pack(),
     )])
     if quests_unlocked:
         quest_label = "⚔️ Квести" if locale == "uk" else "⚔️ Quests"
