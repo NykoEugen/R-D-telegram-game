@@ -99,10 +99,10 @@ def _phase_kb(actions: list[str], locale: str) -> InlineKeyboardMarkup:
 
 
 def _result_kb(locale: str) -> InlineKeyboardMarkup:
-    new_q = "📋 Нове завдання" if locale == "uk" else "📋 New quest"
+    city = "🏙 В місто" if locale == "uk" else "🏙 Return to city"
     menu = "🏠 Меню" if locale == "uk" else "🏠 Menu"
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=new_q, callback_data=QuestCB(action="list").pack())],
+        [InlineKeyboardButton(text=city, callback_data="city:return")],
         [InlineKeyboardButton(text=menu, callback_data="menu:main")],
     ])
 
@@ -256,7 +256,7 @@ async def cb_quest_decline(cb: CallbackQuery, state: FSMContext):
     user_id = cb.from_user.id
     locale = _t(user_id)
     msg = "Ти відмовився від завдання." if locale == "uk" else "You declined the quest."
-    await state.set_state(GameStates.MENU)
+    await state.set_state(GameStates.CITY_EXPLORATION)
     await state.update_data(quest_id=None, quest_phase=None, obj_progress=None, current_obj_idx=None)
     from app.services.i18n_service import i18n_service as _i18n
     await cb.message.edit_text(
@@ -353,7 +353,8 @@ async def cb_quest_do(cb: CallbackQuery, callback_data: QuestCB, state: FSMConte
         await _resolve_quest(cb, quest, state, db_session, cb.from_user.id, locale)
     else:
         await state.update_data(obj_progress=obj_progress, current_obj_idx=obj_idx)
-        await _render_phase(cb.message, quest, obj_idx, obj_progress, locale, edit=True)
+        is_entering_confrontation = obj_idx == len(quest.objectives) - 1
+        await _render_phase(cb.message, quest, obj_idx, obj_progress, locale, edit=not is_entering_confrontation)
 
 
 # ── Internal rendering ────────────────────────────────────────────────────────
@@ -374,7 +375,15 @@ async def _render_phase(
     done = sum(1 for o in quest.objectives if obj_progress.get(o.id, 0) >= o.count)
     total = len(quest.objectives)
     prog_label = "Прогрес" if locale == "uk" else "Progress"
-    text = f"{'⚔️' if is_last_obj else '🗺'} **{title}**\n\n{phase_text}\n\n📊 {prog_label}: {done}/{total}"
+
+    if is_last_obj:
+        divider = "〰〰〰〰〰〰〰〰〰〰"
+        transition = "⚡ Вирішальний момент" if locale == "uk" else "⚡ The decisive moment"
+        header = f"⚔️ **{title}**\n\n{divider}\n_{transition}_\n{divider}\n\n"
+    else:
+        header = f"🗺 **{title}**\n\n"
+
+    text = f"{header}{phase_text}\n\n📊 {prog_label}: {done}/{total}"
 
     obj = quest.objectives[obj_idx]
     # Show required actions + 2 extra for variety (deduplicated)
@@ -442,8 +451,12 @@ async def _resolve_quest(
             text += f"\n\n🎉 **LEVEL UP!** {result.old_level} → {result.new_level}\n+{result.stat_points_gained} stat points · /character"
 
     await cb.message.edit_text(text, reply_markup=_result_kb(locale), parse_mode="Markdown")
-    await state.set_state(GameStates.MENU)
-    await state.update_data(quest_id=None, quest_phase=None, obj_progress=None, current_obj_idx=None)
+    # Keep current_location at quest site so next travel starts from here
+    await state.update_data(
+        quest_id=None, quest_phase=None, obj_progress=None, current_obj_idx=None,
+        current_location=quest.location,
+    )
+    await state.set_state(GameStates.CITY_EXPLORATION)
 
     logger.info(
         "Quest resolved",
