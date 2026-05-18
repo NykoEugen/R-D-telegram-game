@@ -44,7 +44,7 @@ def _t(data: dict, locale: str) -> str:
 
 class CityCB(CallbackData, prefix="city"):
     action: str
-    sub: str = ""
+    sub: str = "."  # non-empty sentinel; aiogram passes None for "" causing ValidationError
 
 
 # ── keyboards ─────────────────────────────────────────────────────────────────

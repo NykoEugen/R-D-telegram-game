@@ -28,7 +28,7 @@ logger = get_logger(__name__)
 
 class QuestCB(CallbackData, prefix="qst"):
     action: str   # list | select | accept | decline | do
-    data: str = ""
+    data: str = "."  # non-empty sentinel; aiogram passes None for "" causing ValidationError
 
 
 # ── Labels ───────────────────────────────────────────────────────────────────
