@@ -13,9 +13,12 @@ from aiogram import Router, F
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.game.states import GameStates
+from app.models.user import User
 from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
 
@@ -156,9 +159,32 @@ async def enter_city(message: Message, state: FSMContext) -> None:
 # ── handlers ──────────────────────────────────────────────────────────────────
 
 @router.callback_query(F.data == "city:return")
-async def cb_city_return(callback: CallbackQuery, state: FSMContext):
+async def cb_city_return(callback: CallbackQuery, state: FSMContext, db_session: AsyncSession):
     """Return to city from any menu — restores CITY_EXPLORATION at last known location."""
     await callback.answer()
+
+    user_id = callback.from_user.id
+    result = await db_session.execute(
+        select(User).where(User.telegram_id == user_id).options(selectinload(User.players))
+    )
+    user = result.scalar_one_or_none()
+
+    if not user or not user.players:
+        locale = i18n_service.get_user_language(user_id)
+        text = (
+            "🧙 Спочатку створи героя, щоб потрапити в місто!"
+            if locale == "uk"
+            else "🧙 Create a hero first to enter the city!"
+        )
+        kb = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(
+                text="⚔️ Створити героя" if locale == "uk" else "⚔️ Create hero",
+                callback_data="heroes_create_new",
+            )],
+        ])
+        await callback.message.edit_text(text, reply_markup=kb)
+        return
+
     fsm = await state.get_data()
     loc_id = fsm.get("current_location", "tavern")
     visited = fsm.get("city_visited", [loc_id])
