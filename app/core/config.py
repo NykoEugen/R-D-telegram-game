@@ -49,7 +49,7 @@ class Settings(BaseSettings):
         needs_ssl = params.pop("sslmode", None) is not None
         params.pop("channel_binding", None)
         if needs_ssl:
-            params["ssl"] = ["true"]
+            params["ssl"] = ["require"]
         new_query = urlencode({k: v[0] for k, v in params.items()})
         return urlunparse(parsed._replace(query=new_query))
 
