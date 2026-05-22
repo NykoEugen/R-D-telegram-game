@@ -22,7 +22,7 @@ async def check_hero_required(message: Message, db_session: AsyncSession) -> tup
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     
@@ -64,7 +64,7 @@ async def get_user_hero(user_id: int, db_session: AsyncSession) -> tuple[User | 
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     

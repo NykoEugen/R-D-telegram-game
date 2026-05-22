@@ -115,7 +115,7 @@ class UserRepository:
         stmt = (
             select(User)
             .where(User.telegram_id == telegram_id)
-            .options(selectinload(User.player))
+            .options(selectinload(User.players))
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()

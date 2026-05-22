@@ -3,6 +3,7 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 from aiogram.filters import Command
 from app.services.logging_service import get_logger
 from app.services.i18n_service import i18n_service
+from app.handlers.menu import build_main_menu_kb
 
 router = Router()
 logger = get_logger(__name__)
@@ -49,38 +50,22 @@ async def cmd_language(message: Message):
 
 @router.callback_query(F.data.startswith("lang_"))
 async def handle_language_callback(callback: CallbackQuery):
-    """Handle language selection callback."""
+    await callback.answer()
     try:
         user_id = callback.from_user.id
-        
-        # Extract language code from callback data
         lang_code = callback.data.split("_")[1]
-        
-        # Set user language
         i18n_service.set_user_language(user_id, lang_code)
-        
-        # Get language name for display
         lang_name = i18n_service.get_language_name(lang_code)
-        
-        # Send confirmation message
+
         await callback.message.edit_text(
-            i18n_service.get_text(user_id, 'language_changed', language=lang_name)
+            i18n_service.get_text(user_id, 'language_changed', language=lang_name) + "\n\n" +
+            i18n_service.get_text(user_id, 'menu.title'),
+            reply_markup=build_main_menu_kb(user_id),
+            parse_mode="Markdown"
         )
-        
-        logger.info("User changed language", 
-                   user_id=callback.from_user.id,
-                   user_name=callback.from_user.first_name,
-                   chat_id=callback.message.chat.id,
-                   language_code=lang_code,
-                   language_name=lang_name)
-        
+
+        logger.info("User changed language", user_id=user_id, language_code=lang_code)
+
     except Exception as e:
-        logger.error("Error in language callback", 
-                    user_id=callback.from_user.id,
-                    chat_id=callback.message.chat.id,
-                    error_type=type(e).__name__,
-                    error_message=str(e))
-        await callback.answer("❌ Error changing language")
-    
-    # Answer callback to remove loading state
-    await callback.answer()
+        logger.error("Error in language callback", user_id=callback.from_user.id,
+                     error_type=type(e).__name__, error_message=str(e))

@@ -1,0 +1,202 @@
+nodes:
+  # ── City of Kam'yanobrid ──────────────────────────────────────────────────
+  tavern:
+    name:
+      uk: "Таверна «Сонний дракон»"
+      en: "The Sleeping Dragon"
+    description:
+      uk: "Тут пахне пивом, димом і старими скаргами. Бруно за стійкою."
+      en: "It smells of beer, smoke, and old grievances. Bruno is at the counter."
+    neighbors: [market, guild]
+
+  guild:
+    name:
+      uk: "Гільдія авантюристів"
+      en: "Adventurers' Guild"
+    description:
+      uk: "Реєстраційна книга, стара зброя на стінах, Марта за столом."
+      en: "A registration book, old weapons on the walls, Marta at her desk."
+    neighbors: [tavern, street]
+
+  market:
+    name:
+      uk: "Ринкова площа"
+      en: "Market Square"
+    description:
+      uk: "Голоси продавців, запах риби і спецій, Хаїм десь поруч."
+      en: "Vendors calling out, smell of fish and spices, Haim somewhere nearby."
+    neighbors: [tavern, street, apothecary]
+
+  street:
+    name:
+      uk: "Вулиці міста"
+      en: "City Streets"
+    description:
+      uk: "Вузькі провулки, звичайні люди зі своїми звичайними проблемами."
+      en: "Narrow alleys, ordinary people with their ordinary problems."
+    neighbors: [market, guild, city_gate, night_market]
+
+  apothecary:
+    name:
+      uk: "Аптека Мирона"
+      en: "Myron's Apothecary"
+    description:
+      uk: "Запах сушених трав і чогось хімічного. Аптекар Мирон щось перетирає в ступці."
+      en: "Smell of dried herbs and something chemical. Apothecary Myron grinds something in a mortar."
+    neighbors: [market]
+
+  night_market:
+    name:
+      uk: "Нічний ринок"
+      en: "Night Market"
+    description:
+      uk: "Вночі ринкова площа інша — тихіша, темніша, і люди тут інші."
+      en: "At night the market square is different — quieter, darker, and the people are different."
+    neighbors: [street]
+
+  # ── Outside the city ─────────────────────────────────────────────────────
+  city_gate:
+    name:
+      uk: "Міські ворота"
+      en: "City Gates"
+    description:
+      uk: "Вартові кивають — ти вже знайоме обличчя. За воротами починається решта світу."
+      en: "The guards nod — you're a familiar face now. Beyond the gates begins the rest of the world."
+    neighbors: [street, road]
+
+  road:
+    name:
+      uk: "Тракт"
+      en: "The Road"
+    description:
+      uk: "Розбита дорога між полями. Зрідка проїздять вози, зрідка проходять люди."
+      en: "A rutted road between fields. Occasional carts pass, occasional people."
+    neighbors: [city_gate, forest, farm, swamp]
+
+  farm:
+    name:
+      uk: "Ферма Ковальських"
+      en: "Kovalsky Farm"
+    description:
+      uk: "Невелике господарство, собака гавкає, десь мукає корова."
+      en: "A small farmstead, a dog barking, a cow lowing somewhere."
+    neighbors: [road]
+
+  forest:
+    name:
+      uk: "Темний ліс"
+      en: "Dark Forest"
+    description:
+      uk: "Ліс тут старий, щільний. Між деревами завжди чується щось зайве."
+      en: "The forest here is old, dense. Between the trees there's always something extra to hear."
+    neighbors: [road, ruins]
+
+  ruins:
+    name:
+      uk: "Стародавні руїни"
+      en: "Ancient Ruins"
+    description:
+      uk: "Залишки чогось великого і давно забутого. Каміння вкрите мохом, між ним ростуть дерева."
+      en: "Remains of something great and long forgotten. The stones are covered in moss, trees grow between them."
+    neighbors: [forest]
+
+  swamp:
+    name:
+      uk: "Прокляте болото"
+      en: "Cursed Swamp"
+    description:
+      uk: "Болото тягнеться далеко. Вода чорна, дерева криві, рух між ними — суцільна помилка орієнтації."
+      en: "The swamp stretches far. Black water, crooked trees, movement between them — one continuous disorientation."
+    neighbors: [road, beast_lair]
+
+  beast_lair:
+    name:
+      uk: "Лігво звіра"
+      en: "Beast's Lair"
+    description:
+      uk: "Місце де болото стає ще темнішим. Кістки, сліди, тиша яка щось приховує."
+      en: "Where the swamp grows darker still. Bones, tracks, a silence that hides something."
+    neighbors: [swamp]
+
+
+edges:
+  # city
+  tavern→market:
+    uk: "Від таверни до ринку — кілька хвилин ходьби вузькими вуличками. Під ногами бруківка, зверху — навислі балкони."
+    en: "From the tavern to the market is a few minutes through narrow streets. Cobblestones underfoot, overhanging balconies above."
+  market→tavern:
+    uk: "Від ринку назад до таверни. Вже видно знайому вивіску зі сонним драконом."
+    en: "From the market back to the tavern. The familiar sign of the sleeping dragon is already visible."
+  tavern→guild:
+    uk: "Гільдія недалеко — обходиш колодязь на розвилці і заходиш з боковою вулицею."
+    en: "The guild is not far — you go around the well at the crossroads and turn down a side street."
+  guild→tavern:
+    uk: "Від гільдії до таверни — два квартали. Пахне смаженим м'ясом, значить близько."
+    en: "From the guild to the tavern — two blocks. You can smell roasting meat, so it's close."
+  market→street:
+    uk: "Від ринку вглиб міста — вулиця стає вужчою, людей менше, будівлі старіші."
+    en: "From the market into the city — the street narrows, fewer people, older buildings."
+  street→market:
+    uk: "Виходиш на ринкову площу. Знову гамір, знову Хаїм десь кричить про ціни."
+    en: "You emerge into the market square. Again the noise, again Haim somewhere shouting about prices."
+  guild→street:
+    uk: "Від гільдії до вуличок міста — тут вже починається справжній Кам'янобрід, без фасадів."
+    en: "From the guild to the city streets — here begins the real Kam'yanobrid, without facades."
+  street→guild:
+    uk: "Гільдія виглядає солідніше зовні ніж всередині. Сходи старі але міцні."
+    en: "The guild looks more solid from the outside than inside. The stairs are old but sturdy."
+  market→apothecary:
+    uk: "Аптека Мирона — в боковій вуличці, майже схована за навісом торговки тканинами."
+    en: "Myron's apothecary is in a side alley, almost hidden behind a fabric vendor's awning."
+  apothecary→market:
+    uk: "Виходиш з аптеки назад на ринок. Після запаху настоянок свіже повітря здається особливо добрим."
+    en: "You exit the apothecary back to the market. After the smell of tinctures, fresh air seems especially good."
+  street→night_market:
+    uk: "Вночі ринок виглядає інакше — смолоскипи замість денного світла, тіні замість обличь."
+    en: "At night the market looks different — torches instead of daylight, shadows instead of faces."
+  night_market→street:
+    uk: "Залишаєш нічний ринок. Вдень тут буде зовсім звичайне місце."
+    en: "You leave the night market. In daylight this will be a completely ordinary place."
+  street→city_gate:
+    uk: "Міські ворота — в кінці головної вулиці. Чим ближче, тим більше відчуваєш що місто закінчується."
+    en: "The city gates — at the end of the main street. The closer you get, the more you feel the city ending."
+  city_gate→street:
+    uk: "Повертаєшся в місто. Вартові кивають, не запитуючи нічого."
+    en: "You return to the city. The guards nod without asking anything."
+  # outside
+  city_gate→road:
+    uk: "За воротами — тракт. Широкий, розбитий, і йде кудись далеко між полями."
+    en: "Beyond the gates — the road. Wide, rutted, going somewhere far between the fields."
+  road→city_gate:
+    uk: "Ворота Кам'янобріду вже видно. Місто виглядає меншим звідси."
+    en: "The gates of Kam'yanobrid are already visible. The city looks smaller from here."
+  road→forest:
+    uk: "Тракт іде вглиб лісу. Дерева стають вищими, небо — вужчим смужкою між кронами."
+    en: "The road goes into the forest. The trees grow taller, the sky narrows to a strip between the canopies."
+  forest→road:
+    uk: "Ліс залишається за спиною. Назовні завжди легше ніж всередину."
+    en: "The forest falls behind you. Outward is always easier than inward."
+  road→farm:
+    uk: "Ферма Ковальських — трохи збоку від тракту. Стежка туди утоптана, значить ходять часто."
+    en: "The Kovalsky farm is a little off the road. The path there is well-worn, meaning people come often."
+  farm→road:
+    uk: "Від ферми назад на тракт. Собака проводжає до межі поля і зупиняється."
+    en: "From the farm back to the road. The dog escorts you to the edge of the field and stops."
+  forest→ruins:
+    uk: "Між деревами починає проглядатись каміння — старе, з написами яких вже не прочитати."
+    en: "Between the trees stones begin to show — old, with inscriptions no longer legible."
+  ruins→forest:
+    uk: "Залишаєш руїни. Ліс навколо здається живішим ніж те що ти щойно бачив."
+    en: "You leave the ruins. The forest around feels more alive than what you just saw."
+  road→swamp:
+    uk: "Тракт іде на захід, до болота. Земля поступово м'якшає під ногами."
+    en: "The road goes west, toward the swamp. The ground gradually softens underfoot."
+  swamp→road:
+    uk: "Виходиш з болота на тверду землю. Одяг мокрий, але ти живий — вже добре."
+    en: "You step out of the swamp onto solid ground. Your clothes are wet, but you're alive — already good."
+  swamp→beast_lair:
+    uk: "Болото стає темнішим і тихішим. Тут нічого не кричить і не плюскоче — це погано."
+    en: "The swamp grows darker and quieter. Nothing here cries out or splashes — that's bad."
+  beast_lair→swamp:
+    uk: "Іти назад через болото після цього місця — приємна прогулянка."
+    en: "Walking back through the swamp after this place feels like a pleasant stroll."

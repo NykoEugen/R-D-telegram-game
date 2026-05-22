@@ -1,0 +1,119 @@
+city:
+  name:
+    uk: "Кам'янобрід"
+    en: "Kamenobrid"
+  intro:
+    uk: "Кам'янобрід зустрічає тебе так само, як зустрічав усіх до тебе: брудними вулицями, запахом смоли і квашеної капусти, і цілковитою відсутністю інтересу до твоєї появи. Місто стоїть на перехресті трьох доріг вже триста років — і за цей час встигло стати і торговельним вузлом, і перевалочним пунктом для тих, кому нікуди йти, і кладовищем надій для тих, хто йшов з надіями. Ти тут. Добре, що ти хоча б тут."
+    en: "Kamenobrid greets you the way it has greeted everyone before you: with dirty streets, the smell of tar and sauerkraut, and complete indifference to your arrival. The town has stood at the crossroads of three roads for three hundred years — and in that time has managed to become a trading hub, a waypoint for those with nowhere to go, and a graveyard of ambitions for those who arrived with ambitions. You are here. At least you are here."
+  intro_quests_unlocked:
+    uk: "Після таверни й гільдії в голові дещо вкладається на місце — куди йти, у кого питати, і за що можна отримати срібло."
+    en: "After the tavern and the guild, things begin to fall into place — where to go, who to ask, and what might earn you some silver."
+
+  locations:
+    tavern:
+      name:
+        uk: "Таверна «Сонний дракон»"
+        en: "The Sleeping Dragon"
+      description:
+        uk: "Таверна «Сонний дракон» ніколи не спала — назва іронічна, як і все в цьому місті. Усередині: низька стеля, дим від трьох вогнищ одразу, десь у кутку хтось сперечається про борги, і за стійкою — Бруно Трактирник, чоловік з руками ковальського вигляду і поглядом людини, яка за двадцять років бачила достатньо, щоб більше нічому не дивуватись. Він тебе вже помітив."
+        en: "The Sleeping Dragon has never slept — the name is ironic, like everything in this town. Inside: low ceiling, smoke from three hearths at once, someone arguing over debts in a corner, and behind the counter — Bruno the Innkeeper, a man with the hands of a blacksmith and the look of someone who has spent twenty years seeing enough to be surprised by nothing. He has already noticed you."
+      npc:
+        uk: "Бруно Трактирник"
+        en: "Bruno the Innkeeper"
+      actions:
+        drink:
+          label:
+            uk: "🍺 Замовити кухоль"
+            en: "🍺 Order a drink"
+          text:
+            uk: "Бруно ставить кухоль на стійку без зайвих рухів. «Мед чи пиво». Чекає. Отримавши відповідь, наповнює і відразу зайнятий іншим — але через хвилину повертається: «Вперше в місті? Видно». Не як образа — просто факт."
+            en: "Bruno sets a mug on the counter without unnecessary movement. 'Mead or ale.' Waits. On receiving an answer he fills it and is immediately occupied with something else — but a minute later he is back: 'First time in town? Shows.' Not as an insult — just a fact."
+        rumor:
+          label:
+            uk: "👂 Послухати плітки"
+            en: "👂 Listen to rumors"
+          text:
+            uk: "Бруно протирає кухоль і говорить, не дивлячись: «На дорозі до Дубової переправи знову щось сталось з возом. Другий за місяць». Відвідувач у кутку додає: «А в мене сусід каже — в підвалі хтось кусається». Обидва чекають твоєї реакції. Тут так знайомляться."
+            en: "Bruno wipes a mug without looking up: 'Something happened to another wagon on the road to Oak Crossing. Second this month.' A man in the corner adds: 'My neighbour says something is biting people in his cellar.' Both wait for your reaction. This is how introductions work here."
+        board:
+          label:
+            uk: "📋 Дошка оголошень"
+            en: "📋 Notice board"
+          text:
+            uk: "Дошка в кутку обліплена клаптями шкіри й паперу — завдання, оголошення, чийсь малюнок кота і приписка «не брати». Кілька аркушів з гільдійною печаткою — але щоб їх брати, треба спочатку зареєструватись у гільдії."
+            en: "The board in the corner is covered in scraps of hide and paper — jobs, notices, someone's drawing of a cat and a note that reads 'do not take.' Several sheets bear the guild seal — but to claim those, you need to register at the guild first."
+
+    guild:
+      name:
+        uk: "Гільдія авантюристів"
+        en: "Adventurers' Guild"
+      description:
+        uk: "Будівля гільдії виглядає надійніше за більшість будинків у місті — камінь, а не дерево, і двері з залізними завісами, які не скриплять. На стінах зброя і карти, у кутку шафа з реєстраційними книгами, за столом — Гільд-майстер Марта: жінка років п'ятдесяти, коротко підстрижена, з чорнильною плямою на пальці і виразом обличчя людини, яка давно вирішила не витрачати слів там, де достатньо погляду."
+        en: "The guild building looks more solid than most in town — stone, not wood, and iron-hinged doors that do not creak. Weapons and maps cover the walls; in the corner stands a cabinet of registration books; behind the desk sits Guildmaster Marta: a woman of around fifty, closely shorn, with an ink stain on her finger and the expression of someone who long ago decided not to spend words where a look suffices."
+      npc:
+        uk: "Гільд-майстер Марта"
+        en: "Guildmaster Marta"
+      actions:
+        register:
+          label:
+            uk: "📜 Зареєструватись"
+            en: "📜 Register"
+          text:
+            uk: "Марта відкриває книгу, пише твоє ім'я, ставить печатку. «Ім'я вписано. Завдання на дошці — берете листок, виконуєте, повертаєтесь з доказом. Авансів немає, скарг не приймаємо». Закриває книгу. Реєстрація завершена."
+            en: "Marta opens the book, writes your name, applies the seal. 'Name recorded. Jobs are on the board — take the sheet, complete it, return with proof. No advances, no complaints accepted.' She closes the book. Registration complete."
+        ask_work:
+          label:
+            uk: "💼 Запитати про роботу"
+            en: "💼 Ask about work"
+          text:
+            uk: "«Завдання поділені за складністю — перший ярус для таких, як ти зараз. Виконаєш кілька — відкриються важчі. Там і платять більше, і вмирають частіше». Пауза. «Читай дошку»."
+            en: "'Jobs are tiered by difficulty — first tier for people in your current condition. Complete several and harder ones open up. Better pay and more frequent dying.' A pause. 'Read the board.'"
+
+    market:
+      name:
+        uk: "Ринкова площа"
+        en: "Market Square"
+      description:
+        uk: "Ринкова площа — найгучніше місце в місті і найдемократичніше: тут горлають однаково і купці, і покупці, і кури. Торгують усім — від риби до амулетів від нечисті, причому амулети продає та ж людина. Купець Хаїм тримає найбільший намет посередині: тканини, прянощі, дрібний залізний товар і вираз обличчя людини, яка вважає, що ціна завжди підлягає обговоренню — але тільки в один бік."
+        en: "Market Square is the loudest place in town and the most democratic: merchants and buyers and chickens all shout with equal conviction. They sell everything here — from fish to amulets against evil spirits, the latter sold by the same person as the former. Merchant Haim runs the largest stall in the centre: cloth, spices, small ironware, and the expression of a man who believes every price is open to discussion — but only in one direction."
+      npc:
+        uk: "Купець Хаїм"
+        en: "Merchant Haim"
+      actions:
+        browse:
+          label:
+            uk: "🛒 Роздивитись крамниці"
+            en: "🛒 Browse the stalls"
+          text:
+            uk: "Товар є на будь-який смак — і майже на жоден гаманець. Ти зупиняєшся перед лотком з вживаними клинками: добрі, але ціна нагадує, що ти поки що дивишся, а не купуєш."
+            en: "Goods to suit every taste — and almost no purse. You stop at a stall of second-hand blades: decent quality, but the price is a reminder that you are browsing, not buying."
+        talk:
+          label:
+            uk: "🗣 Поговорити з Хаїмом"
+            en: "🗣 Talk to Haim"
+          text:
+            uk: "Хаїм відривається від рахунків. «Новий в місті? Слухай мою пораду безкоштовно: один раз безкоштовно, потім за гроші». Він показує кудись за плече. «Гільдія — ось де з нуля можна стати нулем з можливостями. А поки — тримайся від Вербової балки вночі. Там нічого доброго»."
+            en: "Haim looks up from his accounts. 'New in town? Take my advice — free this once, after that it costs.' He gestures somewhere over his shoulder. 'The guild — that is where a nobody can become a nobody with prospects. And for now — stay away from Verbova Ravine at night. Nothing good there.'"
+
+    street:
+      name:
+        uk: "Вулиці міста"
+        en: "City Streets"
+      description:
+        uk: "Вулиці Кам'яноброду вузькі так, ніби будинки вирішили посунутись одне до одного і забули зупинитись. Городяни ходять своїми справами — ковалі, прачки, діти з невідомо чим у руках, старі на лавках із поглядом людей, які пережили все попереднє і налаштовані пережити й це. Місто живе. Не завжди приємно, але живе."
+        en: "The streets of Kamenobrid are narrow in the way that suggests the buildings once decided to move closer together and forgot to stop. The townspeople go about their business — smiths, washerwomen, children carrying unidentified things, old men on benches with the look of people who have survived everything previous and intend to survive this too. The town lives. Not always pleasantly, but it lives."
+      actions:
+        explore:
+          label:
+            uk: "🚶 Пройтись містом"
+            en: "🚶 Walk around"
+          text:
+            uk: "За поворотом — провулок, де хтось намалював на стіні карту зі стрілками і написом «не туди». Ти стоїш і дивишся на це довше, ніж варто, бо незрозуміло: попередження це чи реклама."
+            en: "Around the corner — an alley where someone has painted a map with arrows on the wall and the words 'not this way.' You stand looking at it longer than you should, because it is unclear whether it is a warning or an advertisement."
+        help:
+          label:
+            uk: "🤝 Допомогти комусь"
+            en: "🤝 Help someone"
+          text:
+            uk: "Стара жінка впустила кошик з ринку — яблука котяться по бруківці в усі боки. Ти збираєш. Вона дивиться на тебе, потім на яблука, потім знову на тебе. «Дякую». Пауза. «Ти звідки такий уважний?» Питання риторичне. Але яблуко вона тобі дає."
+            en: "An old woman has dropped her market basket — apples rolling across the cobblestones in every direction. You gather them. She looks at you, then at the apples, then at you again. 'Thank you.' A pause. 'Where do you come from, being so attentive?' The question is rhetorical. But she gives you an apple."

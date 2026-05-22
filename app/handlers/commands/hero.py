@@ -47,7 +47,7 @@ async def cmd_hero_menu(message: Message, state: FSMContext, db_session: AsyncSe
         result = await db_session.execute(
             select(User)
             .where(User.telegram_id == user_id)
-            .options(selectinload(User.player))
+            .options(selectinload(User.players))
         )
         user = result.scalar_one_or_none()
         
@@ -350,7 +350,7 @@ async def confirm_hero_creation(callback: CallbackQuery, state: FSMContext, db_s
         result = await db_session.execute(
             select(User)
             .where(User.telegram_id == user_id)
-            .options(selectinload(User.player))
+            .options(selectinload(User.players))
         )
         user = result.scalar_one_or_none()
         
@@ -358,23 +358,21 @@ async def confirm_hero_creation(callback: CallbackQuery, state: FSMContext, db_s
             await callback.answer(i18n_service.get_text(user_id, 'hero.errors.user_not_found'))
             return
         
-        # Check if user already has a player (for replacement)
-        from app.models.player import Player
-        existing_player_result = await db_session.execute(
-            select(Player).where(Player.user_id == user.id)
-        )
-        existing_player = existing_player_result.scalar_one_or_none()
-        
-        if existing_player:
-            # Delete existing player
-            await db_session.delete(existing_player)
-            await db_session.commit()
-        
-        # Create new player
+        from app.services.repositories.player_repo import PlayerRepository
+        repo = PlayerRepository(db_session)
+
+        # Replace existing single hero (legacy /hero flow — always replaces)
+        existing_players = user.players
+        for ep in existing_players:
+            await db_session.delete(ep)
+        await db_session.flush()
+
         player = Player(
             user_id=user.id,
             character_name=hero_name,
             character_class=character_class,
+            slot=1,
+            is_active=True,
             level=1,
             experience=0,
             strength=10,
@@ -383,48 +381,23 @@ async def confirm_hero_creation(callback: CallbackQuery, state: FSMContext, db_s
             vitality=10,
             luck=10,
             available_stat_points=0,
-            health=60,  # 20 + 4*10
+            health=60,
             max_health=60
         )
-    
+
         # Apply class bonuses
         player.apply_class_bonuses(character_class)
-        
+
         db_session.add(player)
         await db_session.commit()
-        await db_session.refresh(player)  # Refresh the player object after commit
+        await db_session.refresh(player)
         
-        # Calculate basic stats for display (avoid potential async issues)
         hp_max = 20 + 4 * player.vitality
         attack = 2 + player.strength
         magic = 2 + player.intelligence
         crit_chance = min(35.0, 5.0 + 0.5 * player.agility)
         dodge = min(25.0, 2.0 + 0.3 * player.agility)
-        
-        # Create keyboard with quest options
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=i18n_service.get_text(user_id, 'btn.start_quest'), 
-                    callback_data="start_quest"
-                ),
-                InlineKeyboardButton(
-                    text=i18n_service.get_text(user_id, 'btn.adventure'), 
-                    callback_data="start_adventure"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text=i18n_service.get_text(user_id, 'btn.view_hero'), 
-                    callback_data="view_hero"
-                ),
-                InlineKeyboardButton(
-                    text=i18n_service.get_text(user_id, 'btn.main_menu'), 
-                    callback_data="back_to_start"
-                )
-            ]
-        ])
-        
+
         await callback.message.edit_text(
             i18n_service.get_text(user_id, 'hero.creation.created',
                                  name=hero_name,
@@ -434,11 +407,13 @@ async def confirm_hero_creation(callback: CallbackQuery, state: FSMContext, db_s
                                  magic=magic,
                                  crit_chance=crit_chance,
                                  dodge=dodge),
-            reply_markup=keyboard,
             parse_mode="Markdown"
         )
-        
+
         await state.clear()
+
+        from app.handlers.city import enter_city
+        await enter_city(callback.message, state)
         
         # Hero creation completed successfully
         
@@ -492,7 +467,7 @@ async def view_hero_details(callback: CallbackQuery, db_session: AsyncSession):
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     
@@ -551,7 +526,7 @@ async def show_hero_stats(callback: CallbackQuery, db_session: AsyncSession):
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     
@@ -607,7 +582,7 @@ async def handle_hero_level_up(callback: CallbackQuery, db_session: AsyncSession
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     
@@ -670,7 +645,7 @@ async def start_hero_point_distribution(callback: CallbackQuery, state: FSMConte
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     
@@ -869,7 +844,7 @@ async def back_to_hero_menu(callback: CallbackQuery, db_session: AsyncSession):
     result = await db_session.execute(
         select(User)
         .where(User.telegram_id == user_id)
-        .options(selectinload(User.player))
+        .options(selectinload(User.players))
     )
     user = result.scalar_one_or_none()
     

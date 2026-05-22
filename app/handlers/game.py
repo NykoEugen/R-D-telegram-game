@@ -20,25 +20,29 @@ from app.game.scenes import (
     scene_graph,
 )
 from app.core.config import settings
+from app.services.scene_text_loader import get_scene_text
 
 router = Router()
 logger = get_logger(__name__)
 
-_SCENE_DESCRIPTIONS = {
-    "story":       "You find yourself in {scene}. The atmosphere is tense.",
-    "choice":      "You must make a decision at {scene}. What will you choose?",
-    "encounter":   "A dangerous encounter awaits at {scene}!",
-    "dialogue":    "You meet someone interesting at {scene}.",
-    "rest":        "You find a safe place to rest at {scene}.",
-    "exploration": "You explore the mysterious {scene}.",
-    "quest":       "A new quest opportunity presents itself at {scene}.",
-    "loot":        "You discover valuable items at {scene}!",
-    "combat":      "Battle erupts at {scene}!",
-}
 
-
-def _scene_description(scene) -> str:
-    template = _SCENE_DESCRIPTIONS.get(scene.kind.value, "You are at {scene}.")
+def _scene_description(scene, locale: str = "en") -> str:
+    text = get_scene_text(scene.id, locale)
+    if text:
+        return text
+    # Fallback to generic template if scene not in YAML
+    fallbacks = {
+        "story": "You find yourself in {scene}.",
+        "choice": "You must make a decision at {scene}.",
+        "encounter": "A dangerous encounter awaits at {scene}!",
+        "dialogue": "You meet someone at {scene}.",
+        "rest": "You rest at {scene}.",
+        "exploration": "You explore {scene}.",
+        "quest": "A quest presents itself at {scene}.",
+        "loot": "You discover items at {scene}!",
+        "combat": "Battle erupts at {scene}!",
+    }
+    template = fallbacks.get(scene.kind.value, "You are at {scene}.")
     return template.format(scene=scene.id.replace("_", " ").title())
 
 

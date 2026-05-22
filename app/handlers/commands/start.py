@@ -8,6 +8,7 @@ from app.services.logging_service import get_logger
 from app.services.i18n_service import i18n_service
 from app.services.fsm_service import FSMStateService
 from app.game.states import GameStates
+from app.handlers.menu import build_main_menu_kb
 
 router = Router()
 logger = get_logger(__name__)
@@ -54,6 +55,11 @@ async def cmd_start(message: Message, state: FSMContext, db_session: AsyncSessio
         )
         
         await message.answer(welcome_text, parse_mode="HTML")
+        await message.answer(
+            i18n_service.get_text(user_id, 'menu.title'),
+            reply_markup=build_main_menu_kb(user_id),
+            parse_mode="Markdown"
+        )
         logger.info("User started the bot", 
                    user_id=message.from_user.id,
                    user_name=message.from_user.first_name,

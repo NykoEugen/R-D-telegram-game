@@ -1,0 +1,321 @@
+quests:
+  - id: "rats_in_cellar"
+    tier: 1
+    min_level: 1
+    reward_xp: 60
+    reward_gold: 25
+    type: "combat"
+    location: "tavern"
+    title:
+      uk: "Пацюки в льоху"
+      en: "Rats in the Cellar"
+    questgiver:
+      uk: "Бруно Трактирник"
+      en: "Bruno the Innkeeper"
+    description:
+      uk: "Льох таверни захопили пацюки — не звичайні, а великі, злі й, схоже, організовані."
+      en: "The tavern cellar has been overrun by rats — not ordinary ones, but large, vicious, and seemingly coordinated."
+    proposal_text:
+      uk: "Бруно гримає кулаком по стійці так, що кухлі підстрибують. «Слухай, ти виглядаєш як людина, якій нема чого втрачати — це добре, бо в мене є робота». Він нахиляється ближче, і від нього тягне часником і чесним обуренням. «Льох. Пацюки. Великі, чорти, як молоді кішки — і їх там, мабуть, з три десятки. Я туди вже двох хлопців посилав, обидва повернулись без запасів і з покусаними руками». Стукає знову. «Двадцять п'ять срібних і вільний кухоль щовечора — якщо впораєшся»."
+      en: "Bruno slams his fist on the counter hard enough to rattle the mugs. 'Listen, you look like someone with nothing to lose — good, because I have a job.' He leans closer, smelling of garlic and righteous indignation. 'The cellar. Rats. Big ones, damn them, like young cats — thirty of them at least. I sent two boys down already, both came back without the supplies and with bitten hands.' Another slam. 'Twenty-five silver and a free mug every evening — if you handle it.'"
+    exploration_text:
+      uk: "Ти спускаєшся до льоху зі смолоскипом і відразу розумієш: Бруно не перебільшував. Пацюки вибудували щось схоже на лігво між бочками з солониною — нори, стежки, навіть щось на кшталт варти по кутках. Це вже не звичайні гризуни. Це проблема."
+      en: "You descend to the cellar with a torch and immediately understand: Bruno was not exaggerating. The rats have built something like a settlement between the brine barrels — burrows, paths, even what looks like sentries posted at the corners. These are not ordinary rodents. This is a problem."
+    confrontation_text:
+      uk: "Ватажок — справжнє страховисько розміром з невелику собаку — вистрибує з тіні і кидається з різкістю, якої від пацюка не чекаєш. Решта — за ним. Льох заповнюється писком і брудом, і тут вже не до роздумів."
+      en: "The leader — a genuine horror the size of a small dog — launches from the shadows with a speed you would not expect from a rat. The rest follow. The cellar fills with squealing and chaos, and there is no longer any time to think."
+    success_text:
+      uk: "Льох очищено. Бруно заглядає зверху з ліхтарем, бачить твій вигляд і мовчки кладе на стійку монети та повний кухоль. «Добра робота», — бурчить він, і за його мірками це майже поема."
+      en: "The cellar is clear. Bruno peers down with a lantern, takes one look at your condition, and silently sets coins and a full mug on the counter. 'Good work,' he mutters, and by his standards that is practically a poem."
+    fail_text:
+      uk: "Ти вилазиш нагору покусаним і без результату. Бруно дивиться на тебе, на льох, потім знову на тебе. «Наступного разу», — каже він, хоча голос не дуже вірить у наступний раз."
+      en: "You climb back up bitten and empty-handed. Bruno looks at you, then at the cellar, then at you again. 'Next time,' he says, though his voice does not believe in a next time."
+    objectives:
+      - id: "scout_cellar"
+        required_actions: ["investigate", "explore"]
+        count: 2
+      - id: "clear_rats"
+        required_actions: ["attack", "defend"]
+        count: 3
+
+  - id: "lost_letter"
+    tier: 1
+    min_level: 1
+    reward_xp: 65
+    reward_gold: 20
+    type: "delivery"
+    location: "apothecary"
+    title:
+      uk: "Загублений лист"
+      en: "The Lost Letter"
+    questgiver:
+      uk: "Аптекар Мирон"
+      en: "Myron the Apothecary"
+    description:
+      uk: "Аптекар Мирон чекає важливого листа від колеги, але гінець десь затримався. Потрібно знайти гінця і доставити лист."
+      en: "Apothecary Myron awaits an important letter from a colleague, but the courier has gone missing. The letter must be found and delivered."
+    proposal_text:
+      uk: "Мирон перебирає баночки на полиці з видом людини, яка не може знайти не баночку, а спокій. «Молодий чоловіче», — каже він не повертаючись, — «гінець мав бути три дні тому. Лист стосується рецепту, який я вже тиждень не можу відтворити, і якщо він загубився разом з тією людиною...». Пауза. Він нарешті обертається. «Заплачу двадцять срібних і дам склянку тонізуючого відвару — власного виготовлення, не отруєного, запевняю вас». Очі в нього тривожні й чесні. «Гінець пішов дорогою через Вербову балку. Туди й дивіться»."
+      en: "Myron moves jars along the shelf with the air of a man searching not for a jar but for peace of mind. 'Young person,' he says without turning, 'the courier was due three days ago. The letter concerns a formula I have spent a week failing to reconstruct, and if it is lost along with that man...' A pause. He finally turns. 'I will pay twenty silver and give you a vial of tonic — my own preparation, not poisoned, I assure you.' His eyes are anxious and honest. 'The courier took the road through Verbova Ravine. Start there.'"
+    exploration_text:
+      uk: "Вербова балка — місце похмуре навіть у погожий день: верби нависають над дорогою, вкриваючи її тінню, і кожен кущ може ховати що завгодно. Сліди гінця ти знаходиш швидко — кинута торба, зім'ята трава, і десь недалеко — звук, схожий на стогін."
+      en: "Verbova Ravine is a gloomy place even on a fine day: willows hang over the road in a curtain of shadow, and any bush could hide anything. You find the courier's trail quickly — an abandoned satchel, flattened grass, and not far away, a sound like a groan."
+    confrontation_text:
+      uk: "Гінця знайдено — живий, але скручений і перелякований до краю. Його затримали двоє молодиків, яким ліс дав зайву відвагу. Вони ще тут і розходитись не збираються."
+      en: "The courier is found — alive, but bound and badly frightened. Two young men with more forest-courage than sense detained him. They are still here and have no intention of leaving."
+    success_text:
+      uk: "Лист доставлено, гінець врятований, молодики розбіглись. Мирон читає листа з видом людини, яка щойно віднайшла загублену частину себе. Монети й відвар переходять до тебе без зайвих слів, але з поглядом, що важить більше за нагороду."
+      en: "Letter delivered, courier rescued, troublemakers scattered. Myron reads the letter with the look of a man who has just recovered a missing piece of himself. Coins and tonic reach you without many words, but with a look that weighs more than the reward."
+    fail_text:
+      uk: "Гінець зник остаточно або лист втрачено. Мирон приймає звістку тихо і з гідністю, але пальці стискають баночку з такою силою, що аж біліють."
+      en: "The courier is gone for good or the letter is lost. Myron receives the news quietly and with dignity, but his fingers close around a jar with enough force to whiten his knuckles."
+    objectives:
+      - id: "find_courier"
+        required_actions: ["investigate", "explore"]
+        count: 2
+      - id: "recover_letter"
+        required_actions: ["talk", "negotiate"]
+        count: 1
+
+  - id: "missing_merchant"
+    tier: 2
+    min_level: 2
+    reward_xp: 90
+    reward_gold: 40
+    type: "rescue"
+    location: "road"
+    title:
+      uk: "Зниклий купець"
+      en: "The Missing Merchant"
+    questgiver:
+      uk: "Капітан варти Ядвіга"
+      en: "Captain of the Guard Yadviha"
+    description:
+      uk: "Заможний купець зник по дорозі між Кам'яноброддям і містом. Капітан Ядвіга хоче результату, а не виправдань."
+      en: "A wealthy merchant disappeared on the road. Captain Yadviha wants results, not excuses."
+    proposal_text:
+      uk: "Ядвіга не встає зустрічати — вона дивиться від стола так, ніби ти вже спізнився і виглядаєш недостатньо компетентно. «Купець Остап Чорновіл. Виїхав три дні тому. Обоз прибув, купця — нема». Вона кладе на стіл аркуш. «Вартові зайняті охороною міста, а не бігом по лісах за кожним зниклим. Але сім'я Чорновілів — платники, і губернатор хоче зникнення без скандалу». Короткий погляд. «Сорок срібних. Знайдете живим — ще десять зверху від родини. Шукайте на ділянці між Вовчим Яром і Дубовою переправою. І не гайте часу»."
+      en: "Yadviha does not rise to greet you — she looks up from her table as though you are already late and appear insufficiently competent. 'Merchant Ostap Chornovil. Left three days ago. The wagon train arrived. The merchant did not.' She places a sheet on the table. 'The guard is occupied defending the city, not chasing through forests. But the Chornovil family are contributors, and the governor wants this resolved without spectacle.' A brief look. 'Forty silver. Find him alive — another ten from the family. Search between Vovchyi Yar and the Oak Crossing. Do not waste time.'"
+    exploration_text:
+      uk: "Між Вовчим Яром і переправою — кілька верст дороги, яку ліс з двох боків тисне все щільніше. Сліди боротьби знаходяться на другій милі: перекинутий тюк, зламана лиця, і щось затягнуто в ліс. Ти йдеш за слідом."
+      en: "Between Vovchyi Yar and the crossing lie several miles of road the forest presses in on from both sides. Signs of struggle appear at the second mile: an overturned bundle, a broken lantern, and something dragged into the trees. You follow the trail."
+    confrontation_text:
+      uk: "Купець — живий, зв'язаний у старій мисливській хатині. Навколо — четверо. Вони помічають тебе раніше, ніж хотілось би, і хапаються за зброю без зайвих переговорів."
+      en: "The merchant is alive, bound in an old hunting hut. Four men surround him. They notice you sooner than you would like and reach for weapons without wasting time on conversation."
+    success_text:
+      uk: "Купець повертається живим. Ядвіга приймає звіт кивком. Сорок срібних і окремо — конверт від родини Чорновілів. У конверті — ще десять і записка з одним словом: «Дякуємо»."
+      en: "The merchant returns alive. Yadviha receives your report with a nod. Forty silver and separately — an envelope from the Chornovil family. Inside: ten more and a note with a single word: 'Thank you.'"
+    fail_text:
+      uk: "Купця знайдено занадто пізно або не знайдено взагалі. Ядвіга вислуховує без виразу обличчя — це гірше, ніж якби вона кричала."
+      en: "The merchant was found too late or not at all. Yadviha listens without expression — which is worse than if she had shouted."
+    objectives:
+      - id: "track_merchant"
+        required_actions: ["investigate", "explore"]
+        count: 3
+      - id: "rescue_merchant"
+        required_actions: ["attack", "defend", "talk"]
+        count: 2
+
+  - id: "night_watch"
+    tier: 2
+    min_level: 2
+    reward_xp: 95
+    reward_gold: 45
+    type: "combat"
+    location: "night_market"
+    title:
+      uk: "Нічна варта"
+      en: "Night Watch"
+    questgiver:
+      uk: "Купець Хаїм"
+      en: "Merchant Khaim"
+    description:
+      uk: "Склади купця Хаїма вже двічі грабували вночі. Він хоче найняти когось, хто зловить злодіїв на місці злочину."
+      en: "Merchant Khaim's warehouses have been robbed twice in the night. He wants to hire someone to catch the thieves in the act."
+    proposal_text:
+      uk: "Хаїм зустрічає тебе в крамниці з виглядом людини, яка нещодавно рахувала і не дорахувалась. «Сідайте, сідайте». «Дивіться: двічі за місяць. Вночі. Нічого не зламано — відчинено. Значить або ключ є в когось чужого, або вони знають, як відмикати без ключа. Варта знизує плечима — кажуть, нічого не бачили». Він тягне себе за бороду. «Сорок п'ять срібних. Ночуйте біля складу, спіймайте їх — мені потрібні імена або тіла. Краще імена, але я розумію, як буває»."
+      en: "Khaim receives you with the manner of a man who has recently been counting and come up short. 'Sit, sit.' 'Look here: twice in a month. At night. Nothing broken — opened. Which means someone has a key, or they know how to manage without one. The watch shrugs — saw nothing, they say.' He pulls at his beard. 'Forty-five silver. Stay near the warehouse, catch them — I need names or bodies. Names preferably, but I understand how things go.'"
+    exploration_text:
+      uk: "Ніч біля складу — холодна і тривожна. Ти вивчаєш підходи, знаходиш слід, якого варта оминала: м'який ґрунт під бічним вікном із чіткими відбитками підошов, і де-не-де — щось схоже на мастило від замка."
+      en: "A night beside the warehouse is cold and tense. You study the approaches, finding a trail the watch had overlooked: soft earth under the side window with clear boot impressions, and here and there, something resembling lock-oil."
+    confrontation_text:
+      uk: "О другій годині вони з'являються — троє, злагоджено й тихо, явно не вперше. Але ти вже на місці. Момент, коли вони розуміють, що пастка спрацювала — варто запам'ятати."
+      en: "At the second hour they appear — three of them, smooth and quiet, clearly not their first time. But you are already in position. The moment they understand the trap has closed — remember that look."
+    success_text:
+      uk: "Злодіїв схоплено або нейтралізовано. Хаїм з'являється на світанку і починає рахувати шкоду — але цього разу з видом людини, яка знає, що втрат більше не буде. Гаманець переходить до тебе з подякою, яка звучить як полегшення."
+      en: "The thieves are caught or neutralised. Khaim appears at dawn and begins tallying the damage — but this time with the face of a man who knows the losses will stop. The purse reaches you with gratitude that sounds a great deal like relief."
+    fail_text:
+      uk: "Вони пішли — з товаром і без слідів. Хаїм дивиться на порожній склад і на тебе по черзі, і в цьому мовчанні більше докору, ніж у будь-яких словах."
+      en: "They got away — with the goods and without a trace. Khaim looks at the empty warehouse and then at you in turn, and in that silence there is more reproach than any words could carry."
+    objectives:
+      - id: "scout_warehouse"
+        required_actions: ["investigate", "sneak"]
+        count: 2
+      - id: "ambush_thieves"
+        required_actions: ["attack", "defend"]
+        count: 2
+
+  - id: "ruins_mystery"
+    tier: 3
+    min_level: 3
+    reward_xp: 120
+    reward_gold: 55
+    type: "exploration"
+    location: "ruins"
+    title:
+      uk: "Таємниця руїн"
+      en: "Mystery of the Ruins"
+    questgiver:
+      uk: "Вчений Теодор"
+      en: "Scholar Teodor"
+    description:
+      uk: "Вчений Теодор знайшов у руїнах написи, яких не може розшифрувати без зразків з глибших рівнів. Потрібен сміливець."
+      en: "Scholar Teodor found inscriptions in the ruins he cannot decipher without samples from the deeper levels. He needs someone brave enough to retrieve them."
+    proposal_text:
+      uk: "Теодор відчиняє двері і одразу ж забуває, що ти там стоїш — повертається до столу, заваленого кресленнями і порожніми чашками. «О, так, так, заходьте», — каже він хвилин через дві. «Значить так. Руїни за Чорним болотом — старовина неймовірна, не менш як три тисячі років, я певен. Але нижній рівень закритий завалом, і там, я переконаний, є каменеписи зовсім іншого штибу». Він нарешті дивиться на тебе. «Мені туди не влізти — коліна. А вам треба тільки спуститись, знайти плити з написами і принести мені естампажі». Пауза. «Платжу п'ятдесят п'ять срібних і особистий подяковий лист. Листи іноді відчиняють двері»."
+      en: "Teodor opens the door and immediately forgets you are standing there — turning back to a table buried under drawings and empty cups. 'Oh, yes, yes, come in,' he says some two minutes later. 'Now then. The ruins beyond the Black Marsh — extraordinary antiquity, no less than three thousand years, I am certain. But the lower level is blocked by a collapse, and I am convinced there are inscriptions of an entirely different character down there.' He finally looks at you. 'I cannot manage it myself — knees. You simply need to descend, locate the inscription slabs, and bring me rubbings.' A pause. 'I pay fifty-five silver and a personal letter of thanks. Letters open doors sometimes.'"
+    exploration_text:
+      uk: "Нижній рівень руїн — зовсім інший. Верхній принаймні схожий на будівлю. Тут же — лабіринт вузьких коридорів, де стелі тиснуть на плечі, і кожен крок відгукується довше, ніж має. Написи на стінах справді є — густі, рівні, і від них нехолодно тільки якщо не вдивлятись."
+      en: "The lower level of the ruins is something else entirely. The upper at least resembles a building. Here there is a labyrinth of narrow corridors where the ceilings press down on your shoulders, and every step echoes longer than it should. The inscriptions are indeed present — dense, even, and unsettling only if you look at them too closely."
+    confrontation_text:
+      uk: "Щось у глибині руїн — не мертве. Ти відчуваєш це до того, як бачиш. Воно рухається в темряві між написами, і схоже, не в захваті від відвідувача."
+      en: "Something in the depths of the ruins is not dead. You feel it before you see it. It moves in the darkness between the inscriptions, and appears to take a dim view of visitors."
+    success_text:
+      uk: "Естампажі зроблено, зразки зібрано. Теодор отримує їх з дрижачими руками і негайно забуває про твою присутність — це найщиріша форма подяки, на яку він здатний. Монети вже лежали готові на столі."
+      en: "The rubbings are made, the samples collected. Teodor receives them with trembling hands and immediately forgets your presence — this is the most sincere form of gratitude he is capable of. The coins were already waiting on the table."
+    fail_text:
+      uk: "Нижній рівень переміг. Ти повертаєшся без нічого, а Теодор дивиться на тебе довго і мовчки, перш ніж повернутись до своїх схем."
+      en: "The lower level won. You return empty-handed, and Teodor regards you at length in silence before turning back to his diagrams."
+    objectives:
+      - id: "map_lower_level"
+        required_actions: ["explore", "investigate"]
+        count: 3
+      - id: "collect_samples"
+        required_actions: ["loot", "investigate"]
+        count: 2
+      - id: "deal_with_guardian"
+        required_actions: ["attack", "flee", "sneak"]
+        count: 1
+
+  - id: "bandit_negotiation"
+    tier: 3
+    min_level: 3
+    reward_xp: 125
+    reward_gold: 60
+    type: "diplomacy"
+    location: "forest"
+    title:
+      uk: "Переговори з розбійниками"
+      en: "Negotiating with Bandits"
+    questgiver:
+      uk: "Голова села Ганна"
+      en: "Village Elder Hanna"
+    description:
+      uk: "Банда розбійників перекрила єдину дорогу до ринку і вимагає мита. Голова села не може ні платити, ні чекати."
+      en: "A bandit gang has blocked the only road to market and demands a toll. The village elder can neither pay nor wait."
+    proposal_text:
+      uk: "Ганна — жінка за шістдесят, яка виглядає так, ніби пережила достатньо, щоб більше нічому не дивуватись. Вона розмовляє стоячи. «Слухай. Дорога заблокована вже два тижні. Банда — з десяток людей, ватажок кличе себе Кривою Шаблею, і він не дурний — дурні довго не тримаються». Вона дивиться прямо. «Платити йому ми не можемо — немає чим. Вбивати всіх — нас теж не вистачить. Але якщо хтось розумний поговорить з ним по-людськи, може знайдеться угода». Пауза. «Шістдесят срібних з сільської скарбниці. І нашу вдячність — вона теж чогось варта в цих краях»."
+      en: "Hanna is a woman past sixty who looks as though she has lived through enough to be surprised by nothing. She speaks standing. 'Listen. The road has been blocked two weeks. The gang — ten or so, their leader calls himself Kryva Shablia, and he is not stupid — the stupid ones do not last.' She looks straight at you. 'We cannot pay him — nothing to pay with. Kill them all — we are not enough. But if someone sensible speaks to him in a human way, perhaps there is a deal to be found.' A pause. 'Sixty silver from the village treasury. And our gratitude — that is also worth something in these parts.'"
+    exploration_text:
+      uk: "Табір розбійників ти знаходиш за годину ходу від дороги — добре захований, але не дуже. Кілька вартових, вогнища, і десь усередині — розмова ватажка з кимось незадоволеним. Хороша нагода прислухатись перш ніж заходити."
+      en: "You find the bandit camp an hour's walk from the road — well hidden, but not particularly so. A few sentries, campfires, and somewhere inside — the leader arguing with someone unhappy. A good chance to listen before walking in."
+    confrontation_text:
+      uk: "Кривий Шабля — чоловік із шрамом через всю щоку і поглядом людини, якій набридло довіряти стороннім. Він слухає тебе, але рука лежить на рукоятці. Слова мають бути точними."
+      en: "Kryva Shablia is a man with a scar across his whole cheek and the look of someone who has grown tired of trusting strangers. He listens to you, but his hand rests on the hilt. The words need to be precise."
+    success_text:
+      uk: "Угоду знайдено — не ідеальну, але працюючу. Кривий Шабля знімає людей з дороги. «Добре», — каже Ганна нарешті. Монети і рукостискання — по-старому, без паперів."
+      en: "A deal is found — not perfect, but workable. Kryva Shablia pulls his people off the road. 'Good,' Hanna says at last. Coins and a handshake — the old way, no papers."
+    fail_text:
+      uk: "Переговори зірвались. Дорога лишається закритою, а Ганна починає думати про інший план."
+      en: "The negotiations collapsed. The road remains blocked, and Hanna begins thinking about another plan."
+    objectives:
+      - id: "scout_bandit_camp"
+        required_actions: ["sneak", "investigate"]
+        count: 2
+      - id: "negotiate_with_leader"
+        required_actions: ["talk", "negotiate"]
+        count: 3
+
+  - id: "cursed_swamp"
+    tier: 4
+    min_level: 4
+    reward_xp: 145
+    reward_gold: 75
+    type: "exploration"
+    location: "swamp"
+    title:
+      uk: "Прокляте болото"
+      en: "The Cursed Swamp"
+    questgiver:
+      uk: "Відьмак Лукаш"
+      en: "Witcher Lukash"
+    description:
+      uk: "Чорне болото стало іще небезпечнішим — щось збуджує його давню нечисть. Лукаш знає причину, але потрібен помічник."
+      en: "The Black Marsh has grown more dangerous — something is stirring its ancient evil. Lukash knows the cause but needs someone to help reach the heart of the swamp."
+    proposal_text:
+      uk: "Лукаш не схожий на відьмаків із пісень — невисокий, сивий, з руками, вкритими старими опіками. «Болото прокидається», — каже він без вступу. «Не в переносному — буквально. Там на дні є щось старе, пов'язане, і хтось або щось ниточку підрізало». Він виймає карту, змальовану на шкірі. «Нам треба дістатись до Острівця Трьох Дубів — там джерело. Болото не хоче пускати, і воно матиме аргументи». Погляд важкий і прямий. «Сімдесят п'ять срібних. І якщо все піде добре — інформація, що коштує більше»."
+      en: "Lukash does not look like the witchers from songs — short, grey-haired, with hands covered in old burns. 'The marsh is waking,' he says without preamble. 'Not figuratively — literally. At the bottom there is something old, bound, and someone or something has cut the cord.' He produces a map drawn on hide. 'We need to reach the Isle of Three Oaks — that is the source. The marsh does not want to allow it, and it will have arguments.' His gaze is heavy and direct. 'Seventy-five silver. And if things go well — information worth considerably more.'"
+    exploration_text:
+      uk: "Чорне болото — місце, де навіть повітря відчуває себе важчим. Лукаш іде попереду, читаючи болото, як текст. Нечисть кружляє на відстані, але поки тримається. Острівець десь попереду."
+      en: "The Black Marsh is a place where even the air feels heavier. Lukash walks ahead, reading the swamp like text. The unclean spirits circle at a distance but hold off for now. The isle is somewhere ahead."
+    confrontation_text:
+      uk: "Серце болота зустрічає вас чимось, що важко описати — воно старе, мокре і злобне, і має тілесну форму лише коли хоче. Лукаш діє методично. Тобі треба не заважати йому і не вмерти."
+      en: "The heart of the marsh greets you with something difficult to describe — it is old, wet, and malicious, and takes physical form only when it chooses to. Lukash acts methodically. Your task is to not get in his way and not die."
+    success_text:
+      uk: "Стара прив'язь відновлена. Болото замовкає — не дружньо, але ворожо менш активно. Лукаш виймає гаманець і свій обіцяний секрет — і обидва виявляються варті уваги."
+      en: "The old binding is restored. The marsh grows quiet — not friendly, but less actively hostile. Lukash produces the purse and his promised secret — and both prove worth having."
+    fail_text:
+      uk: "До серця болота не добрались. Ви відступили, живі, але нічого не вирішено. Болото лишається розбудженим."
+      en: "The heart of the marsh was not reached. You retreated alive, but nothing is resolved. The marsh remains awake."
+    objectives:
+      - id: "navigate_swamp"
+        required_actions: ["explore", "investigate"]
+        count: 3
+      - id: "defend_lukash"
+        required_actions: ["defend", "attack"]
+        count: 2
+      - id: "restore_binding"
+        required_actions: ["investigate", "rest"]
+        count: 1
+
+  - id: "lair_of_the_beast"
+    tier: 4
+    min_level: 4
+    reward_xp: 155
+    reward_gold: 85
+    type: "combat"
+    location: "beast_lair"
+    title:
+      uk: "Лігво звіра"
+      en: "Lair of the Beast"
+    questgiver:
+      uk: "Барон Ворон"
+      en: "Baron Voron"
+    description:
+      uk: "Щось велике і страшне оселилось у горах за баронством і вже розірвало кількох пастухів. Барон Ворон оголосив нагороду."
+      en: "Something large and terrible has settled in the mountains and has already killed several shepherds. Baron Voron has announced a reward."
+    proposal_text:
+      uk: "Барон Ворон приймає тебе в залі, де голови здобичі вкривають стіни так густо, що ти майже відчуваєш погляди. «Я не звик прохати», — починає він. «Але воно вбило вже семеро і вчора зайшло в передмістя вночі — вночі. Це вже не дикий звір, це демонстрація». Він підводиться. «В горах за Вороновим Гребенем є печера — давня, велика. Звір там. Ходять туди і не повертаються». Повертається. «Вісімдесят п'ять срібних і право полювати в моїх лісах безмитно десять років — якщо вернетесь». Пауза. «Якщо»."
+      en: "Baron Voron receives you in a hall where trophy heads cover the walls so thickly you almost feel their gaze. 'I am not accustomed to asking,' he begins. 'But it has killed seven already and entered the outskirts last night — at night. That is no longer a wild animal, that is a demonstration.' He stands. 'In the mountains beyond Voroniv Ridge there is a cave — ancient, large. The beast is there. People go in and do not return.' He turns. 'Eighty-five silver and the right to hunt my forests toll-free for ten years — if you come back.' A pause. 'If.'"
+    exploration_text:
+      uk: "Вороновий Гребінь — місце, куди навіть гірські кози ходять неохоче. Слід звіра тут очевидний: розчавлені кущі, задерта земля, і запах — важкий, мускусний. Печера видніється з третього пагорба."
+      en: "Voroniv Ridge is a place even mountain goats approach reluctantly. The beast's trail is obvious: crushed bushes, raked earth, and a smell — heavy, musky. The cave is visible from the third hill."
+    confrontation_text:
+      uk: "Печера велика, темна і пахне смертю — не метафорично. Коли воно нарешті виходить на тебе з темряви, ти розумієш, чому жоден не повернувся: воно не відоме і не схоже ні на що, для чого в тебе є назва. Але в тебе є зброя і причина."
+      en: "The cave is large, dark, and smells of death — not metaphorically. When it finally comes at you from the darkness, you understand why no one came back: it is unknown and resembles nothing you have a name for. But you have a weapon and a reason."
+    success_text:
+      uk: "Звір мертвий. Ти виходиш з печери на світло і стоїш там, доки легені не вирішать, що все добре. Барон Ворон отримує звістку і мовчить — довго. Потім: «Я думав, це неможливо». Вісімдесят п'ять срібних і дозвіл на мисливство вручаються без зайвих церемоній."
+      en: "The beast is dead. You walk out of the cave into the light and stand there until your lungs decide everything is fine. Baron Voron receives the news and is silent — for a long time. Then: 'I thought it impossible.' Eighty-five silver and the hunting charter are presented without ceremony."
+    fail_text:
+      uk: "Ти вийшов, воно — ні, але й завдання теж ні. Барон вислуховує і відпускає тебе з гідністю. «Повертайтесь», — каже він."
+      en: "You came out. It did not. But neither did the task. The Baron listens and dismisses you with dignity. 'Come back,' he says."
+    objectives:
+      - id: "track_beast"
+        required_actions: ["explore", "investigate"]
+        count: 3
+      - id: "fight_the_beast"
+        required_actions: ["attack", "defend"]
+        count: 4
+      - id: "confirm_kill"
+        required_actions: ["investigate", "loot"]
+        count: 1

@@ -13,6 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.db import Base
 
 if TYPE_CHECKING:
+    from app.models.player import Player
     from app.models.player_progress import PlayerProgress
 
 
@@ -41,12 +42,12 @@ class User(Base):
     last_activity: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     
     # Relationships
-    player: Mapped[Optional["Player"]] = relationship(
-        "Player", 
-        back_populates="user", 
-        uselist=False,
+    players: Mapped[List["Player"]] = relationship(
+        "Player",
+        back_populates="user",
         lazy="selectin",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        order_by="Player.slot"
     )
     progress: Mapped[Optional["PlayerProgress"]] = relationship(
         "PlayerProgress", 
@@ -56,5 +57,13 @@ class User(Base):
         cascade="all, delete-orphan"
     )
     
+    @property
+    def player(self) -> Optional["Player"]:
+        """Return active player for backward compatibility."""
+        for p in self.players:
+            if p.is_active:
+                return p
+        return self.players[0] if self.players else None
+
     def __repr__(self) -> str:
         return f"<User(id={self.id}, telegram_id={self.telegram_id}, username={self.username})>"

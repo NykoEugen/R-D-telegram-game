@@ -37,6 +37,24 @@ services:
     networks:
       - telegram_game_network
 
+  bot:
+    build: .
+    container_name: r-d-telegram-game-bot
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://telegram_user:telegram_password@postgres:5432/telegram_game
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - telegram_game_network
+    restart: unless-stopped
+
   # Optional: pgAdmin for database management
   pgadmin:
     image: dpage/pgadmin4:latest
