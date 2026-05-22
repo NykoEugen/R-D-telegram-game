@@ -34,6 +34,14 @@ class Settings(BaseSettings):
     
     # Database configuration
     database_url: str = Field(..., env="DATABASE_URL", description="Database connection URL")
+
+    @validator("database_url")
+    def normalize_database_url(cls, v):
+        # Neon and some providers give postgres:// or postgresql:// — asyncpg needs +asyncpg scheme
+        for prefix in ("postgres://", "postgresql://"):
+            if v.startswith(prefix):
+                return v.replace(prefix, "postgresql+asyncpg://", 1)
+        return v
     
     # Redis configuration
     redis_url: str = Field(..., env="REDIS_URL", description="Redis connection URL")
