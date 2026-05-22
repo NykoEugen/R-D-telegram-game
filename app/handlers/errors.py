@@ -69,7 +69,8 @@ def setup_error_handlers(router: Router) -> None:
                 user_id=update_info.get('user_id'),
                 chat_id=update_info.get('chat_id'),
                 error_type=type(error).__name__,
-                error_message=str(error)
+                error_message=str(error),
+                traceback=format_exception(error),
             )
             
         except Exception as e:
