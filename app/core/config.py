@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     @property
     def webhook_url(self) -> str:
         if self.webhook_base_url:
-            return f"{self.webhook_base_url}{self.webhook_path}"
+            return f"{self.webhook_base_url.rstrip('/')}{self.webhook_path}"
         return ""
     
     @validator("log_level")

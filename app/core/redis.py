@@ -33,9 +33,11 @@ async def init_redis() -> None:
     # Create connection pool
     pool = ConnectionPool.from_url(
         settings.redis_url,
-        max_connections=20,
+        max_connections=10,
         retry_on_timeout=True,
-        decode_responses=False,  # We'll handle encoding/decoding manually
+        health_check_interval=30,  # ping idle connections before use (fixes Upstash server-side close)
+        socket_keepalive=True,
+        decode_responses=False,
     )
     
     # Create Redis client
