@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     
     # Redis configuration
     redis_url: str = Field(..., env="REDIS_URL", description="Redis connection URL")
+
+    @validator("redis_url")
+    def normalize_redis_url(cls, v):
+        # Upstash sometimes omits scheme — ensure redis:// or rediss:// prefix
+        if not v.startswith(("redis://", "rediss://", "unix://")):
+            return f"redis://{v}"
+        return v
     
     # Game configuration
     game_name: str = Field(default="Fantasy RPG Adventure", description="Name of the game")
