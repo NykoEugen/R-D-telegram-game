@@ -5,6 +5,7 @@ This module provides a clean, single source of truth for all configuration setti
 """
 
 from typing import Optional
+from urllib.parse import urlparse, urlunparse, urlencode, parse_qs
 from pydantic import Field, validator
 from pydantic_settings import BaseSettings
 
@@ -40,8 +41,18 @@ class Settings(BaseSettings):
         # Neon and some providers give postgres:// or postgresql:// — asyncpg needs +asyncpg scheme
         for prefix in ("postgres://", "postgresql://"):
             if v.startswith(prefix):
-                return v.replace(prefix, "postgresql+asyncpg://", 1)
-        return v
+                v = v.replace(prefix, "postgresql+asyncpg://", 1)
+                break
+        # asyncpg doesn't understand sslmode/channel_binding — replace with ssl=true
+        parsed = urlparse(v)
+        params = parse_qs(parsed.query, keep_blank_values=True)
+        needs_ssl = params.pop("sslmode", None) is not None
+        params.pop("channel_binding", None)
+        if needs_ssl:
+            params["ssl"] = ["true"]
+        new_query = urlencode({k: v[0] for k, v in params.items()})
+        return urlunparse(parsed._replace(query=new_query))
+
     
     # Redis configuration
     redis_url: str = Field(..., env="REDIS_URL", description="Redis connection URL")
