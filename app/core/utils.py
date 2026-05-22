@@ -4,6 +4,7 @@ Core utilities for the Telegram RPG game bot.
 This module contains common utility functions used across the application.
 """
 
+import traceback as tb
 from typing import Any, Dict, Optional
 from aiogram.types import TelegramObject, Update
 
@@ -92,4 +93,5 @@ def format_exception(exception: Exception) -> Dict[str, Any]:
         'type': type(exception).__name__,
         'message': str(exception),
         'module': getattr(exception, '__module__', None),
+        'traceback': ''.join(tb.format_exception(type(exception), exception, exception.__traceback__)),
     }
