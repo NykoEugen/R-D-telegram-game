@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: r-d-telegram-game-postgres
+    environment:
+      POSTGRES_DB: telegram_game
+      POSTGRES_USER: telegram_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U telegram_user -d telegram_game"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - telegram_game_network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: r-d-telegram-game-redis
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - telegram_game_network
+    restart: unless-stopped
+
+  bot:
+    build: .
+    container_name: r-d-telegram-game-bot
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://telegram_user:${POSTGRES_PASSWORD}@postgres:5432/telegram_game
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - telegram_game_network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  telegram_game_network:
+    driver: bridge
