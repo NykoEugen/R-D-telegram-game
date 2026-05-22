@@ -75,7 +75,7 @@ async def main():
     logger.info("All routers registered")
 
     try:
-        if Config.NGROK_URL:
+        if Config.WEBHOOK_BASE_URL:
             logger.info("Bot is running in webhook mode", webhook_url=Config.WEBHOOK_URL)
             await bot.set_webhook(
                 url=Config.WEBHOOK_URL,
@@ -88,6 +88,11 @@ async def main():
                 secret_token=Config.WEBHOOK_SECRET,
             ).register(app, path=Config.WEBHOOK_PATH)
             setup_application(app, dp, bot=bot)
+
+            async def health(_: web.Request) -> web.Response:
+                return web.Response(text="ok")
+
+            app.router.add_get("/health", health)
 
             runner = web.AppRunner(app)
             await runner.setup()
@@ -104,7 +109,7 @@ async def main():
         logger.error("Fatal error occurred", error_type=type(e).__name__, error_message=str(e))
         raise
     finally:
-        if Config.NGROK_URL:
+        if Config.WEBHOOK_BASE_URL:
             await bot.delete_webhook()
         await cache_cleanup_service.stop()
         await close_db()

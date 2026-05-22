@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     # Bot configuration
     bot_token: str = Field(..., env="BOT_TOKEN", description="Telegram bot token")
 
-    # Ngrok configuration for local testing
-    ngrok_url: Optional[str] = Field(default="", env="NGROK_URL", description="Ngrok URL for local testing")
+    # Webhook base URL (triggers webhook mode when set; use ngrok locally, Koyeb/DuckDNS in prod)
+    webhook_base_url: Optional[str] = Field(default="", env="WEBHOOK_BASE_URL", description="Base URL for webhook")
     
     # Logging configuration
     log_level: str = Field(default="INFO", env="LOG_LEVEL", description="Logging level")
@@ -53,9 +53,8 @@ class Settings(BaseSettings):
     
     @property
     def webhook_url(self) -> str:
-        """Generate webhook URL from ngrok URL and webhook path."""
-        if self.ngrok_url:
-            return f"{self.ngrok_url}{self.webhook_path}"
+        if self.webhook_base_url:
+            return f"{self.webhook_base_url}{self.webhook_path}"
         return ""
     
     @validator("log_level")
@@ -84,8 +83,7 @@ class Config:
     # Bot configuration
     BOT_TOKEN = settings.bot_token
 
-    # Ngrok configuration for local testing
-    NGROK_URL = settings.ngrok_url
+    WEBHOOK_BASE_URL = settings.webhook_base_url
     
     # Logging configuration
     LOG_LEVEL = settings.log_level
