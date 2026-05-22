@@ -2,10 +2,10 @@ import asyncio
 from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
-from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from app.core.config import Config
-from app.core.redis import init_redis, close_redis
+from app.core.redis import init_redis, close_redis, get_redis
 from app.core.db import init_db, close_db
 from app.handlers.commands import start_router, game_router, language_router, character_router
 from app.handlers.menu import router as menu_router
@@ -38,9 +38,9 @@ async def main():
     logger.info("Initializing Redis connection...")
     await init_redis()
 
-    # FSM uses MemoryStorage — state is persisted to PostgreSQL via FSMStateService
+    storage = RedisStorage(redis=get_redis())
     bot = Bot(token=Config.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
-    dp = Dispatcher(storage=MemoryStorage())
+    dp = Dispatcher(storage=storage)
 
     dp.message.middleware(GlobalErrorHandler())
     dp.callback_query.middleware(GlobalErrorHandler())
