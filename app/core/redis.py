@@ -12,6 +12,9 @@ from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
 from redis.asyncio import Redis, ConnectionPool
+from redis.asyncio.retry import Retry
+from redis.backoff import ExponentialBackoff
+from redis.exceptions import ConnectionError as RedisConnectionError, TimeoutError as RedisTimeoutError
 
 from .config import settings
 
@@ -40,8 +43,15 @@ async def init_redis() -> None:
         decode_responses=False,
     )
     
+    # Retry up to 3 times with exponential backoff on connection errors (Upstash drops idle connections)
+    retry = Retry(ExponentialBackoff(cap=0.5, base=0.1), retries=3)
+
     # Create Redis client
-    redis_client = Redis(connection_pool=pool)
+    redis_client = Redis(
+        connection_pool=pool,
+        retry=retry,
+        retry_on_error=[RedisConnectionError, RedisTimeoutError],
+    )
 
 
 async def close_redis() -> None:
