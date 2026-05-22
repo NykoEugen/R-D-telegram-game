@@ -53,69 +53,27 @@ class DatabaseMiddleware(BaseMiddleware):
                 quest_loop_service = QuestLoopService(event.bot, fsm_service, i18n_service)
                 data["quest_loop_service"] = quest_loop_service
             
-            # Restore FSM state if user_id is available
-            if user_id:
-                try:
-                    # Get FSM context from data
-                    fsm_context = data.get("state")
-                    if fsm_context:
-                        # Restore FSM state from PostgreSQL
-                        game_session = await fsm_service.restore_fsm_from_postgres(
-                            fsm_context, user_id
-                        )
-                        if game_session:
-                            data["game_session"] = game_session
-                            logger.info("Restored FSM state from PostgreSQL",
-                                       user_id=user_id,
-                                       session_id=game_session.session_id)
-                        else:
-                            logger.info("No active session found for user",
-                                       user_id=user_id)
-                    else:
-                        logger.warning("No FSM context found in data", user_id=user_id)
-                        
-                except Exception as e:
-                    logger.error("Failed to restore FSM state",
-                                user_id=user_id,
-                                error_type=type(e).__name__,
-                                error_message=str(e))
-                    # Continue processing even if FSM restoration fails
-            
             # Process the update
             try:
                 result = await handler(event, data)
-                
-                # Sync FSM state to PostgreSQL after successful processing
+
+                # Sync FSM state to PostgreSQL for telemetry after successful processing
                 if user_id and "state" in data:
-                    fsm_context = data["state"]
                     try:
-                        # Extract action and scene info from the event
-                        action = None
-                        scene_id = None
-                        
-                        if hasattr(event, 'data') and event.data:
-                            # Callback query with action data
-                            action = "callback_query"
-                        elif hasattr(event, 'text') and event.text:
-                            # Text message
-                            action = "text_message"
-                        
-                        # Sync FSM state
+                        action = "callback_query" if hasattr(event, 'data') else "text_message"
                         await fsm_service.sync_fsm_to_postgres(
-                            fsm_context,
+                            data["state"],
                             user_id,
                             action=action,
-                            scene_id=scene_id
                         )
-                        
                     except Exception as e:
                         logger.error("Failed to sync FSM state to PostgreSQL",
                                     user_id=user_id,
                                     error_type=type(e).__name__,
                                     error_message=str(e))
-                
+
                 return result
-                
+
             except Exception as e:
                 logger.error("Error in database middleware",
                             user_id=user_id,
