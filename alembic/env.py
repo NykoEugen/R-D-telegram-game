@@ -5,7 +5,6 @@ This module configures Alembic to work with our async SQLAlchemy setup.
 """
 
 import asyncio
-import os
 from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -16,6 +15,7 @@ from alembic import context
 # Import your models here
 from app.core.db import Base
 from app.models import *  # Import all models
+from app.core.config import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -30,9 +30,8 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 target_metadata = Base.metadata
 
-# Override sqlalchemy.url from DATABASE_URL env var when available (e.g. Docker)
-if db_url := os.environ.get("DATABASE_URL"):
-    config.set_main_option("sqlalchemy.url", db_url)
+# Use normalized DATABASE_URL from settings (handles postgresql:// → postgresql+asyncpg://)
+config.set_main_option("sqlalchemy.url", settings.database_url)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
