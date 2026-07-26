@@ -38,6 +38,13 @@ quests:
       - id: "clear_rats"
         required_actions: ["attack", "defend"]
         count: 3
+    loot_table:
+      - item_id: "rat_tail"
+        chance: 0.7
+        qty_min: 1
+        qty_max: 3
+      - item_id: "health_potion"
+        chance: 0.25
 
   - id: "lost_letter"
     tier: 1
@@ -328,3 +335,10 @@ quests:
       - id: "confirm_kill"
         required_actions: ["investigate", "loot"]
         count: 1
+    loot_table:
+      - item_id: "dragon_scale"
+        chance: 0.4
+      - item_id: "health_potion"
+        chance: 0.5
+        qty_min: 1
+        qty_max: 2

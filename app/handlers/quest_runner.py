@@ -25,6 +25,7 @@ from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
 from app.services.progression_service import ProgressionService
 from app.services.quest_loader import QuestDef, get_eligible_quests, get_quest_by_id
+from app.services.repositories.item_repo import ItemRepository
 from app.services.repositories.player_repo import PlayerRepository
 from app.services.repositories.quest_repo import QuestRepository
 
@@ -139,6 +140,29 @@ async def _safe_edit(message, text: str, reply_markup=None, parse_mode: str = "M
 def _success_chance(tier: int, player_level: int, quest_min_level: int) -> int:
     """Base 70% for T1, −10% per tier, +5% per level above minimum."""
     return max(35, min(95, 80 - tier * 10 + (player_level - quest_min_level) * 5))
+
+
+async def _roll_loot(
+    db_session: AsyncSession, player_id: int, quest: QuestDef
+) -> list[tuple[str, int]]:
+    """Roll a quest's loot_table, grant hits to inventory, return (name, qty) for display."""
+    if not quest.loot_table:
+        return []
+
+    item_repo = ItemRepository(db_session)
+    gained: list[tuple[str, int]] = []
+    for entry in quest.loot_table:
+        if random.random() > entry.chance:
+            continue
+        qty = random.randint(entry.qty_min, entry.qty_max)
+        if qty <= 0:
+            continue
+        await item_repo.add_item_to_inventory(
+            player_id, entry.item_id, qty, acquired_from=f"quest:{quest.id}"
+        )
+        item = await item_repo.get_item_by_item_id(entry.item_id)
+        gained.append((item.name if item else entry.item_id, qty))
+    return gained
 
 
 async def _show_quest_board(target, state: FSMContext, db_session: AsyncSession, edit: bool = False):
@@ -504,6 +528,8 @@ async def _resolve_quest(
     else:
         await quest_repo.fail_quest(player.id, quest.id)
 
+    loot_gained = await _roll_loot(db_session, player.id, quest) if success else []
+
     title = quest.get("title", locale)
     outcome = quest.get("success_text" if success else "fail_text", locale)
     xp_label = "Досвід" if locale == "uk" else "XP"
@@ -514,6 +540,11 @@ async def _resolve_quest(
     else:
         fail_label = "Завдання провалено" if locale == "uk" else "Quest failed"
         reward_line = f"\n\n❌ {fail_label} · +{result.xp_gained} {xp_label}"
+
+    if loot_gained:
+        loot_label = "Здобич" if locale == "uk" else "Loot"
+        items_str = ", ".join(f"{name} x{qty}" for name, qty in loot_gained)
+        reward_line += f"\n🎁 {loot_label}: {items_str}"
 
     xp_bar = ProgressionService.calc_xp_bar(player)
     text = f"{'✅' if success else '❌'} **{title}**\n\n{outcome}{reward_line}\n\n{xp_bar}"

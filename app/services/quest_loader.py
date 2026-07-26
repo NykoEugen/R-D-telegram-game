@@ -14,6 +14,14 @@ class ObjectiveDef:
 
 
 @dataclass
+class LootEntry:
+    item_id: str
+    chance: float  # 0.0-1.0
+    qty_min: int = 1
+    qty_max: int = 1
+
+
+@dataclass
 class QuestDef:
     id: str
     tier: int
@@ -35,6 +43,7 @@ class QuestDef:
     npc_id: str | None = None  # questgiver NPC, links into app/services/npc_loader.py
     reset_hours: int | None = None  # for daily/weekly: hours until repeatable again
     objectives: list[ObjectiveDef] = field(default_factory=list)
+    loot_table: list[LootEntry] = field(default_factory=list)
 
     def get(self, field_name: str, locale: str) -> str:
         d = getattr(self, field_name, {})
@@ -66,6 +75,15 @@ def _load() -> list[QuestDef]:
                 )
                 for o in q.get("objectives", [])
             ]
+            loot_table = [
+                LootEntry(
+                    item_id=item["item_id"],
+                    chance=item["chance"],
+                    qty_min=item.get("qty_min", 1),
+                    qty_max=item.get("qty_max", 1),
+                )
+                for item in q.get("loot_table", [])
+            ]
             _QUESTS.append(
                 QuestDef(
                     id=q["id"],
@@ -88,6 +106,7 @@ def _load() -> list[QuestDef]:
                     npc_id=q.get("npc_id"),
                     reset_hours=q.get("reset_hours"),
                     objectives=objectives,
+                    loot_table=loot_table,
                 )
             )
 

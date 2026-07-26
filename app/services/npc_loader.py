@@ -22,6 +22,12 @@ class StageDialogues:
 
 
 @dataclass
+class VendorStockEntry:
+    item_id: str
+    price: int
+
+
+@dataclass
 class NPCDef:
     id: str
     name: dict[str, str]
@@ -30,6 +36,7 @@ class NPCDef:
     quest_links: list[str] = field(default_factory=list)
     dialogues: dict[str, list[Line]] = field(default_factory=dict)
     stage_dialogues: list[StageDialogues] = field(default_factory=list)
+    vendor_stock: list[VendorStockEntry] = field(default_factory=list)
 
     def get_name(self, locale: str) -> str:
         return self.name.get(locale) or self.name.get("en") or self.id
@@ -85,6 +92,10 @@ def _load() -> list[NPCDef]:
                 quest_links=n.get("quest_links", []),
                 dialogues=n.get("dialogues", {}) or {},
                 stage_dialogues=_parse_stage_dialogues(n.get("stage_dialogues", [])),
+                vendor_stock=[
+                    VendorStockEntry(item_id=s["item_id"], price=s["price"])
+                    for s in n.get("vendor_stock", [])
+                ],
             )
         )
 

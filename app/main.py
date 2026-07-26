@@ -7,7 +7,7 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from aiohttp import web
 
 from app.core.config import Config
-from app.core.db import close_db, init_db
+from app.core.db import close_db, get_db_session, init_db
 from app.core.redis import close_redis, get_redis, init_redis
 from app.handlers.city import router as city_router
 from app.handlers.commands import character_router, language_router, start_router
@@ -17,11 +17,13 @@ from app.handlers.errors import GlobalErrorHandler, setup_error_handlers
 from app.handlers.menu import router as menu_router
 from app.handlers.npc import router as npc_router
 from app.handlers.quest_runner import router as quest_runner_router
+from app.handlers.shop import router as shop_router
 from app.handlers.travel import router as travel_router
 from app.middlewares.correlation import CorrelationMiddleware
 from app.middlewares.database import DatabaseMiddleware
 from app.services.cache_cleanup_service import cache_cleanup_service
 from app.services.i18n_service import i18n_service
+from app.services.item_seed import sync_items_from_yaml
 from app.services.logging_service import get_logger, setup_logging
 
 
@@ -33,6 +35,9 @@ async def main():
 
     logger.info("Initializing database connection...")
     await init_db()
+
+    async with get_db_session() as session:
+        await sync_items_from_yaml(session)
 
     logger.info("Initializing Redis connection...")
     await init_redis()
@@ -57,6 +62,7 @@ async def main():
 
     dp.include_router(city_router)
     dp.include_router(npc_router)
+    dp.include_router(shop_router)
     dp.include_router(travel_router)
     dp.include_router(menu_router)
     dp.include_router(start_router)

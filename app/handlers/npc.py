@@ -14,6 +14,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMar
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.game.states import GameStates
+from app.handlers.shop import ShopCB
 from app.services import npc_loader
 from app.services.i18n_service import i18n_service
 from app.services.repositories.player_repo import PlayerRepository
@@ -46,7 +47,9 @@ class NpcCB(CallbackData, prefix="npc"):
     cat: str = "."
 
 
-def _npc_kb(npc_id: str, categories: list[str], locale: str) -> InlineKeyboardMarkup:
+def _npc_kb(
+    npc_id: str, categories: list[str], locale: str, has_shop: bool = False
+) -> InlineKeyboardMarkup:
     rows = [
         [InlineKeyboardButton(
             text=_category_label(cat, locale),
@@ -55,6 +58,11 @@ def _npc_kb(npc_id: str, categories: list[str], locale: str) -> InlineKeyboardMa
         for cat in categories
         if cat != "greeting"
     ]
+    if has_shop:
+        shop_label = "🛒 Магазин" if locale == "uk" else "🛒 Shop"
+        rows.append([InlineKeyboardButton(
+            text=shop_label, callback_data=ShopCB(action="browse", npc_id=npc_id).pack(),
+        )])
     back_label = "◀️ Відійти" if locale == "uk" else "◀️ Step away"
     rows.append([InlineKeyboardButton(text=back_label, callback_data="city:return")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
@@ -93,7 +101,7 @@ async def cb_npc_open(
 
     await callback.message.edit_text(
         f"🗣 <b>{name}</b>\n\n{body}",
-        reply_markup=_npc_kb(npc.id, categories, locale),
+        reply_markup=_npc_kb(npc.id, categories, locale, has_shop=bool(npc.vendor_stock)),
         parse_mode="HTML",
     )
 
@@ -126,7 +134,7 @@ async def cb_npc_say(
 
     await callback.message.edit_text(
         f"🗣 <b>{name}</b>\n\n{body}",
-        reply_markup=_npc_kb(npc.id, categories, locale),
+        reply_markup=_npc_kb(npc.id, categories, locale, has_shop=bool(npc.vendor_stock)),
         parse_mode="HTML",
     )
 
