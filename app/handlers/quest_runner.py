@@ -20,6 +20,7 @@ from aiogram.types import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.game.states import GameStates
+from app.services import npc_loader
 from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
 from app.services.progression_service import ProgressionService
@@ -86,12 +87,24 @@ def _proposal_kb(locale: str) -> InlineKeyboardMarkup:
     ])
 
 
-def _phase_kb(actions: list[str], locale: str) -> InlineKeyboardMarkup:
+def _talk_label(npc_id: str, locale: str) -> str:
+    npc = npc_loader.get_npc(npc_id)
+    name = npc.get_name(locale) if npc else npc_id
+    return f"💬 Поговорити з {name}" if locale == "uk" else f"💬 Talk to {name}"
+
+
+def _action_label(action: str, locale: str) -> str:
+    if action.startswith("talk-"):
+        return _talk_label(action.removeprefix("talk-"), locale)
     labels = _ACTION_LABELS.get(locale, _ACTION_LABELS["en"])
+    return labels.get(action, action.title())
+
+
+def _phase_kb(actions: list[str], locale: str) -> InlineKeyboardMarkup:
     rows = []
     for a in actions:
         rows.append([InlineKeyboardButton(
-            text=labels.get(a, a.title()),
+            text=_action_label(a, locale),
             callback_data=QuestCB(action="do", data=a).pack(),
         )])
     hero_info = "🧙 Герой" if locale == "uk" else "🧙 Hero"
@@ -245,7 +258,10 @@ async def _start_quest_phase(
         current_obj_idx=0,
     )
     await state.set_state(GameStates.QUEST_ACTIVE)
-    await _render_phase(message, quest, 0, obj_progress, locale, edit=edit)
+    await _render_phase(
+        message, quest, 0, obj_progress, locale, edit=edit,
+        player_level=player.level if player else 1,
+    )
 
 
 @router.callback_query(QuestCB.filter(F.action == "accept"))
@@ -339,7 +355,11 @@ async def cb_back_to_quest(cb: CallbackQuery, state: FSMContext, db_session: Asy
         return
     obj_idx = fsm.get("current_obj_idx", 0)
     obj_progress = fsm.get("obj_progress", {})
-    await _render_phase(cb.message, quest, obj_idx, obj_progress, locale, edit=True)
+    player = await PlayerRepository(db_session).get_player_by_telegram_id(cb.from_user.id)
+    await _render_phase(
+        cb.message, quest, obj_idx, obj_progress, locale, edit=True,
+        player_level=player.level if player else 1,
+    )
 
 
 @router.callback_query(QuestCB.filter(F.action == "do"), GameStates.QUEST_ACTIVE)
@@ -387,10 +407,21 @@ async def cb_quest_do(cb: CallbackQuery, callback_data: QuestCB, state: FSMConte
         await _resolve_quest(cb, quest, state, db_session, cb.from_user.id, locale)
     else:
         is_entering_confrontation = obj_idx == len(quest.objectives) - 1
-        await _render_phase(cb.message, quest, obj_idx, obj_progress, locale, edit=not is_entering_confrontation)
+        await _render_phase(
+            cb.message, quest, obj_idx, obj_progress, locale,
+            edit=not is_entering_confrontation,
+            player_level=player.level if player else 1,
+        )
 
 
 # ── Internal rendering ────────────────────────────────────────────────────────
+
+def _talk_objective_npc(obj) -> str | None:
+    for action in obj.required_actions:
+        if action.startswith("talk-"):
+            return action.removeprefix("talk-")
+    return None
+
 
 async def _render_phase(
     message,
@@ -399,6 +430,7 @@ async def _render_phase(
     obj_progress: dict,
     locale: str,
     edit: bool,
+    player_level: int = 1,
 ):
     is_last_obj = obj_idx == len(quest.objectives) - 1
     phase_key = "confrontation_text" if is_last_obj else "exploration_text"
@@ -419,6 +451,13 @@ async def _render_phase(
     text = f"{header}{phase_text}\n\n📊 {prog_label}: {done}/{total}"
 
     obj = quest.objectives[obj_idx]
+    talk_npc_id = _talk_objective_npc(obj)
+    if talk_npc_id:
+        line, _idx = npc_loader.pick_line(talk_npc_id, "rumor", player_level, locale)
+        if not line:
+            line, _idx = npc_loader.pick_line(talk_npc_id, "greeting", player_level, locale)
+        if line:
+            text += f"\n\n🗣 _{line}_"
     # Show required actions + 2 extra for variety (deduplicated)
     extra = [a for a in ["investigate", "explore", "talk", "flee"] if a not in obj.required_actions][:2]
     actions = list(dict.fromkeys(obj.required_actions + extra))

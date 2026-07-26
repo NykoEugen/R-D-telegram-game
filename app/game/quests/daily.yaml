@@ -39,3 +39,6 @@ quests:
       - id: "wipe_tables"
         required_actions: ["explore", "rest"]
         count: 2
+      - id: "report_to_bruno"
+        required_actions: ["talk-bruno"]
+        count: 1
