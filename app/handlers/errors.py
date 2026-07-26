@@ -1,10 +1,11 @@
-from typing import Any, Awaitable, Callable, Dict
+from collections.abc import Awaitable, Callable
+from typing import Any
+
 from aiogram import BaseMiddleware, Router
-from aiogram.types import TelegramObject, ErrorEvent
-from aiogram.exceptions import TelegramAPIError, TelegramNetworkError, TelegramRetryAfter
+from aiogram.types import ErrorEvent, TelegramObject
 
 from app.core.utils import extract_update_info, format_exception
-from app.services.logging_service import get_logger, get_correlation_id
+from app.services.logging_service import get_correlation_id, get_logger
 
 logger = get_logger(__name__)
 
@@ -13,9 +14,9 @@ class GlobalErrorHandler(BaseMiddleware):
     
     async def __call__(
         self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
-        data: Dict[str, Any]
+        data: dict[str, Any]
     ) -> Any:
         """Process update with global error handling."""
         try:

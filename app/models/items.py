@@ -5,10 +5,18 @@ This module defines Item and InventoryItem models with rarity, attributes, and s
 """
 
 from datetime import datetime
-from typing import Optional, List, Dict, Any
 from enum import Enum
+from typing import Any
 
-from sqlalchemy import String, Integer, DateTime, Boolean, Text, ForeignKey, JSON, Numeric
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -47,7 +55,7 @@ class Item(Base):
     # Item identification
     item_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     
     # Item properties
     item_type: Mapped[ItemType] = mapped_column(String(50), nullable=False)
@@ -59,7 +67,7 @@ class Item(Base):
     max_stack_size: Mapped[int] = mapped_column(Integer, default=99, nullable=False)
     
     # Item attributes (JSON for flexibility)
-    attributes: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    attributes: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     
     # Item stats (for equipment)
     health_bonus: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -79,18 +87,18 @@ class Item(Base):
     is_consumable: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     # Item effects (for consumables and special items)
-    effects: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    effects: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     
     # Metadata
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    tags: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)  # Item tags for categorization
+    tags: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)  # Item tags for categorization
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Relationships
-    inventory_items: Mapped[List["InventoryItem"]] = relationship("InventoryItem", back_populates="item")
+    inventory_items: Mapped[list["InventoryItem"]] = relationship("InventoryItem", back_populates="item")
     
     def __repr__(self) -> str:
         return f"<Item(id={self.id}, item_id={self.item_id}, name={self.name}, rarity={self.rarity})>"
@@ -111,18 +119,18 @@ class InventoryItem(Base):
     # Item instance properties
     quantity: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     is_equipped: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    equipment_slot: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # For equipped items
+    equipment_slot: Mapped[str | None] = mapped_column(String(50), nullable=True)  # For equipped items
     
     # Item instance data (for unique items with custom properties)
-    instance_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    instance_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     
     # Item condition and durability
-    durability: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    max_durability: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    durability: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    max_durability: Mapped[int | None] = mapped_column(Integer, nullable=True)
     
     # Item acquisition
     acquired_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    acquired_from: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # How the item was obtained
+    acquired_from: Mapped[str | None] = mapped_column(String(255), nullable=True)  # How the item was obtained
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

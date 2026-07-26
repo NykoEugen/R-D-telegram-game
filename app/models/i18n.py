@@ -5,10 +5,10 @@ This module defines I18nString model for optional database-based localization.
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any
 from enum import Enum
+from typing import Any
 
-from sqlalchemy import String, Integer, DateTime, Boolean, Text, JSON, UniqueConstraint
+from sqlalchemy import JSON, Boolean, DateTime, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -51,13 +51,13 @@ class I18nString(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     
     # String metadata
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Description for translators
-    context: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # Usage context
-    variables: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)  # Template variables
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)  # Description for translators
+    context: Mapped[str | None] = mapped_column(Text, nullable=True)  # Usage context
+    variables: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)  # Template variables
     
     # String properties
     is_plural: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    plural_forms: Mapped[Optional[Dict[str, str]]] = mapped_column(JSON, nullable=True)  # For languages with multiple plural forms
+    plural_forms: Mapped[dict[str, str] | None] = mapped_column(JSON, nullable=True)  # For languages with multiple plural forms
     
     # String status
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -66,14 +66,14 @@ class I18nString(Base):
     
     # String usage tracking
     usage_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    last_used: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_used: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     
     # String versioning
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
-    parent_key: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # For string variations
+    parent_key: Mapped[str | None] = mapped_column(String(255), nullable=True)  # For string variations
     
     # String tags and categorization
-    tags: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)  # Tags for categorization
+    tags: Mapped[list | None] = mapped_column(JSON, nullable=True)  # Tags for categorization
     priority: Mapped[int] = mapped_column(Integer, default=0, nullable=False)  # Translation priority
     
     # Timestamps
@@ -90,7 +90,7 @@ class I18nString(Base):
         return f"<I18nString(id={self.id}, key={self.key}, language={self.language_code}, category={self.category})>"
     
     @classmethod
-    def get_string(cls, key: str, language_code: str, category: Optional[I18nCategory] = None) -> Optional[str]:
+    def get_string(cls, key: str, language_code: str, category: I18nCategory | None = None) -> str | None:
         """
         Get a localized string by key and language.
         

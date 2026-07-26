@@ -5,14 +5,23 @@ Flow: quest accepted → travel_start() → QUEST_TRAVEL → steps → quest sta
 Each step shows edge text (from→to) + arrival description + Continue button.
 """
 
-from aiogram import Router, F
+from aiogram import F, Router
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.game.states import GameStates
 from app.game.world_graph import (
-    get_edge_text, get_node_description, get_node_name, shortest_path,
+    get_edge_text,
+    get_node_description,
+    get_node_name,
+    shortest_path,
 )
 from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
@@ -52,13 +61,13 @@ async def travel_start(
     quest_id: str,
     quest_location: str,
     start_quest_fn,
+    db_session: AsyncSession,
 ) -> None:
     """
     Called from quest_runner after player accepts a quest.
     If already at quest location — starts quest immediately.
     Otherwise enters QUEST_TRAVEL state.
     """
-    from app.services.repositories.player_repo import PlayerRepository
 
     fsm = await state.get_data()
     # Read current location from FSM (set by city/travel) or fall back to player flags
@@ -68,7 +77,7 @@ async def travel_start(
 
     if not path:
         # Already at destination
-        await start_quest_fn(message, state, edit=False)
+        await start_quest_fn(message, state, db_session, edit=False)
         return
 
     locale = i18n_service.get_user_language(message.from_user.id)
@@ -105,7 +114,9 @@ async def cb_travel_next(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(TravelCB.filter(F.action == "arrive"), GameStates.QUEST_TRAVEL)
-async def cb_travel_arrive(callback: CallbackQuery, state: FSMContext):
+async def cb_travel_arrive(
+    callback: CallbackQuery, state: FSMContext, db_session: AsyncSession
+):
     """Last travel step — update player location and start the quest."""
     await callback.answer()
 
@@ -118,4 +129,4 @@ async def cb_travel_arrive(callback: CallbackQuery, state: FSMContext):
 
     # Delegate to quest runner
     from app.handlers.quest_runner import _start_quest_phase
-    await _start_quest_phase(callback.message, state, edit=True)
+    await _start_quest_phase(callback.message, state, db_session, edit=True)

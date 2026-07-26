@@ -1,9 +1,15 @@
-from aiogram import Router, F
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram import F, Router
 from aiogram.filters import Command
-from app.services.logging_service import get_logger
-from app.services.i18n_service import i18n_service
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
+
 from app.handlers.menu import build_main_menu_kb
+from app.services.i18n_service import i18n_service
+from app.services.logging_service import get_logger
 
 router = Router()
 logger = get_logger(__name__)

@@ -4,26 +4,35 @@ Quest runner — complete quest lifecycle:
 """
 
 import random
-from aiogram import Router, F
+from datetime import datetime, timedelta
+
+from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import (
-    Message, CallbackQuery,
-    InlineKeyboardMarkup, InlineKeyboardButton,
-)
 from aiogram.filters import Command
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.game.states import GameStates
+from app.services import npc_loader
 from app.services.i18n_service import i18n_service
-from app.services.quest_loader import get_available_quests, get_quest_by_id, QuestDef
-from app.services.progression_service import ProgressionService
-from app.services.repositories.player_repo import PlayerRepository
 from app.services.logging_service import get_logger
+from app.services.progression_service import ProgressionService
+from app.services.quest_loader import QuestDef, get_eligible_quests, get_quest_by_id
+from app.services.repositories.item_repo import ItemRepository
+from app.services.repositories.player_repo import PlayerRepository
+from app.services.repositories.quest_repo import QuestRepository
 
 router = Router()
 logger = get_logger(__name__)
+
+ENERGY_COST_QUEST = 10  # spent when accepting a quest
 
 # ── Callback data ────────────────────────────────────────────────────────────
 
@@ -81,12 +90,24 @@ def _proposal_kb(locale: str) -> InlineKeyboardMarkup:
     ])
 
 
-def _phase_kb(actions: list[str], locale: str) -> InlineKeyboardMarkup:
+def _talk_label(npc_id: str, locale: str) -> str:
+    npc = npc_loader.get_npc(npc_id)
+    name = npc.get_name(locale) if npc else npc_id
+    return f"💬 Поговорити з {name}" if locale == "uk" else f"💬 Talk to {name}"
+
+
+def _action_label(action: str, locale: str) -> str:
+    if action.startswith("talk-"):
+        return _talk_label(action.removeprefix("talk-"), locale)
     labels = _ACTION_LABELS.get(locale, _ACTION_LABELS["en"])
+    return labels.get(action, action.title())
+
+
+def _phase_kb(actions: list[str], locale: str) -> InlineKeyboardMarkup:
     rows = []
     for a in actions:
         rows.append([InlineKeyboardButton(
-            text=labels.get(a, a.title()),
+            text=_action_label(a, locale),
             callback_data=QuestCB(action="do", data=a).pack(),
         )])
     hero_info = "🧙 Герой" if locale == "uk" else "🧙 Hero"
@@ -123,6 +144,29 @@ def _success_chance(tier: int, player_level: int, quest_min_level: int) -> int:
     return max(35, min(95, 80 - tier * 10 + (player_level - quest_min_level) * 5))
 
 
+async def _roll_loot(
+    db_session: AsyncSession, player_id: int, quest: QuestDef
+) -> list[tuple[str, int]]:
+    """Roll a quest's loot_table, grant hits to inventory, return (name, qty) for display."""
+    if not quest.loot_table:
+        return []
+
+    item_repo = ItemRepository(db_session)
+    gained: list[tuple[str, int]] = []
+    for entry in quest.loot_table:
+        if random.random() > entry.chance:
+            continue
+        qty = random.randint(entry.qty_min, entry.qty_max)
+        if qty <= 0:
+            continue
+        await item_repo.add_item_to_inventory(
+            player_id, entry.item_id, qty, acquired_from=f"quest:{quest.id}"
+        )
+        item = await item_repo.get_item_by_item_id(entry.item_id)
+        gained.append((item.name if item else entry.item_id, qty))
+    return gained
+
+
 async def _show_quest_board(target, state: FSMContext, db_session: AsyncSession, edit: bool = False):
     """Shared logic: fetch player, list quests, show board."""
     user_id = target.from_user.id
@@ -137,8 +181,18 @@ async def _show_quest_board(target, state: FSMContext, db_session: AsyncSession,
             await target.answer(msg)
         return
 
-    completed = set((player.flags or {}).get("completed_quests", []))
-    quests = [q for q in get_available_quests(player.level) if q.id not in completed]
+    quest_repo = QuestRepository(db_session)
+    completed_ids = {
+        qp.quest_id for qp in await quest_repo.get_completed_quests(player.id)
+    }
+    candidates = get_eligible_quests(player.level, completed_ids)
+
+    quests = []
+    for q in candidates:
+        is_repeatable = q.quest_type in ("daily", "weekly")
+        if is_repeatable and not await quest_repo.is_available_again(player.id, q.id):
+            continue
+        quests.append(q)
 
     if not quests:
         all_done = (
@@ -206,7 +260,9 @@ async def cb_quest_select(cb: CallbackQuery, callback_data: QuestCB, state: FSMC
     await cb.message.edit_text(text, reply_markup=_proposal_kb(locale), parse_mode="Markdown")
 
 
-async def _start_quest_phase(message, state: FSMContext, edit: bool = False) -> None:
+async def _start_quest_phase(
+    message, state: FSMContext, db_session: AsyncSession, edit: bool = False
+) -> None:
     """Shared entry point used by both cb_quest_accept and travel arrival."""
     user_id = message.chat.id  # travel calls with message, not callback
     locale = i18n_service.get_user_language(user_id)
@@ -217,6 +273,10 @@ async def _start_quest_phase(message, state: FSMContext, edit: bool = False) -> 
         await message.answer("Quest data lost. Try /quest.")
         return
 
+    player = await PlayerRepository(db_session).get_player_by_telegram_id(user_id)
+    if player:
+        await QuestRepository(db_session).start_quest(player.id, quest.id)
+
     obj_progress = {o.id: 0 for o in quest.objectives}
     await state.update_data(
         quest_phase="exploration",
@@ -224,11 +284,14 @@ async def _start_quest_phase(message, state: FSMContext, edit: bool = False) -> 
         current_obj_idx=0,
     )
     await state.set_state(GameStates.QUEST_ACTIVE)
-    await _render_phase(message, quest, 0, obj_progress, locale, edit=edit)
+    await _render_phase(
+        message, quest, 0, obj_progress, locale, edit=edit,
+        player_level=player.level if player else 1,
+    )
 
 
 @router.callback_query(QuestCB.filter(F.action == "accept"))
-async def cb_quest_accept(cb: CallbackQuery, state: FSMContext):
+async def cb_quest_accept(cb: CallbackQuery, state: FSMContext, db_session: AsyncSession):
     await cb.answer()
     if await state.get_state() == GameStates.QUEST_ACTIVE:
         return  # duplicate click — first already succeeded
@@ -239,6 +302,21 @@ async def cb_quest_accept(cb: CallbackQuery, state: FSMContext):
         await cb.message.edit_text("Quest data lost. Try /quest.")
         return
 
+    locale = _t(cb.from_user.id)
+    player_repo = PlayerRepository(db_session)
+    player = await player_repo.get_player_by_telegram_id(cb.from_user.id)
+    if player and not await player_repo.consume_energy(player, ENERGY_COST_QUEST):
+        eta = player_repo.energy_regen_eta_minutes(player, ENERGY_COST_QUEST)
+        msg = (
+            f"⚡ Недостатньо енергії ({player.energy}/{ENERGY_COST_QUEST}). "
+            f"Відновиться через {eta} хв."
+            if locale == "uk"
+            else f"⚡ Not enough energy ({player.energy}/{ENERGY_COST_QUEST}). "
+            f"Regenerates in {eta} min."
+        )
+        await cb.answer(msg, show_alert=True)
+        return
+
     from app.handlers.travel import travel_start
     await travel_start(
         message=cb.message,
@@ -246,6 +324,7 @@ async def cb_quest_accept(cb: CallbackQuery, state: FSMContext):
         quest_id=quest.id,
         quest_location=quest.location,
         start_quest_fn=_start_quest_phase,
+        db_session=db_session,
     )
 
 
@@ -278,6 +357,10 @@ async def cb_quest_hero_info(cb: CallbackQuery, state: FSMContext, db_session: A
         await cb.answer(msg, show_alert=True)
         return
 
+    player_repo = PlayerRepository(db_session)
+    player_repo.apply_energy_regen(player)
+    await db_session.flush()
+
     derived = player.get_derived_stats()
     xp_now, xp_need = player.get_xp_progress()
     from app.services.progression_service import ProgressionService
@@ -295,7 +378,7 @@ async def cb_quest_hero_info(cb: CallbackQuery, state: FSMContext, db_session: A
         f"{class_label}: {player.get_character_class_name()}\n\n"
         f"❤️ {hp_label}: {player.health}/{derived.hp_max}\n"
         f"⚔️ {atk_label}: {derived.attack}  🔮 {mag_label}: {derived.magic}\n"
-        f"💰 {gold_label}: {player.coins}\n\n"
+        f"💰 {gold_label}: {player.coins}  ⚡ {player.energy}/{player.max_energy}\n\n"
         f"{xp_bar}"
     )
 
@@ -317,7 +400,11 @@ async def cb_back_to_quest(cb: CallbackQuery, state: FSMContext, db_session: Asy
         return
     obj_idx = fsm.get("current_obj_idx", 0)
     obj_progress = fsm.get("obj_progress", {})
-    await _render_phase(cb.message, quest, obj_idx, obj_progress, locale, edit=True)
+    player = await PlayerRepository(db_session).get_player_by_telegram_id(cb.from_user.id)
+    await _render_phase(
+        cb.message, quest, obj_idx, obj_progress, locale, edit=True,
+        player_level=player.level if player else 1,
+    )
 
 
 @router.callback_query(QuestCB.filter(F.action == "do"), GameStates.QUEST_ACTIVE)
@@ -347,17 +434,39 @@ async def cb_quest_do(cb: CallbackQuery, callback_data: QuestCB, state: FSMConte
     if obj_progress[obj.id] >= obj.count:
         obj_idx += 1
 
+    await state.update_data(obj_progress=obj_progress, current_obj_idx=obj_idx)
+
+    player = await PlayerRepository(db_session).get_player_by_telegram_id(
+        cb.from_user.id
+    )
+    if player:
+        await QuestRepository(db_session).update_progress(
+            player.id,
+            quest.id,
+            current_objective_idx=obj_idx,
+            obj_progress=obj_progress,
+        )
+
     if obj_idx >= len(quest.objectives):
         # All objectives done → resolve
-        await state.update_data(obj_progress=obj_progress, current_obj_idx=obj_idx)
         await _resolve_quest(cb, quest, state, db_session, cb.from_user.id, locale)
     else:
-        await state.update_data(obj_progress=obj_progress, current_obj_idx=obj_idx)
         is_entering_confrontation = obj_idx == len(quest.objectives) - 1
-        await _render_phase(cb.message, quest, obj_idx, obj_progress, locale, edit=not is_entering_confrontation)
+        await _render_phase(
+            cb.message, quest, obj_idx, obj_progress, locale,
+            edit=not is_entering_confrontation,
+            player_level=player.level if player else 1,
+        )
 
 
 # ── Internal rendering ────────────────────────────────────────────────────────
+
+def _talk_objective_npc(obj) -> str | None:
+    for action in obj.required_actions:
+        if action.startswith("talk-"):
+            return action.removeprefix("talk-")
+    return None
+
 
 async def _render_phase(
     message,
@@ -366,6 +475,7 @@ async def _render_phase(
     obj_progress: dict,
     locale: str,
     edit: bool,
+    player_level: int = 1,
 ):
     is_last_obj = obj_idx == len(quest.objectives) - 1
     phase_key = "confrontation_text" if is_last_obj else "exploration_text"
@@ -386,6 +496,13 @@ async def _render_phase(
     text = f"{header}{phase_text}\n\n📊 {prog_label}: {done}/{total}"
 
     obj = quest.objectives[obj_idx]
+    talk_npc_id = _talk_objective_npc(obj)
+    if talk_npc_id:
+        line, _idx = npc_loader.pick_line(talk_npc_id, "rumor", player_level, locale)
+        if not line:
+            line, _idx = npc_loader.pick_line(talk_npc_id, "greeting", player_level, locale)
+        if line:
+            text += f"\n\n🗣 _{line}_"
     # Show required actions + 2 extra for variety (deduplicated)
     extra = [a for a in ["investigate", "explore", "talk", "flee"] if a not in obj.required_actions][:2]
     actions = list(dict.fromkeys(obj.required_actions + extra))
@@ -421,14 +538,18 @@ async def _resolve_quest(
         partial=1.0 if success else 0.25,
     )
 
+    quest_repo = QuestRepository(db_session)
     if success:
-        flags = player.flags or {}
-        completed = flags.get("completed_quests", [])
-        if quest.id not in completed:
-            completed.append(quest.id)
-        flags["completed_quests"] = completed
-        player.flags = flags
-        await db_session.flush()
+        available_at = (
+            datetime.utcnow() + timedelta(hours=quest.reset_hours)
+            if quest.reset_hours
+            else None
+        )
+        await quest_repo.complete_quest(player.id, quest.id, available_at=available_at)
+    else:
+        await quest_repo.fail_quest(player.id, quest.id)
+
+    loot_gained = await _roll_loot(db_session, player.id, quest) if success else []
 
     title = quest.get("title", locale)
     outcome = quest.get("success_text" if success else "fail_text", locale)
@@ -440,6 +561,11 @@ async def _resolve_quest(
     else:
         fail_label = "Завдання провалено" if locale == "uk" else "Quest failed"
         reward_line = f"\n\n❌ {fail_label} · +{result.xp_gained} {xp_label}"
+
+    if loot_gained:
+        loot_label = "Здобич" if locale == "uk" else "Loot"
+        items_str = ", ".join(f"{name} x{qty}" for name, qty in loot_gained)
+        reward_line += f"\n🎁 {loot_label}: {items_str}"
 
     xp_bar = ProgressionService.calc_xp_bar(player)
     text = f"{'✅' if success else '❌'} **{title}**\n\n{outcome}{reward_line}\n\n{xp_bar}"

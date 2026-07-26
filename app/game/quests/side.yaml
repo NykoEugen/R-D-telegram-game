@@ -1,0 +1,215 @@
+# Optional quests — not required for main-chain progression (no `requires` gate).
+
+quests:
+  - id: "haim_missing_crate"
+    tier: 1
+    min_level: 1
+    reward_xp: 40
+    reward_gold: 15
+    type: "delivery"
+    quest_type: "side"
+    location: "market"
+    npc_id: "haim"
+    title:
+      uk: "Загублений ящик Хаїма"
+      en: "Haim's Missing Crate"
+    questgiver:
+      uk: "Купець Хаїм"
+      en: "Merchant Haim"
+    description:
+      uk: "Один з ящиків Хаїма зник з возу дорогою на ринок. Хаїм підозрює конкретного носія, але доказів немає."
+      en: "One of Haim's crates went missing from the cart on the way to market. Haim suspects a particular porter, but has no proof."
+    proposal_text:
+      uk: "«Ящик з прянощами. Був — і нема», — Хаїм розводить руками з видом людини, яка вважає це особистою образою. «Знайди його, і я не забуду»."
+      en: "\"A crate of spices. There — then gone,\" Haim spreads his hands like a man who takes this personally. \"Find it, and I won't forget.\""
+    exploration_text:
+      uk: "Слід ящика веде через ринок до складського провулку, де товар часто «губиться» саме таким чином."
+      en: "The crate's trail leads across the market to a storage alley where goods have a habit of 'going missing' this exact way."
+    confrontation_text:
+      uk: "Носій із ящиком під пахвою помічає тебе і починає пояснювати щось про «тимчасове зберігання», відступаючи до виходу."
+      en: "The porter, crate under one arm, spots you and starts explaining something about 'temporary safekeeping' while backing toward the exit."
+    success_text:
+      uk: "Ящик повернуто. Хаїм перевіряє вміст, кивком підтверджує, що все ціле, і платить без зайвих запитань."
+      en: "The crate is returned. Haim checks the contents, nods that everything is intact, and pays without further questions."
+    fail_text:
+      uk: "Ящик так і не знайшовся. Хаїм записує щось у зошит — і не забуде цього ще довго."
+      en: "The crate is never found. Haim writes something in his ledger — and won't forget this for a while."
+    objectives:
+      - id: "find_crate"
+        required_actions: ["investigate", "explore"]
+        count: 2
+      - id: "confront_porter"
+        required_actions: ["talk", "negotiate"]
+        count: 1
+
+  - id: "yadviha_missing_patrol"
+    tier: 2
+    min_level: 2
+    reward_xp: 55
+    reward_gold: 20
+    type: "rescue"
+    quest_type: "side"
+    location: "road"
+    npc_id: "yadviha"
+    title:
+      uk: "Зниклий патруль"
+      en: "The Missing Patrol"
+    questgiver:
+      uk: "Капітан варти Ядвіга"
+      en: "Captain of the Guard Yadviha"
+    description:
+      uk: "Патруль з двох вартових не повернувся з обходу. Ядвіга не любить, коли її люди зникають без пояснень."
+      en: "A two-guard patrol never returned from its rounds. Yadviha does not like it when her people vanish unexplained."
+    proposal_text:
+      uk: "«Двоє моїх людей. Не повернулись», — Ядвіга каже це так само рівно, як і все інше, але костяшки пальців на столі побіліли. «Знайдіть їх — живих чи ні. Мені потрібна відповідь, не тиша»."
+      en: "\"Two of my people. Didn't come back,\" Yadviha says it as flatly as everything else, but her knuckles on the table have gone white. \"Find them — alive or not. I need an answer, not silence.\""
+    exploration_text:
+      uk: "Слід патруля обривається біля розвилки — один чобіт, покинутий щит, і жодного тіла."
+      en: "The patrol's trail breaks off near a fork in the road — one boot, an abandoned shield, and no bodies."
+    confrontation_text:
+      uk: "У яру — пастка з мотузок і кілька постатей, які явно чекали не варту, а здобич загалом. Вартові живі, але зв'язані."
+      en: "In the ravine — a rope trap and a few figures clearly waiting for prey in general, not the guard specifically. The guards are alive, but bound."
+    success_text:
+      uk: "Вартові повертаються живими. Ядвіга слухає звіт мовчки, потім киває — це в неї означає вдячність."
+      en: "The guards return alive. Yadviha listens to the report in silence, then nods — for her, that means gratitude."
+    fail_text:
+      uk: "Вартових не знайдено. Ядвіга приймає новину без жодного виразу — і це гірше за крик."
+      en: "The guards are not found. Yadviha takes the news without any expression at all — which is worse than shouting."
+    objectives:
+      - id: "track_patrol"
+        required_actions: ["investigate", "explore"]
+        count: 2
+      - id: "free_guards"
+        required_actions: ["attack", "defend"]
+        count: 2
+
+  - id: "teodor_lost_notes"
+    tier: 3
+    min_level: 3
+    reward_xp: 70
+    reward_gold: 25
+    type: "exploration"
+    quest_type: "side"
+    location: "ruins"
+    npc_id: "teodor"
+    title:
+      uk: "Загублені нотатки Теодора"
+      en: "Teodor's Lost Notes"
+    questgiver:
+      uk: "Вчений Теодор"
+      en: "Scholar Teodor"
+    description:
+      uk: "Теодор загубив зошит із начерками десь між верхнім і нижнім рівнем руїн. Без нього робота стоїть."
+      en: "Teodor lost his notebook of sketches somewhere between the upper and lower levels of the ruins. Without it, his work has stalled."
+    proposal_text:
+      uk: "«Зошит. Шкіряний, потертий, з моїми ініціалами», — каже Теодор, не піднімаючи очей від порожнього столу, де він мав би лежати. «Я не пам'ятаю, де його загубив. Це і є проблема»."
+      en: "\"The notebook. Leather, worn, with my initials,\" Teodor says, not looking up from the empty table where it should be. \"I don't remember where I lost it. That is precisely the problem.\""
+    exploration_text:
+      uk: "Коридори між рівнями завалені уламками — зошит міг опинитись де завгодно, і, схоже, саме так і сталось."
+      en: "The corridors between levels are littered with rubble — the notebook could be anywhere, and it seems it is."
+    confrontation_text:
+      uk: "Зошит нарешті знаходиться — під каменем, який доведеться зрушити, і не сам, а в компанії чогось, що там оселилось."
+      en: "The notebook is finally found — under a stone that needs moving, and not alone, but in the company of something that has moved in."
+    success_text:
+      uk: "Теодор гортає сторінки з полегшенням, яке не намагається приховати. «Я думав, все втрачено», — визнає він, віддаючи плату."
+      en: "Teodor flips through the pages with a relief he makes no attempt to hide. \"I thought it was all lost,\" he admits, handing over the payment."
+    fail_text:
+      uk: "Зошит так і не знайдено. Теодор мовчить довше, ніж зазвичай, перш ніж повернутись до порожнього столу."
+      en: "The notebook is never found. Teodor is silent longer than usual before turning back to the empty table."
+    objectives:
+      - id: "search_corridors"
+        required_actions: ["explore", "investigate"]
+        count: 2
+      - id: "deal_with_occupant"
+        required_actions: ["attack", "flee", "sneak"]
+        count: 1
+
+  - id: "hanna_wolf_problem"
+    tier: 2
+    min_level: 2
+    reward_xp: 60
+    reward_gold: 22
+    type: "combat"
+    quest_type: "side"
+    location: "forest"
+    npc_id: "hanna"
+    title:
+      uk: "Вовча проблема"
+      en: "The Wolf Problem"
+    questgiver:
+      uk: "Голова села Ганна"
+      en: "Village Elder Hanna"
+    description:
+      uk: "Зграя вовків підійшла до села занадто близько. Ганна хоче, щоб її прогнали, поки не сталось гіршого."
+      en: "A wolf pack has come too close to the village. Hanna wants them driven off before something worse happens."
+    proposal_text:
+      uk: "«Вовки завжди були — але не такими зграями і не так близько», — Ганна каже це без страху, тільки з утомою людини, яка вже бачила забагато проблем. «Прожени їх, поки не почали рахувати овець уголос»."
+      en: "\"Wolves have always been here — but not in packs this size, not this close,\" Hanna says it without fear, only the weariness of someone who has seen too many problems already. \"Drive them off before they start counting sheep out loud.\""
+    exploration_text:
+      uk: "Сліди зграї ведуть у гущавину — багато слідів, і всі свіжі."
+      en: "The pack's tracks lead into the thicket — many tracks, all fresh."
+    confrontation_text:
+      uk: "Вовки не тікають при твоїй появі — дивний знак, ніби вони чекали на когось. На тебе, судячи з усього."
+      en: "The wolves don't flee at your approach — a strange sign, as if they were waiting for someone. You, apparently."
+    success_text:
+      uk: "Зграя відступає. Ганна оглядає село, потім тебе, і вперше за розмову щось схоже на полегшення проступає на її обличчі."
+      en: "The pack retreats. Hanna surveys the village, then you, and for the first time in the conversation something like relief crosses her face."
+    fail_text:
+      uk: "Вовки лишаються. Ганна починає думати про план Б — і план Б їй не подобається."
+      en: "The wolves remain. Hanna starts thinking about plan B — and she does not like plan B."
+    objectives:
+      - id: "track_wolves"
+        required_actions: ["investigate", "explore"]
+        count: 2
+      - id: "drive_off_pack"
+        required_actions: ["attack", "defend"]
+        count: 2
+    loot_table:
+      - item_id: "healing_herb"
+        chance: 0.3
+
+  - id: "lukash_swamp_herbs"
+    tier: 3
+    min_level: 4
+    reward_xp: 65
+    reward_gold: 28
+    type: "exploration"
+    quest_type: "side"
+    location: "swamp"
+    npc_id: "lukash"
+    title:
+      uk: "Болотні трави Лукаша"
+      en: "Lukash's Swamp Herbs"
+    questgiver:
+      uk: "Відьмак Лукаш"
+      en: "Witcher Lukash"
+    description:
+      uk: "Лукашу потрібні рідкісні трави, що ростуть тільки на межі Чорного болота — там, де воно ще не зовсім прокляте."
+      en: "Lukash needs rare herbs that grow only at the edge of the Black Marsh — where it isn't quite cursed yet."
+    proposal_text:
+      uk: "«Трави ростуть на межі — там, де болото ще вагається, ставати йому по-справжньому лихим чи ні», — каже Лукаш, не відриваючись від приладдя. «Принеси жменю, і я поділюсь дечим корисним»."
+      en: "\"The herbs grow at the edge — where the swamp still hasn't decided whether to turn truly foul,\" Lukash says without looking up from his gear. \"Bring me a handful, and I'll share something useful.\""
+    exploration_text:
+      uk: "Межа болота оманливо спокійна — трави ростуть щільними купками серед купин, помітно ближче до відкритої води, ніж хотілося б."
+      en: "The edge of the swamp is deceptively calm — the herbs grow in dense clumps among the hummocks, noticeably closer to open water than one would like."
+    confrontation_text:
+      uk: "Щось під поверхнею вирішує, що жменя трав варта того, щоб про неї посперечатись."
+      en: "Something beneath the surface decides the handful of herbs is worth arguing over."
+    success_text:
+      uk: "Лукаш оглядає траву, задоволено киває і виконує обіцянку — інформація виявляється саме такою корисною, як він і казав."
+      en: "Lukash inspects the herbs, nods with satisfaction, and keeps his promise — the information proves exactly as useful as he said."
+    fail_text:
+      uk: "Трав немає. Лукаш знизує плечима — болото забирає більше, ніж дає, він давно це прийняв."
+      en: "No herbs. Lukash shrugs — the swamp takes more than it gives, he accepted that long ago."
+    objectives:
+      - id: "gather_swamp_herbs"
+        required_actions: ["explore", "investigate"]
+        count: 2
+      - id: "fend_off_swamp_thing"
+        required_actions: ["attack", "defend", "flee"]
+        count: 1
+    loot_table:
+      - item_id: "healing_herb"
+        chance: 0.6
+        qty_min: 1
+        qty_max: 3

@@ -4,20 +4,17 @@ FSM State Management Service for the Telegram RPG game bot.
 This service handles synchronization between FSM states and PostgreSQL GameSession storage.
 """
 
-import json
-from typing import Optional, Dict, Any, Union
 from datetime import datetime
+from typing import Any
 
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.telemetry import GameSession, SessionStatus
-from app.models.player import Player
-from app.services.repositories.session_repo import SessionRepository
-from app.services.repositories.player_repo import PlayerRepository
-from app.services.repositories.user_repo import UserRepository
 from app.services.logging_service import get_logger
+from app.services.repositories.player_repo import PlayerRepository
+from app.services.repositories.session_repo import SessionRepository
+from app.services.repositories.user_repo import UserRepository
 
 logger = get_logger(__name__)
 
@@ -35,10 +32,10 @@ class FSMStateService:
         self,
         fsm_context: FSMContext,
         user_id: int,
-        action: Optional[str] = None,
-        scene_id: Optional[str] = None,
-        additional_data: Optional[Dict[str, Any]] = None
-    ) -> Optional[GameSession]:
+        action: str | None = None,
+        scene_id: str | None = None,
+        additional_data: dict[str, Any] | None = None
+    ) -> GameSession | None:
         """
         Sync FSM state data to PostgreSQL GameSession.
         
@@ -138,7 +135,7 @@ class FSMStateService:
         self,
         fsm_context: FSMContext,
         user_id: int
-    ) -> Optional[GameSession]:
+    ) -> GameSession | None:
         """
         Restore FSM state from PostgreSQL GameSession.
         
@@ -201,9 +198,9 @@ class FSMStateService:
     async def create_or_get_session(
         self,
         user_id: int,
-        scene_id: Optional[str] = None,
-        initial_data: Optional[Dict[str, Any]] = None
-    ) -> Optional[GameSession]:
+        scene_id: str | None = None,
+        initial_data: dict[str, Any] | None = None
+    ) -> GameSession | None:
         """
         Create a new session or get existing active session.
         
@@ -262,7 +259,7 @@ class FSMStateService:
         self,
         user_id: int,
         status: SessionStatus = SessionStatus.COMPLETED,
-        end_scene_id: Optional[str] = None
+        end_scene_id: str | None = None
     ) -> bool:
         """
         End the active session for a user.
@@ -318,7 +315,7 @@ class FSMStateService:
     async def get_session_state(
         self,
         user_id: int
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Get current session state for a user.
         

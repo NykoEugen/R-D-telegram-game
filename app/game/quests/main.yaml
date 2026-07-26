@@ -5,6 +5,8 @@ quests:
     reward_xp: 60
     reward_gold: 25
     type: "combat"
+    quest_type: "main"
+    npc_id: "bruno"
     location: "tavern"
     title:
       uk: "Пацюки в льоху"
@@ -37,6 +39,13 @@ quests:
       - id: "clear_rats"
         required_actions: ["attack", "defend"]
         count: 3
+    loot_table:
+      - item_id: "rat_tail"
+        chance: 0.7
+        qty_min: 1
+        qty_max: 3
+      - item_id: "health_potion"
+        chance: 0.25
 
   - id: "lost_letter"
     tier: 1
@@ -44,6 +53,8 @@ quests:
     reward_xp: 65
     reward_gold: 20
     type: "delivery"
+    quest_type: "main"
+    npc_id: "myron"
     location: "apothecary"
     title:
       uk: "Загублений лист"
@@ -83,6 +94,9 @@ quests:
     reward_xp: 90
     reward_gold: 40
     type: "rescue"
+    quest_type: "main"
+    npc_id: "yadviha"
+    requires: ["rats_in_cellar"]
     location: "road"
     title:
       uk: "Зниклий купець"
@@ -122,6 +136,8 @@ quests:
     reward_xp: 95
     reward_gold: 45
     type: "combat"
+    quest_type: "main"
+    npc_id: "haim"
     location: "night_market"
     title:
       uk: "Нічна варта"
@@ -161,6 +177,8 @@ quests:
     reward_xp: 120
     reward_gold: 55
     type: "exploration"
+    quest_type: "main"
+    npc_id: "teodor"
     location: "ruins"
     title:
       uk: "Таємниця руїн"
@@ -203,6 +221,8 @@ quests:
     reward_xp: 125
     reward_gold: 60
     type: "diplomacy"
+    quest_type: "main"
+    npc_id: "hanna"
     location: "forest"
     title:
       uk: "Переговори з розбійниками"
@@ -242,6 +262,8 @@ quests:
     reward_xp: 145
     reward_gold: 75
     type: "exploration"
+    quest_type: "main"
+    npc_id: "lukash"
     location: "swamp"
     title:
       uk: "Прокляте болото"
@@ -284,6 +306,8 @@ quests:
     reward_xp: 155
     reward_gold: 85
     type: "combat"
+    quest_type: "main"
+    npc_id: "voron"
     location: "beast_lair"
     title:
       uk: "Лігво звіра"
@@ -319,3 +343,10 @@ quests:
       - id: "confirm_kill"
         required_actions: ["investigate", "loot"]
         count: 1
+    loot_table:
+      - item_id: "dragon_scale"
+        chance: 0.4
+      - item_id: "health_potion"
+        chance: 0.5
+        qty_min: 1
+        qty_max: 2

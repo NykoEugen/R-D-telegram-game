@@ -1,7 +1,7 @@
-from enum import StrEnum
-from dataclasses import dataclass
-from typing import Dict, Any, Optional, List
 import random
+from dataclasses import dataclass
+from enum import StrEnum
+from typing import Any, Optional
 
 from app.services.logging_service import get_logger
 
@@ -138,11 +138,11 @@ ACTION_META: dict[Action, ActionMeta] = {
 @dataclass
 class ActionConsequence:
     """Represents the consequences of taking an action."""
-    stat_changes: Dict[str, int] = None
+    stat_changes: dict[str, int] = None
     energy_cost: int = 0
     risk_change: int = 0
-    goal_updates: List[str] = None
-    scene_modifiers: Dict[str, Any] = None
+    goal_updates: list[str] = None
+    scene_modifiers: dict[str, Any] = None
     success_probability: float = 1.0
     failure_consequences: Optional['ActionConsequence'] = None
     
@@ -159,7 +159,7 @@ class ActionProcessor:
     """Processes actions and applies their consequences to player state."""
     
     @staticmethod
-    def process_action(action: Action, player_state, scene_context: Optional[Dict] = None) -> ActionConsequence:
+    def process_action(action: Action, player_state, scene_context: dict | None = None) -> ActionConsequence:
         """Process an action and return its consequences."""
         scene_context = scene_context or {}
         
@@ -175,7 +175,7 @@ class ActionProcessor:
         return consequence
     
     @staticmethod
-    def _get_base_consequence(action: Action, scene_context: Dict) -> ActionConsequence:
+    def _get_base_consequence(action: Action, scene_context: dict) -> ActionConsequence:
         """Get the base consequence for an action."""
         base_consequences = {
             Action.ATTACK: ActionConsequence(
@@ -479,7 +479,7 @@ class ActionProcessor:
         return base_consequences.get(action, ActionConsequence())
     
     @staticmethod
-    def _apply_scene_modifiers(consequence: ActionConsequence, scene_context: Dict) -> ActionConsequence:
+    def _apply_scene_modifiers(consequence: ActionConsequence, scene_context: dict) -> ActionConsequence:
         """Apply scene-specific modifiers to consequences."""
         scene_type = scene_context.get("scene_type", "")
         
@@ -516,7 +516,7 @@ class ActionProcessor:
         return consequence
     
     @staticmethod
-    def apply_consequence(consequence: ActionConsequence, player_state) -> Dict[str, Any]:
+    def apply_consequence(consequence: ActionConsequence, player_state) -> dict[str, Any]:
         """Apply a consequence to the player state and return results."""
         results = {
             "success": True,
@@ -563,7 +563,7 @@ class ActionProcessor:
         return results
 
 
-def get_available_actions(scene_type: str, player_state) -> List[Action]:
+def get_available_actions(scene_type: str, player_state) -> list[Action]:
     """Get available actions based on scene type and player state."""
     base_actions = {
         "story": [Action.CONTINUE, Action.INVESTIGATE, Action.CONTINUE],

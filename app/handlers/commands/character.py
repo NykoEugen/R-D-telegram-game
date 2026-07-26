@@ -2,17 +2,22 @@
 Character creation and management commands for the Telegram RPG game bot.
 """
 
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from sqlalchemy.ext.asyncio import AsyncSession
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.player import Player
 from app.models.character import CharacterClass, CharacterProgression
+from app.models.player import Player
 from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
 
@@ -40,7 +45,6 @@ async def cmd_create_character(message: Message, state: FSMContext, db_session: 
     
     # Check if user already has a character
     from app.models.user import User
-    from sqlalchemy import select
     
     result = await db_session.execute(
         select(User)
@@ -170,7 +174,6 @@ async def confirm_character_creation(callback: CallbackQuery, state: FSMContext,
     
     # Get user
     from app.models.user import User
-    from sqlalchemy import select
     
     result = await db_session.execute(
         select(User)
@@ -230,7 +233,6 @@ async def cmd_character_stats(message: Message, db_session: AsyncSession):
     
     # Get user and player
     from app.models.user import User
-    from sqlalchemy import select
     
     result = await db_session.execute(
         select(User)
@@ -284,7 +286,6 @@ async def view_detailed_stats(callback: CallbackQuery, db_session: AsyncSession)
     
     # Get user and player
     from app.models.user import User
-    from sqlalchemy import select
     
     result = await db_session.execute(
         select(User)
@@ -342,7 +343,6 @@ async def handle_level_up(callback: CallbackQuery, db_session: AsyncSession):
     
     # Get user and player
     from app.models.user import User
-    from sqlalchemy import select
     
     result = await db_session.execute(
         select(User)
@@ -399,7 +399,6 @@ async def start_point_distribution(callback: CallbackQuery, state: FSMContext, d
     
     # Get user and player
     from app.models.user import User
-    from sqlalchemy import select
     
     result = await db_session.execute(
         select(User)
@@ -465,7 +464,6 @@ async def distribute_stat_point(callback: CallbackQuery, state: FSMContext, db_s
         return
     
     # Get player
-    from sqlalchemy import select
     result = await db_session.execute(
         select(Player).where(Player.id == data["player_id"])
     )
@@ -545,7 +543,6 @@ async def confirm_distribution(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "cancel_dist", CharacterManagementStates.DISTRIBUTING_POINTS)
 async def cancel_distribution(callback: CallbackQuery, state: FSMContext, db_session: AsyncSession):
     await callback.answer()
-    from sqlalchemy import select
     from app.handlers.menu import build_hero_menu_kb
     user_id = callback.from_user.id
     data = await state.get_data()

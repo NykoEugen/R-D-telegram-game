@@ -6,26 +6,32 @@ Visited locations are tracked in FSM state as a list.
 """
 
 from pathlib import Path
-from typing import Optional
 
 import yaml
-from aiogram import Router, F
+from aiogram import F, Router
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.game.states import GameStates
+from app.handlers.npc import NpcCB
 from app.models.user import User
+from app.services import npc_loader
 from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
 
 router = Router()
 logger = get_logger(__name__)
 
-_CITY_DATA: Optional[dict] = None
+_CITY_DATA: dict | None = None
 _YAML_PATH = Path(__file__).parent.parent / "game" / "city_intro.yaml"
 
 UNLOCK_LOCATIONS = {"tavern", "guild"}
@@ -35,7 +41,7 @@ def _load() -> dict:
     global _CITY_DATA
     if _CITY_DATA is not None:
         return _CITY_DATA
-    with open(_YAML_PATH, "r", encoding="utf-8") as f:
+    with open(_YAML_PATH, encoding="utf-8") as f:
         data = yaml.safe_load(f)
     _CITY_DATA = data.get("city", {})
     return _CITY_DATA
@@ -83,6 +89,11 @@ def _location_kb(user_id: int, loc_id: str, visited: list[str], quests_unlocked:
     city = _load()
     loc = city.get("locations", {}).get(loc_id, {})
     rows = []
+    for npc in npc_loader.get_npcs_by_location(loc_id):
+        rows.append([InlineKeyboardButton(
+            text=f"🗣 {npc.get_name(locale)}",
+            callback_data=NpcCB(action="open", npc_id=npc.id).pack(),
+        )])
     for act_id, act in loc.get("actions", {}).items():
         label = _t(act.get("label", {}), locale)
         rows.append([InlineKeyboardButton(
@@ -117,11 +128,10 @@ def _city_map_text(locale: str, visited: list[str]) -> str:
     city_name = _t(city.get("name", {}), locale)
     if not visited:
         intro = _t(city.get("intro", {}), locale)
+    elif locale == "uk":
+        intro = f"Ти стоїш посеред {city_name}. Куди далі?"
     else:
-        if locale == "uk":
-            intro = f"Ти стоїш посеред {city_name}. Куди далі?"
-        else:
-            intro = f"You stand in the middle of {city_name}. Where to next?"
+        intro = f"You stand in the middle of {city_name}. Where to next?"
     return f"🏙 <b>{city_name}</b>\n\n{intro}"
 
 

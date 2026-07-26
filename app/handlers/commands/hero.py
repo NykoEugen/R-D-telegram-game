@@ -4,21 +4,26 @@ Hero creation and selection handlers for the Telegram RPG game bot.
 This module provides streamlined hero creation and management functionality.
 """
 
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from sqlalchemy.ext.asyncio import AsyncSession
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.models.character import CharacterClass, CharacterProgression
 from app.models.player import Player
 from app.models.user import User
-from app.models.character import CharacterClass, CharacterProgression
+from app.services.fsm_service import FSMStateService
 from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
-from app.services.fsm_service import FSMStateService
 
 logger = get_logger(__name__)
 router = Router()

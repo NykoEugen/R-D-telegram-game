@@ -4,16 +4,21 @@ Session repository for the Telegram RPG game bot.
 This module provides data access methods for GameSession entities.
 """
 
-from typing import Optional, List, Dict, Any
-from datetime import datetime, timedelta
 import uuid
+from datetime import datetime, timedelta
+from typing import Any
 
-from sqlalchemy import select, update, delete, and_, or_, func, desc
+from sqlalchemy import and_, delete, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from app.models.telemetry import GameSession, SessionStatus, MessageLog, MessageType, AIGeneration, AIGenerationType
-from app.models.player import Player
+from app.models.telemetry import (
+    AIGeneration,
+    AIGenerationType,
+    GameSession,
+    MessageLog,
+    MessageType,
+    SessionStatus,
+)
 
 
 class SessionRepository:
@@ -25,9 +30,9 @@ class SessionRepository:
     async def create_session(
         self,
         player_id: int,
-        start_scene_id: Optional[str] = None,
-        session_data: Optional[Dict[str, Any]] = None,
-        client_info: Optional[Dict[str, Any]] = None
+        start_scene_id: str | None = None,
+        session_data: dict[str, Any] | None = None,
+        client_info: dict[str, Any] | None = None
     ) -> GameSession:
         """
         Create a new game session.
@@ -62,7 +67,7 @@ class SessionRepository:
         
         return game_session
     
-    async def get_session_by_id(self, session_id: int) -> Optional[GameSession]:
+    async def get_session_by_id(self, session_id: int) -> GameSession | None:
         """
         Get a session by its database ID.
         
@@ -76,7 +81,7 @@ class SessionRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def get_session_by_session_id(self, session_id: str) -> Optional[GameSession]:
+    async def get_session_by_session_id(self, session_id: str) -> GameSession | None:
         """
         Get a session by its unique session identifier.
         
@@ -90,7 +95,7 @@ class SessionRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def get_active_session(self, player_id: int) -> Optional[GameSession]:
+    async def get_active_session(self, player_id: int) -> GameSession | None:
         """
         Get the active session for a player.
         
@@ -116,9 +121,9 @@ class SessionRepository:
     async def get_player_sessions(
         self,
         player_id: int,
-        status: Optional[SessionStatus] = None,
+        status: SessionStatus | None = None,
         limit: int = 50
-    ) -> List[GameSession]:
+    ) -> list[GameSession]:
         """
         Get sessions for a player.
         
@@ -143,7 +148,7 @@ class SessionRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def get_recent_sessions(self, hours: int = 24, limit: int = 100) -> List[GameSession]:
+    async def get_recent_sessions(self, hours: int = 24, limit: int = 100) -> list[GameSession]:
         """
         Get recent sessions within a time period.
         
@@ -170,7 +175,7 @@ class SessionRepository:
         self,
         session_id: str,
         **updates
-    ) -> Optional[GameSession]:
+    ) -> GameSession | None:
         """
         Update a session's attributes.
         
@@ -202,8 +207,8 @@ class SessionRepository:
         self,
         session_id: str,
         status: SessionStatus = SessionStatus.COMPLETED,
-        end_scene_id: Optional[str] = None
-    ) -> Optional[GameSession]:
+        end_scene_id: str | None = None
+    ) -> GameSession | None:
         """
         End a game session.
         
@@ -238,8 +243,8 @@ class SessionRepository:
     async def save_player_state_snapshot(
         self,
         session_id: str,
-        player_state: Dict[str, Any]
-    ) -> Optional[GameSession]:
+        player_state: dict[str, Any]
+    ) -> GameSession | None:
         """
         Save a snapshot of the player's state in the session.
         
@@ -259,7 +264,7 @@ class SessionRepository:
         actions: int = 0,
         ai_generations: int = 0,
         errors: int = 0
-    ) -> Optional[GameSession]:
+    ) -> GameSession | None:
         """
         Increment session counters.
         
@@ -292,11 +297,11 @@ class SessionRepository:
         session_id: str,
         message_type: MessageType,
         content: str,
-        message_id: Optional[str] = None,
-        scene_id: Optional[str] = None,
-        action_id: Optional[str] = None,
-        message_metadata: Optional[Dict[str, Any]] = None,
-        processing_time_ms: Optional[int] = None
+        message_id: str | None = None,
+        scene_id: str | None = None,
+        action_id: str | None = None,
+        message_metadata: dict[str, Any] | None = None,
+        processing_time_ms: int | None = None
     ) -> MessageLog:
         """
         Add a message log to a session.
@@ -347,21 +352,21 @@ class SessionRepository:
         generation_type: AIGenerationType,
         prompt: str,
         response: str,
-        generation_id: Optional[str] = None,
-        context_data: Optional[Dict[str, Any]] = None,
-        scene_id: Optional[str] = None,
-        action_id: Optional[str] = None,
-        model_name: Optional[str] = None,
-        model_version: Optional[str] = None,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-        prompt_tokens: Optional[int] = None,
-        completion_tokens: Optional[int] = None,
-        total_tokens: Optional[int] = None,
-        cost_usd: Optional[float] = None,
-        duration_ms: Optional[int] = None,
+        generation_id: str | None = None,
+        context_data: dict[str, Any] | None = None,
+        scene_id: str | None = None,
+        action_id: str | None = None,
+        model_name: str | None = None,
+        model_version: str | None = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        prompt_tokens: int | None = None,
+        completion_tokens: int | None = None,
+        total_tokens: int | None = None,
+        cost_usd: float | None = None,
+        duration_ms: int | None = None,
         is_successful: bool = True,
-        error_message: Optional[str] = None
+        error_message: str | None = None
     ) -> AIGeneration:
         """
         Add an AI generation record to a session.
@@ -436,9 +441,9 @@ class SessionRepository:
     async def get_session_messages(
         self,
         session_id: str,
-        message_type: Optional[MessageType] = None,
+        message_type: MessageType | None = None,
         limit: int = 100
-    ) -> List[MessageLog]:
+    ) -> list[MessageLog]:
         """
         Get message logs for a session.
         
@@ -470,9 +475,9 @@ class SessionRepository:
     async def get_session_ai_generations(
         self,
         session_id: str,
-        generation_type: Optional[AIGenerationType] = None,
+        generation_type: AIGenerationType | None = None,
         limit: int = 100
-    ) -> List[AIGeneration]:
+    ) -> list[AIGeneration]:
         """
         Get AI generation records for a session.
         
@@ -501,7 +506,7 @@ class SessionRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def get_session_statistics(self, session_id: str) -> Optional[Dict[str, Any]]:
+    async def get_session_statistics(self, session_id: str) -> dict[str, Any] | None:
         """
         Get comprehensive statistics for a session.
         

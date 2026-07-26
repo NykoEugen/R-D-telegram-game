@@ -4,10 +4,8 @@ Character attributes and progression system for the Telegram RPG game bot.
 This module defines character classes, attributes, and progression mechanics.
 """
 
-from enum import Enum
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-import math
+from enum import Enum
 
 
 class CharacterClass(str, Enum):
@@ -43,14 +41,14 @@ class DerivedStats:
 class ClassBonus:
     """Starting bonuses and level-up bonuses for character classes."""
     starting_bonus: BaseAttributes
-    level_up_bonus: List[str]  # List of attributes to increase on level up
+    level_up_bonus: list[str]  # List of attributes to increase on level up
 
 
 class CharacterProgression:
     """Character progression and leveling system."""
     
     # Class definitions with starting bonuses and level-up patterns
-    CLASS_DEFINITIONS: Dict[CharacterClass, ClassBonus] = {
+    CLASS_DEFINITIONS: dict[CharacterClass, ClassBonus] = {
         CharacterClass.WARRIOR: ClassBonus(
             starting_bonus=BaseAttributes(strength=2, agility=0, intelligence=0, vitality=2, luck=0),
             level_up_bonus=["strength", "vitality"]
@@ -119,7 +117,7 @@ class CharacterProgression:
         return level
     
     @staticmethod
-    def get_xp_progress_to_next_level(current_level: int, current_xp: int) -> Tuple[int, int]:
+    def get_xp_progress_to_next_level(current_level: int, current_xp: int) -> tuple[int, int]:
         """Get XP progress towards next level (current, required)."""
         total_xp_for_current = CharacterProgression.get_total_xp_for_level(current_level)
         total_xp_for_next = CharacterProgression.get_total_xp_for_level(current_level + 1)
@@ -184,7 +182,7 @@ class CharacterManager:
     """Manages character creation, progression, and stat calculations."""
     
     @staticmethod
-    def create_character(character_class: CharacterClass, name: str) -> Dict:
+    def create_character(character_class: CharacterClass, name: str) -> dict:
         """Create a new character with class bonuses applied."""
         base_attributes = BaseAttributes()
         attributes_with_bonuses = CharacterProgression.apply_class_bonuses(base_attributes, character_class)
@@ -203,7 +201,7 @@ class CharacterManager:
         }
     
     @staticmethod
-    def level_up_character(character_data: Dict, stat_distribution: Optional[BaseAttributes] = None) -> Dict:
+    def level_up_character(character_data: dict, stat_distribution: BaseAttributes | None = None) -> dict:
         """Level up a character and apply bonuses."""
         current_level = character_data["level"]
         new_level = CharacterProgression.get_level_from_xp(character_data["experience"])
@@ -259,7 +257,7 @@ class CharacterManager:
         return character_data
     
     @staticmethod
-    def add_experience(character_data: Dict, xp_gained: int) -> Dict:
+    def add_experience(character_data: dict, xp_gained: int) -> dict:
         """Add experience to character and handle level ups."""
         character_data["experience"] += xp_gained
         
@@ -273,7 +271,7 @@ class CharacterManager:
         return character_data
     
     @staticmethod
-    def get_character_summary(character_data: Dict) -> str:
+    def get_character_summary(character_data: dict) -> str:
         """Get a formatted summary of character stats."""
         attrs = character_data["attributes"]
         derived = character_data["derived_stats"]

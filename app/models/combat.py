@@ -5,11 +5,10 @@ This module defines combat-related models including enemies, combat state,
 status effects, and combat actions.
 """
 
-from enum import Enum
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, field
 import random
-import math
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 
 class CombatAction(str, Enum):
@@ -65,7 +64,7 @@ class Enemy:
     armor: int = 0
     gold_reward: int = 0
     xp_reward: int = 0
-    loot_table: List[Dict[str, Any]] = field(default_factory=list)
+    loot_table: list[dict[str, Any]] = field(default_factory=list)
     
     @property
     def hp_current(self) -> int:
@@ -82,12 +81,12 @@ class CombatState:
     player_hp: int
     player_max_hp: int
     enemy: Enemy
-    turn_order: List[str]  # "player" or "enemy"
+    turn_order: list[str]  # "player" or "enemy"
     current_turn: int = 0
-    player_status_effects: List[StatusEffectInstance] = field(default_factory=list)
-    enemy_status_effects: List[StatusEffectInstance] = field(default_factory=list)
-    player_skill_cooldowns: Dict[ClassSkill, int] = field(default_factory=dict)
-    combat_log: List[str] = field(default_factory=list)
+    player_status_effects: list[StatusEffectInstance] = field(default_factory=list)
+    enemy_status_effects: list[StatusEffectInstance] = field(default_factory=list)
+    player_skill_cooldowns: dict[ClassSkill, int] = field(default_factory=dict)
+    combat_log: list[str] = field(default_factory=list)
     player_crit_bonus: float = 0.0  # Temporary crit bonus (e.g., from Aimed Shot)
     
     @property
@@ -108,7 +107,7 @@ class CombatCalculator:
         return sum(random.randint(1, sides) for _ in range(count))
     
     @staticmethod
-    def calculate_initiative(player_agi: int, enemy_agi: int) -> List[str]:
+    def calculate_initiative(player_agi: int, enemy_agi: int) -> list[str]:
         """Calculate turn order based on agility + random roll."""
         player_init = player_agi + random.randint(1, 6)
         enemy_init = enemy_agi + random.randint(1, 6)
@@ -158,7 +157,7 @@ class CombatActions:
     """Handles combat action execution."""
     
     @staticmethod
-    def execute_attack(combat_state: CombatState, player_stats: Dict, is_player_attacking: bool) -> Tuple[int, bool, str]:
+    def execute_attack(combat_state: CombatState, player_stats: dict, is_player_attacking: bool) -> tuple[int, bool, str]:
         """Execute a basic attack."""
         if is_player_attacking:
             attacker_attack = player_stats["attack"]
@@ -201,7 +200,7 @@ class CombatActions:
         return damage, is_crit, "hit"
     
     @staticmethod
-    def execute_skill(combat_state: CombatState, player_stats: Dict, skill: ClassSkill) -> Tuple[int, bool, str, List[StatusEffectInstance]]:
+    def execute_skill(combat_state: CombatState, player_stats: dict, skill: ClassSkill) -> tuple[int, bool, str, list[StatusEffectInstance]]:
         """Execute a class skill."""
         new_effects = []
         damage = 0
@@ -294,13 +293,13 @@ class CombatActions:
         return damage, is_crit, result, new_effects
     
     @staticmethod
-    def execute_escape(combat_state: CombatState, player_stats: Dict) -> bool:
+    def execute_escape(combat_state: CombatState, player_stats: dict) -> bool:
         """Execute escape attempt."""
         escape_chance = CombatCalculator.calculate_escape_chance(player_stats["agility"])
         return random.random() * 100 <= escape_chance
     
     @staticmethod
-    def process_status_effects(combat_state: CombatState, player_stats: Dict) -> List[str]:
+    def process_status_effects(combat_state: CombatState, player_stats: dict) -> list[str]:
         """Process status effects at the end of turn."""
         effects_log = []
         
@@ -357,7 +356,7 @@ class CombatActions:
             del combat_state.player_skill_cooldowns[skill]
     
     @staticmethod
-    def get_available_skills(player_class: str, cooldowns: Dict[ClassSkill, int]) -> List[ClassSkill]:
+    def get_available_skills(player_class: str, cooldowns: dict[ClassSkill, int]) -> list[ClassSkill]:
         """Get list of available skills for player class."""
         class_skills = {
             "warrior": [ClassSkill.POWER_STRIKE],

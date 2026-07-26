@@ -4,12 +4,12 @@ User Cache Service for the Telegram RPG game bot.
 This service provides caching for users and players to avoid repeated database queries.
 """
 
-from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any
 
-from app.models.user import User
 from app.models.player import Player
+from app.models.user import User
 from app.services.logging_service import get_logger
 
 logger = get_logger(__name__)
@@ -29,10 +29,10 @@ class UserCacheService:
     
     def __init__(self, cache_duration_minutes: int = 30):
         self.cache_duration = timedelta(minutes=cache_duration_minutes)
-        self._cache: Dict[int, CachedUser] = {}
-        self._telegram_to_user_id: Dict[int, int] = {}
+        self._cache: dict[int, CachedUser] = {}
+        self._telegram_to_user_id: dict[int, int] = {}
     
-    def get_cached_user(self, telegram_id: int) -> Optional[CachedUser]:
+    def get_cached_user(self, telegram_id: int) -> CachedUser | None:
         """
         Get cached user data if still valid.
         
@@ -149,7 +149,7 @@ class UserCacheService:
         
         return len(expired_telegram_ids)
     
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """
         Get cache statistics.
         

@@ -5,16 +5,14 @@ This module handles combat-related commands and integrates combat
 with the existing game systems.
 """
 
-from typing import Dict, Optional
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
-from aiogram.fsm.context import FSMContext
 
-from app.models.combat import EnemyGenerator
-from app.models.player import Player
+from aiogram import F, Router
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message
+
 from app.handlers.combat import CombatHandler
-from app.services.i18n_service import I18nService
 from app.services.fsm_service import FSMStateService
+from app.services.i18n_service import I18nService
 
 
 class CombatCommandHandler:
@@ -77,7 +75,7 @@ class CombatCommandHandler:
         """Handle /battle command (alias for /combat)."""
         await self.handle_combat_command(message, context)
     
-    async def _get_player_data(self, user_id: int) -> Optional[Dict]:
+    async def _get_player_data(self, user_id: int) -> dict | None:
         """Get player data from database."""
         try:
             # This would typically fetch from database

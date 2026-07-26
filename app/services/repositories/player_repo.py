@@ -4,10 +4,10 @@ Player repository for the Telegram RPG game bot.
 This module provides data access methods for Player entities.
 """
 
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any
 
-from sqlalchemy import select, update, delete, and_, or_
+from sqlalchemy import and_, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -24,8 +24,8 @@ class PlayerRepository:
     async def create_player(
         self,
         user_id: int,
-        character_name: Optional[str] = None,
-        character_class: Optional[str] = None,
+        character_name: str | None = None,
+        character_class: str | None = None,
         **kwargs
     ) -> Player:
         """
@@ -75,7 +75,7 @@ class PlayerRepository:
 
         return player
     
-    async def get_player_by_id(self, player_id: int) -> Optional[Player]:
+    async def get_player_by_id(self, player_id: int) -> Player | None:
         """
         Get a player by their ID.
         
@@ -89,17 +89,17 @@ class PlayerRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def get_player_by_user_id(self, user_id: int) -> Optional[Player]:
+    async def get_player_by_user_id(self, user_id: int) -> Player | None:
         """Get active player by user ID (backward compat)."""
         return await self.get_active_player(user_id)
     
-    async def get_players_by_user_id(self, user_id: int) -> List[Player]:
+    async def get_players_by_user_id(self, user_id: int) -> list[Player]:
         """Get all players (heroes) for a user, ordered by slot."""
         stmt = select(Player).where(Player.user_id == user_id).order_by(Player.slot)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_active_player(self, user_id: int) -> Optional[Player]:
+    async def get_active_player(self, user_id: int) -> Player | None:
         """Get the active player for a user."""
         stmt = select(Player).where(
             and_(Player.user_id == user_id, Player.is_active == True)
@@ -134,7 +134,7 @@ class PlayerRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one()
 
-    async def get_player_by_slot(self, user_id: int, slot: int) -> Optional[Player]:
+    async def get_player_by_slot(self, user_id: int, slot: int) -> Player | None:
         """Get a hero by slot number."""
         stmt = select(Player).where(
             and_(Player.user_id == user_id, Player.slot == slot)
@@ -152,7 +152,7 @@ class PlayerRepository:
                 return slot
         raise ValueError("No free slots")
 
-    async def get_player_by_telegram_id(self, telegram_id: int) -> Optional[Player]:
+    async def get_player_by_telegram_id(self, telegram_id: int) -> Player | None:
         """Get the active player by Telegram ID."""
         stmt = (
             select(Player)
@@ -176,7 +176,7 @@ class PlayerRepository:
             player = result2.scalar_one_or_none()
         return player
     
-    async def get_player_with_user(self, player_id: int) -> Optional[Player]:
+    async def get_player_with_user(self, player_id: int) -> Player | None:
         """
         Get a player with their associated user data.
         
@@ -194,7 +194,7 @@ class PlayerRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def get_players_by_status(self, status: PlayerStatus) -> List[Player]:
+    async def get_players_by_status(self, status: PlayerStatus) -> list[Player]:
         """
         Get all players with a specific status.
         
@@ -208,7 +208,7 @@ class PlayerRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def get_online_players(self) -> List[Player]:
+    async def get_online_players(self) -> list[Player]:
         """
         Get all currently online players.
         
@@ -219,7 +219,7 @@ class PlayerRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def get_players_by_level_range(self, min_level: int, max_level: int) -> List[Player]:
+    async def get_players_by_level_range(self, min_level: int, max_level: int) -> list[Player]:
         """
         Get players within a specific level range.
         
@@ -236,7 +236,7 @@ class PlayerRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def update_player(self, player_id: int, **updates) -> Optional[Player]:
+    async def update_player(self, player_id: int, **updates) -> Player | None:
         """
         Update a player's attributes.
         
@@ -310,7 +310,7 @@ class PlayerRepository:
         result = await self.session.execute(stmt)
         return result.rowcount > 0
     
-    async def add_experience(self, player_id: int, exp_amount: int) -> Optional[Player]:
+    async def add_experience(self, player_id: int, exp_amount: int) -> Player | None:
         """
         Add experience to a player and handle level up if needed.
         
@@ -351,7 +351,7 @@ class PlayerRepository:
         
         return await self.update_player(player_id, **updates)
     
-    async def add_currency(self, player_id: int, coins: int = 0, gems: int = 0) -> Optional[Player]:
+    async def add_currency(self, player_id: int, coins: int = 0, gems: int = 0) -> Player | None:
         """
         Add currency to a player.
         
@@ -375,7 +375,7 @@ class PlayerRepository:
         
         return await self.update_player(player_id, **updates)
     
-    async def update_player_flags(self, player_id: int, flags: Dict[str, Any]) -> Optional[Player]:
+    async def update_player_flags(self, player_id: int, flags: dict[str, Any]) -> Player | None:
         """
         Update a player's game flags.
         
@@ -451,7 +451,7 @@ class PlayerRepository:
         # Simple level calculation: 100 exp per level
         return max(1, (experience // 100) + 1)
     
-    async def get_player_stats(self, player_id: int) -> Optional[Dict[str, Any]]:
+    async def get_player_stats(self, player_id: int) -> dict[str, Any] | None:
         """
         Get comprehensive player statistics.
         
@@ -488,3 +488,41 @@ class PlayerRepository:
             "last_played": player.last_played,
             "created_at": player.created_at,
         }
+
+    def apply_energy_regen(self, player: Player) -> None:
+        """Regenerate energy lazily based on elapsed time (per-hour rate in Config)."""
+        from app.core.config import Config
+
+        now = datetime.utcnow()
+        last = player.energy_updated_at or now
+        elapsed_hours = (now - last).total_seconds() / 3600
+        if elapsed_hours <= 0 or player.energy >= player.max_energy:
+            return
+
+        regen = int(elapsed_hours * Config.ENERGY_REGENERATION_RATE)
+        if regen > 0:
+            player.energy = min(player.max_energy, player.energy + regen)
+            player.energy_updated_at = now
+
+    async def consume_energy(self, player: Player, amount: int) -> bool:
+        """Regenerate lazily, then spend `amount` energy. False if insufficient."""
+        self.apply_energy_regen(player)
+        if player.energy < amount:
+            return False
+
+        player.energy -= amount
+        player.energy_updated_at = datetime.utcnow()
+        await self.session.flush()
+        return True
+
+    def energy_regen_eta_minutes(self, player: Player, needed: int) -> int:
+        """Minutes until `player` reaches `needed` energy (no further spending)."""
+        from app.core.config import Config
+
+        deficit = needed - player.energy
+        if deficit <= 0:
+            return 0
+        rate_per_minute = Config.ENERGY_REGENERATION_RATE / 60
+        if rate_per_minute <= 0:
+            return 0
+        return max(1, int(deficit / rate_per_minute) + 1)

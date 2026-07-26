@@ -7,14 +7,21 @@ Import the Base class and any models you need from this module.
 
 from app.core.db import Base
 
+from .i18n import I18nCategory, I18nString
+from .items import InventoryItem, Item, ItemRarity, ItemType
+from .lore import QuestProgress, QuestStatus, QuestType
+from .player import Player, PlayerStatus
+from .telemetry import (
+    AIGeneration,
+    AIGenerationType,
+    GameSession,
+    MessageLog,
+    MessageType,
+    SessionStatus,
+)
+
 # Import all models
 from .user import User
-from .player import Player, PlayerStatus
-from .items import Item, InventoryItem, ItemRarity, ItemType
-from .lore import Scene, Action, Quest, QuestProgress, SceneType, ActionType, QuestStatus, QuestType
-from .telemetry import GameSession, MessageLog, AIGeneration, SessionStatus, MessageType, AIGenerationType
-from .i18n import I18nString, I18nCategory
-from .player_progress import PlayerProgress, ExplorationSession, RegionUnlock, PlayerStats
 
 __all__ = [
     "Base",
@@ -24,16 +31,11 @@ __all__ = [
     "PlayerStatus",
     # Item models
     "Item",
-    "InventoryItem", 
+    "InventoryItem",
     "ItemRarity",
     "ItemType",
-    # Lore models
-    "Scene",
-    "Action",
-    "Quest",
+    # Quest progress models
     "QuestProgress",
-    "SceneType",
-    "ActionType", 
     "QuestStatus",
     "QuestType",
     # Telemetry models
@@ -46,9 +48,4 @@ __all__ = [
     # I18n models
     "I18nString",
     "I18nCategory",
-    # Player progress models
-    "PlayerProgress",
-    "ExplorationSession", 
-    "RegionUnlock",
-    "PlayerStats",
 ]

@@ -1,17 +1,15 @@
-import json
 import logging
 import sys
 import uuid
+from contextvars import ContextVar
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
-from contextvars import ContextVar
 
 import orjson
 from pythonjsonlogger import jsonlogger
 
 # Context variable to store correlation ID for the current request
-correlation_id: ContextVar[Optional[str]] = ContextVar('correlation_id', default=None)
+correlation_id: ContextVar[str | None] = ContextVar('correlation_id', default=None)
 
 class OrjsonFormatter(jsonlogger.JsonFormatter):
     """Custom JSON formatter using orjson for better performance."""
@@ -92,7 +90,7 @@ class StructuredLogger:
 
 def setup_logging(
     log_level: str = "INFO",
-    log_file: Optional[str] = None,
+    log_file: str | None = None,
     enable_console: bool = True
 ) -> None:
     """Setup logging with structured JSON format.
@@ -163,7 +161,7 @@ def set_correlation_id(corr_id: str) -> None:
     """
     correlation_id.set(corr_id)
 
-def get_correlation_id() -> Optional[str]:
+def get_correlation_id() -> str | None:
     """Get current correlation ID.
     
     Returns:

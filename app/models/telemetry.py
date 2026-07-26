@@ -5,10 +5,10 @@ This module defines GameSession, MessageLog, and AIGeneration models for storing
 """
 
 from datetime import datetime
-from typing import Optional, List, Dict, Any
 from enum import Enum
+from typing import Any, Optional
 
-from sqlalchemy import String, Integer, DateTime, Boolean, Text, ForeignKey, JSON, Float
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -57,13 +57,13 @@ class GameSession(Base):
     
     # Session properties
     status: Mapped[SessionStatus] = mapped_column(String(20), default=SessionStatus.ACTIVE, nullable=False)
-    start_scene_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    end_scene_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    start_scene_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    end_scene_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     
     # Session data
-    session_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
-    player_state_snapshot: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
-    current_state: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # Current FSM state
+    session_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    player_state_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    current_state: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Current FSM state
     
     # Session statistics
     messages_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -72,11 +72,11 @@ class GameSession(Base):
     
     # Session timing
     started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    duration_seconds: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
     
     # Session metadata
-    client_info: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)  # Client/bot version info
+    client_info: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)  # Client/bot version info
     error_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     
     # Timestamps
@@ -85,8 +85,8 @@ class GameSession(Base):
     
     # Relationships
     player: Mapped["Player"] = relationship("Player", back_populates="game_sessions")
-    message_logs: Mapped[List["MessageLog"]] = relationship("MessageLog", back_populates="game_session")
-    ai_generations: Mapped[List["AIGeneration"]] = relationship("AIGeneration", back_populates="game_session")
+    message_logs: Mapped[list["MessageLog"]] = relationship("MessageLog", back_populates="game_session")
+    ai_generations: Mapped[list["AIGeneration"]] = relationship("AIGeneration", back_populates="game_session")
     
     def __repr__(self) -> str:
         return f"<GameSession(id={self.id}, session_id={self.session_id}, player_id={self.player_id}, status={self.status})>"
@@ -104,29 +104,29 @@ class MessageLog(Base):
     game_session_id: Mapped[int] = mapped_column(Integer, ForeignKey("game_sessions.id"), nullable=False)
     
     # Message identification
-    message_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # Telegram message ID
+    message_id: Mapped[str | None] = mapped_column(String(100), nullable=True)  # Telegram message ID
     
     # Message properties
     message_type: Mapped[MessageType] = mapped_column(String(50), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     
     # Message context
-    scene_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    action_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    scene_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    action_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     
     # Message metadata
-    message_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    message_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     is_ai_generated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    ai_generation_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("ai_generations.id"), nullable=True)
+    ai_generation_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("ai_generations.id"), nullable=True)
     
     # Message timing
     sent_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    processing_time_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    processing_time_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     
     # Message status
     is_processed: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     has_error: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
@@ -159,39 +159,39 @@ class AIGeneration(Base):
     response: Mapped[str] = mapped_column(Text, nullable=False)
     
     # Generation context
-    context_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
-    scene_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    action_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    context_data: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    scene_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    action_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     
     # AI model information
-    model_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    model_version: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    temperature: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    max_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    model_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    model_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    temperature: Mapped[float | None] = mapped_column(Float, nullable=True)
+    max_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     
     # Generation metrics
-    prompt_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    completion_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    total_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    cost_usd: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    prompt_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    completion_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    total_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cost_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
     
     # Generation timing
     started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     
     # Generation status
     is_successful: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     
     # Generation quality metrics
-    quality_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)  # 0.0 to 1.0
-    user_rating: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # 1-5 stars
+    quality_score: Mapped[float | None] = mapped_column(Float, nullable=True)  # 0.0 to 1.0
+    user_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 1-5 stars
     is_flagged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     # Generation metadata
-    generation_metadata: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    generation_metadata: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
@@ -199,7 +199,7 @@ class AIGeneration(Base):
     
     # Relationships
     game_session: Mapped["GameSession"] = relationship("GameSession", back_populates="ai_generations")
-    message_logs: Mapped[List["MessageLog"]] = relationship("MessageLog", back_populates="ai_generation")
+    message_logs: Mapped[list["MessageLog"]] = relationship("MessageLog", back_populates="ai_generation")
     
     def __repr__(self) -> str:
         return f"<AIGeneration(id={self.id}, generation_id={self.generation_id}, type={self.generation_type}, successful={self.is_successful})>"

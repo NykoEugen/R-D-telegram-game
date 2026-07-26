@@ -1,14 +1,14 @@
-from aiogram import Router, F
-from aiogram.types import Message
+from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.logging_service import get_logger
-from app.services.i18n_service import i18n_service
-from app.services.fsm_service import FSMStateService
 from app.game.states import GameStates
 from app.handlers.menu import build_main_menu_kb
+from app.services.fsm_service import FSMStateService
+from app.services.i18n_service import i18n_service
+from app.services.logging_service import get_logger
 
 router = Router()
 logger = get_logger(__name__)

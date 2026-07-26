@@ -4,15 +4,14 @@ Item repository for the Telegram RPG game bot.
 This module provides data access methods for Item and InventoryItem entities.
 """
 
-from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime
+from typing import Any
 
-from sqlalchemy import select, update, delete, and_, or_, func
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.items import Item, InventoryItem, ItemRarity, ItemType
-from app.models.player import Player
+from app.models.items import InventoryItem, Item, ItemRarity, ItemType
 
 
 class ItemRepository:
@@ -71,7 +70,7 @@ class ItemRepository:
         
         return item
     
-    async def get_item_by_id(self, item_id: int) -> Optional[Item]:
+    async def get_item_by_id(self, item_id: int) -> Item | None:
         """
         Get an item by its database ID.
         
@@ -85,7 +84,7 @@ class ItemRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def get_item_by_item_id(self, item_id: str) -> Optional[Item]:
+    async def get_item_by_item_id(self, item_id: str) -> Item | None:
         """
         Get an item by its unique item identifier.
         
@@ -99,7 +98,7 @@ class ItemRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def get_items_by_type(self, item_type: ItemType) -> List[Item]:
+    async def get_items_by_type(self, item_type: ItemType) -> list[Item]:
         """
         Get all items of a specific type.
         
@@ -113,7 +112,7 @@ class ItemRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def get_items_by_rarity(self, rarity: ItemRarity) -> List[Item]:
+    async def get_items_by_rarity(self, rarity: ItemRarity) -> list[Item]:
         """
         Get all items of a specific rarity.
         
@@ -127,7 +126,7 @@ class ItemRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def search_items(self, query: str, limit: int = 50) -> List[Item]:
+    async def search_items(self, query: str, limit: int = 50) -> list[Item]:
         """
         Search for items by name or description.
         
@@ -161,9 +160,9 @@ class ItemRepository:
         player_id: int,
         item_id: str,
         quantity: int = 1,
-        acquired_from: Optional[str] = None,
+        acquired_from: str | None = None,
         **kwargs
-    ) -> Optional[InventoryItem]:
+    ) -> InventoryItem | None:
         """
         Add an item to a player's inventory.
         
@@ -281,7 +280,7 @@ class ItemRepository:
         await self.session.flush()
         return True
     
-    async def get_inventory_item(self, player_id: int, item_id: str) -> Optional[InventoryItem]:
+    async def get_inventory_item(self, player_id: int, item_id: str) -> InventoryItem | None:
         """
         Get a specific inventory item for a player.
         
@@ -306,7 +305,7 @@ class ItemRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def get_inventory_items_by_item_id(self, player_id: int, item_id: str) -> List[InventoryItem]:
+    async def get_inventory_items_by_item_id(self, player_id: int, item_id: str) -> list[InventoryItem]:
         """
         Get all inventory items of a specific item type for a player.
         
@@ -331,7 +330,7 @@ class ItemRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def get_player_inventory(self, player_id: int) -> List[InventoryItem]:
+    async def get_player_inventory(self, player_id: int) -> list[InventoryItem]:
         """
         Get all items in a player's inventory.
         
@@ -350,7 +349,7 @@ class ItemRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def get_equipped_items(self, player_id: int) -> List[InventoryItem]:
+    async def get_equipped_items(self, player_id: int) -> list[InventoryItem]:
         """
         Get all equipped items for a player.
         
@@ -538,7 +537,7 @@ class ItemRepository:
         
         return inventory_item is not None
     
-    async def get_inventory_summary(self, player_id: int) -> Dict[str, Any]:
+    async def get_inventory_summary(self, player_id: int) -> dict[str, Any]:
         """
         Get a summary of a player's inventory.
         

@@ -1,0 +1,70 @@
+# Item catalog — source of truth for the `items` DB table.
+# Synced idempotently at bot startup (app/services/item_seed.py): rows
+# missing from the DB are created; existing rows are left untouched so
+# player-facing data (already-granted items) is never disturbed.
+#
+# Item.name/description are plain strings (not bilingual like quest/NPC
+# YAML) — Ukrainian is used as the primary/richest language project-wide,
+# so item names are Ukrainian-only for now.
+
+items:
+  - item_id: "health_potion"
+    name: "Зілля лікування"
+    description: "Відновлює трохи здоров'я."
+    item_type: "consumable"
+    rarity: "common"
+    base_value: 10
+    sell_value: 4
+    is_consumable: true
+    effects: {heal: 20}
+
+  - item_id: "rat_tail"
+    name: "Щурячий хвіст"
+    description: "Доказ виконаної роботи в льоху. Гільдія платить копійки, але платить."
+    item_type: "material"
+    rarity: "common"
+    base_value: 2
+    sell_value: 1
+
+  - item_id: "rusty_dagger"
+    name: "Іржавий кинджал"
+    description: "Не вражає, але ріже."
+    item_type: "weapon"
+    rarity: "common"
+    base_value: 15
+    sell_value: 6
+    strength_bonus: 1
+
+  - item_id: "leather_armor"
+    name: "Шкіряний обладунок"
+    description: "Базовий захист для тих, хто ще не заслужив кращого."
+    item_type: "armor"
+    rarity: "common"
+    base_value: 25
+    sell_value: 10
+    vitality_bonus: 2
+
+  - item_id: "silver_ring"
+    name: "Срібний перстень"
+    description: "Простий, але добре зроблений."
+    item_type: "accessory"
+    rarity: "uncommon"
+    base_value: 40
+    sell_value: 18
+    intelligence_bonus: 1
+
+  - item_id: "healing_herb"
+    name: "Лікувальна трава"
+    description: "Росте на болотах. Гірка на смак, але дієва."
+    item_type: "material"
+    rarity: "common"
+    base_value: 5
+    sell_value: 2
+
+  - item_id: "dragon_scale"
+    name: "Луска звіра"
+    description: "Здобута в бою з тим, кого краще не пам'ятати."
+    item_type: "material"
+    rarity: "rare"
+    base_value: 100
+    sell_value: 45

@@ -1,12 +1,11 @@
 """Handles XP grants, level-ups, and reward distribution for players."""
 
 from dataclasses import dataclass
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.character import CharacterClass, CharacterProgression
 from app.models.player import Player
-from app.models.character import CharacterProgression, CharacterClass
 from app.services.logging_service import get_logger
 
 logger = get_logger(__name__)
