@@ -15,6 +15,7 @@ from app.handlers.commands.hero import router as hero_router
 from app.handlers.commands.heroes import router as heroes_router
 from app.handlers.errors import GlobalErrorHandler, setup_error_handlers
 from app.handlers.menu import router as menu_router
+from app.handlers.npc import router as npc_router
 from app.handlers.quest_runner import router as quest_runner_router
 from app.handlers.travel import router as travel_router
 from app.middlewares.correlation import CorrelationMiddleware
@@ -55,6 +56,7 @@ async def main():
     setup_error_handlers(dp)
 
     dp.include_router(city_router)
+    dp.include_router(npc_router)
     dp.include_router(travel_router)
     dp.include_router(menu_router)
     dp.include_router(start_router)

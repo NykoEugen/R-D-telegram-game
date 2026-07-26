@@ -22,7 +22,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.game.states import GameStates
+from app.handlers.npc import NpcCB
 from app.models.user import User
+from app.services import npc_loader
 from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
 
@@ -87,6 +89,11 @@ def _location_kb(user_id: int, loc_id: str, visited: list[str], quests_unlocked:
     city = _load()
     loc = city.get("locations", {}).get(loc_id, {})
     rows = []
+    for npc in npc_loader.get_npcs_by_location(loc_id):
+        rows.append([InlineKeyboardButton(
+            text=f"🗣 {npc.get_name(locale)}",
+            callback_data=NpcCB(action="open", npc_id=npc.id).pack(),
+        )])
     for act_id, act in loc.get("actions", {}).items():
         label = _t(act.get("label", {}), locale)
         rows.append([InlineKeyboardButton(

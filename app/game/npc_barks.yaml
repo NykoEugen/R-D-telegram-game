@@ -1,0 +1,35 @@
+# Shared reusable dialogue lines for vendor/flavor NPCs that don't need a
+# fully unique dialogue tree — e.g. background merchants and street NPCs.
+# Looked up by role when an NPC has no entry of its own for a category.
+
+vendor:
+  greeting:
+    - uk: "Товар подивись, гроші порахуй, тоді питай."
+      en: "Look at the goods, count your coins, then ask."
+    - uk: "Свіжий крам, чесна ціна — про решту не питай."
+      en: "Fresh stock, fair price — don't ask about the rest."
+    - uk: "О, покупець. Чи просто дивишся?"
+      en: "Oh, a customer. Or just looking?"
+  farewell:
+    - uk: "Заходь ще, як гроші заведуться."
+      en: "Come back when you've got coin."
+    - uk: "Бувай. Двері самі не зачиняються."
+      en: "Off you go. The door won't close itself."
+  haggle:
+    - uk: "Ціна вже й так по-дружньому занижена."
+      en: "The price is already a friendly discount."
+    - uk: "Торгуйся деінде, у мене тут не базар... хоча так, базар."
+      en: "Haggle elsewhere — this isn't a market... well, it is, actually."
+  out_of_stock:
+    - uk: "Закінчилось. Наступного разу пощастить більше."
+      en: "Sold out. Better luck next time."
+
+flavor:
+  greeting:
+    - uk: "Киває в твій бік і повертається до своїх справ."
+      en: "Nods in your direction and goes back to their business."
+    - uk: "Дивиться на тебе довше, ніж треба, потім знизує плечима."
+      en: "Looks at you a beat too long, then shrugs."
+  farewell:
+    - uk: "Махає рукою, не відриваючись від роботи."
+      en: "Waves without looking up from their work."
