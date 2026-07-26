@@ -1,14 +1,14 @@
-from typing import Any, Awaitable, Callable, Dict
+from collections.abc import Awaitable, Callable
+from typing import Any
+
 from aiogram import BaseMiddleware
-from aiogram.types import TelegramObject, Update
-from aiogram.types.base import UNSET
+from aiogram.types import TelegramObject
 
 from app.core.utils import extract_update_info
 from app.services.logging_service import (
-    get_logger, 
-    set_correlation_id, 
     generate_correlation_id,
-    get_correlation_id
+    get_logger,
+    set_correlation_id,
 )
 
 logger = get_logger(__name__)
@@ -18,9 +18,9 @@ class CorrelationMiddleware(BaseMiddleware):
     
     async def __call__(
         self,
-        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         **kwargs
     ) -> Any:
         """Process update with correlation ID and logging."""

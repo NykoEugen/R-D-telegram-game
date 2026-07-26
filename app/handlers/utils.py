@@ -2,9 +2,9 @@
 Utility functions for handlers.
 """
 
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from sqlalchemy.ext.asyncio import AsyncSession
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.user import User

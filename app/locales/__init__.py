@@ -1,6 +1,6 @@
 import json
-from pathlib import Path
 from functools import lru_cache
+from pathlib import Path
 
 LOCALES_DIR = Path(__file__).parent / "locales"
 DEFAULT_LOCALE = "uk"
@@ -9,7 +9,7 @@ SUPPORTED_LOCALES = {"uk", "en"}
 @lru_cache(maxsize=16)
 def _load_locale(locale: str) -> dict:
     loc = locale if locale in SUPPORTED_LOCALES else DEFAULT_LOCALE
-    with open(LOCALES_DIR / f"{loc}.json", "r", encoding="utf-8") as f:
+    with open(LOCALES_DIR / f"{loc}.json", encoding="utf-8") as f:
         return json.load(f)
 
 def t(key: str, locale: str | None = None, **kwargs) -> str:

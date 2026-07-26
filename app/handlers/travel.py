@@ -5,14 +5,22 @@ Flow: quest accepted → travel_start() → QUEST_TRAVEL → steps → quest sta
 Each step shows edge text (from→to) + arrival description + Continue button.
 """
 
-from aiogram import Router, F
+from aiogram import F, Router
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 
 from app.game.states import GameStates
 from app.game.world_graph import (
-    get_edge_text, get_node_description, get_node_name, shortest_path,
+    get_edge_text,
+    get_node_description,
+    get_node_name,
+    shortest_path,
 )
 from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
@@ -58,7 +66,6 @@ async def travel_start(
     If already at quest location — starts quest immediately.
     Otherwise enters QUEST_TRAVEL state.
     """
-    from app.services.repositories.player_repo import PlayerRepository
 
     fsm = await state.get_data()
     # Read current location from FSM (set by city/travel) or fall back to player flags

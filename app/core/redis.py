@@ -4,22 +4,20 @@ Redis configuration and connection management for the Telegram RPG game bot.
 This module provides Redis connection management and utility functions.
 """
 
-import asyncio
-from typing import Optional, Any, Union
 import json
 import pickle
-from contextlib import asynccontextmanager
+from typing import Any
 
-import redis.asyncio as redis
-from redis.asyncio import Redis, ConnectionPool
+from redis.asyncio import ConnectionPool, Redis
 from redis.asyncio.retry import Retry
 from redis.backoff import ExponentialBackoff
-from redis.exceptions import ConnectionError as RedisConnectionError, TimeoutError as RedisTimeoutError
+from redis.exceptions import ConnectionError as RedisConnectionError
+from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from .config import settings
 
 # Global Redis connection
-redis_client: Optional[Redis] = None
+redis_client: Redis | None = None
 
 
 async def init_redis() -> None:
@@ -86,7 +84,7 @@ def get_redis() -> Redis:
 async def set_cache(
     key: str, 
     value: Any, 
-    expire: Optional[int] = None,
+    expire: int | None = None,
     serialize: bool = True
 ) -> bool:
     """
@@ -223,7 +221,7 @@ async def set_user_session(user_id: int, session_data: dict, expire: int = 3600)
     return await set_cache(key, session_data, expire=expire)
 
 
-async def get_user_session(user_id: int) -> Optional[dict]:
+async def get_user_session(user_id: int) -> dict | None:
     """
     Get user session data from Redis.
     

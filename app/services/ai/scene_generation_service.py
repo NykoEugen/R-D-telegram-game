@@ -4,16 +4,13 @@ AI Scene Generation Service for the Telegram RPG game bot.
 This module handles AI-powered scene generation with controlled choice mapping.
 """
 
-import asyncio
 import re
-from typing import Optional, List, Dict, Tuple
 from dataclasses import dataclass
 
-from app.core.config import Config
-from app.services.logging_service import get_logger
-from app.services.ai.generation_service import AIGenerationService
-from app.prompts import get_prompts, get_prompt_config
 from app.game.actions import Action
+from app.prompts import get_prompt_config, get_prompts
+from app.services.ai.generation_service import AIGenerationService
+from app.services.logging_service import get_logger
 
 logger = get_logger(__name__)
 
@@ -22,7 +19,7 @@ logger = get_logger(__name__)
 class AIScene:
     """Represents an AI-generated scene with description and choices."""
     description: str
-    choices: List[Tuple[str, Action]]  # (choice_text, mapped_action)
+    choices: list[tuple[str, Action]]  # (choice_text, mapped_action)
     scene_type: str = "ai_generated"
 
 
@@ -93,7 +90,7 @@ class AISceneGenerationService:
     }
     
     @classmethod
-    async def generate_scene(cls, language: str = "en") -> Optional[AIScene]:
+    async def generate_scene(cls, language: str = "en") -> AIScene | None:
         """Generate a complete AI scene with description and mapped choices."""
         try:
             # Generate scene description
@@ -125,7 +122,7 @@ class AISceneGenerationService:
             return None
     
     @classmethod
-    async def _generate_scene_description(cls, language: str) -> Optional[str]:
+    async def _generate_scene_description(cls, language: str) -> str | None:
         """Generate scene description using AI."""
         try:
             client = await AIGenerationService._ensure_client()
@@ -171,7 +168,7 @@ class AISceneGenerationService:
             return None
     
     @classmethod
-    async def _generate_choices(cls, scene_description: str, language: str) -> Optional[List[str]]:
+    async def _generate_choices(cls, scene_description: str, language: str) -> list[str] | None:
         """Generate choice options using AI."""
         try:
             client = await AIGenerationService._ensure_client()
@@ -227,7 +224,7 @@ class AISceneGenerationService:
             return None
     
     @classmethod
-    def _parse_choices(cls, content: str) -> List[str]:
+    def _parse_choices(cls, content: str) -> list[str]:
         """Parse choices from AI response."""
         choices = []
         
@@ -265,7 +262,7 @@ class AISceneGenerationService:
         return choices[:3]  # Ensure we only return up to 3 choices
     
     @classmethod
-    def _generate_fallback_choices(cls) -> List[str]:
+    def _generate_fallback_choices(cls) -> list[str]:
         """Generate fallback choices if AI generation fails."""
         return [
             "Scout Area",
@@ -274,7 +271,7 @@ class AISceneGenerationService:
         ]
     
     @classmethod
-    def _map_choices_to_actions(cls, choices: List[str]) -> List[Tuple[str, Action]]:
+    def _map_choices_to_actions(cls, choices: list[str]) -> list[tuple[str, Action]]:
         """Map choice texts to predefined actions."""
         mapped_choices = []
         
@@ -306,6 +303,6 @@ class AISceneGenerationService:
         return mapped_choices
     
     @classmethod
-    def get_available_actions(cls) -> List[Action]:
+    def get_available_actions(cls) -> list[Action]:
         """Get list of available actions for AI scenes."""
         return [Action.SCOUT, Action.FIGHT, Action.RETREAT, Action.TALK, Action.PICKLOCK]

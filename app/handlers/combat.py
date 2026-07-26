@@ -5,19 +5,26 @@ This module handles combat-related interactions including combat flow,
 action processing, and combat state management.
 """
 
-from typing import Dict, List, Optional, Tuple, Any
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 
 from app.models.combat import (
-    CombatState, Enemy, CombatAction, ClassSkill, StatusEffect,
-    CombatCalculator, CombatActions, EnemyGenerator, StatusEffectInstance
+    ClassSkill,
+    CombatActions,
+    CombatCalculator,
+    CombatState,
+    EnemyGenerator,
+    StatusEffect,
 )
-from app.models.character import CharacterClass
-from app.services.i18n_service import I18nService
 from app.services.fsm_service import FSMStateService
+from app.services.i18n_service import I18nService
 
 
 class CombatStates(StatesGroup):
@@ -56,7 +63,7 @@ class CombatHandler:
         self, 
         message: Message, 
         context: FSMContext, 
-        player_data: Dict,
+        player_data: dict,
         i18n_service: I18nService,
         enemy_type: str = "goblin"
     ) -> None:
@@ -147,7 +154,7 @@ class CombatHandler:
         callback: CallbackQuery, 
         context: FSMContext, 
         combat_state: CombatState, 
-        player_data: Dict, 
+        player_data: dict, 
         language: str
     ) -> None:
         """Execute player attack."""
@@ -183,7 +190,7 @@ class CombatHandler:
         callback: CallbackQuery, 
         context: FSMContext, 
         combat_state: CombatState, 
-        player_data: Dict, 
+        player_data: dict, 
         skill: ClassSkill, 
         language: str
     ) -> None:
@@ -239,7 +246,7 @@ class CombatHandler:
         callback: CallbackQuery, 
         context: FSMContext, 
         combat_state: CombatState, 
-        player_data: Dict, 
+        player_data: dict, 
         language: str
     ) -> None:
         """Execute enemy turn."""
@@ -295,7 +302,7 @@ class CombatHandler:
         callback: CallbackQuery, 
         context: FSMContext, 
         combat_state: CombatState, 
-        player_data: Dict, 
+        player_data: dict, 
         language: str
     ) -> None:
         """Execute escape attempt."""
@@ -316,7 +323,7 @@ class CombatHandler:
         callback: CallbackQuery, 
         context: FSMContext, 
         combat_state: CombatState, 
-        player_data: Dict, 
+        player_data: dict, 
         language: str
     ) -> None:
         """Handle combat victory."""
@@ -363,7 +370,7 @@ You defeated the {combat_state.enemy.name}!
         callback: CallbackQuery, 
         context: FSMContext, 
         combat_state: CombatState, 
-        player_data: Dict, 
+        player_data: dict, 
         language: str
     ) -> None:
         """Handle combat defeat."""
@@ -399,7 +406,7 @@ You return to town to recover...
         callback: CallbackQuery, 
         context: FSMContext, 
         combat_state: CombatState, 
-        player_data: Dict, 
+        player_data: dict, 
         language: str
     ) -> None:
         """Handle successful escape."""
@@ -420,7 +427,7 @@ You successfully escaped from the {combat_state.enemy.name}!
         callback: CallbackQuery, 
         context: FSMContext, 
         combat_state: CombatState, 
-        player_data: Dict, 
+        player_data: dict, 
         language: str
     ) -> None:
         """Update combat display with current state."""
@@ -465,7 +472,7 @@ HP: {player_hp_bar} {combat_state.player_hp}/{combat_state.player_max_hp}
         
         return combat_text
     
-    async def _get_combat_keyboard(self, player_data: Dict, language: str) -> InlineKeyboardMarkup:
+    async def _get_combat_keyboard(self, player_data: dict, language: str) -> InlineKeyboardMarkup:
         """Get combat action keyboard."""
         buttons = [
             [InlineKeyboardButton(text="⚔️ Attack", callback_data="combat_attack")],
@@ -493,7 +500,7 @@ HP: {player_hp_bar} {combat_state.player_hp}/{combat_state.player_max_hp}
         callback: CallbackQuery, 
         context: FSMContext, 
         combat_state: CombatState, 
-        player_data: Dict, 
+        player_data: dict, 
         language: str
     ) -> None:
         """Show skill selection keyboard."""
@@ -524,7 +531,7 @@ HP: {player_hp_bar} {combat_state.player_hp}/{combat_state.player_max_hp}
         callback: CallbackQuery, 
         context: FSMContext, 
         combat_state: CombatState, 
-        player_data: Dict, 
+        player_data: dict, 
         language: str
     ) -> None:
         """Show item selection keyboard."""

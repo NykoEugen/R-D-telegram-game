@@ -5,16 +5,15 @@ This model represents a user in the game system with basic Telegram information.
 """
 
 from datetime import datetime
-from typing import Optional, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import String, Integer, DateTime, Boolean
+from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
 
 if TYPE_CHECKING:
     from app.models.player import Player
-    from app.models.player_progress import PlayerProgress
 
 
 class User(Base):
@@ -27,9 +26,9 @@ class User(Base):
     
     # Telegram user information
     telegram_id: Mapped[int] = mapped_column(Integer, unique=True, index=True, nullable=False)
-    username: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    first_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    last_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    username: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    first_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     
     # User preferences
     language: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
@@ -39,24 +38,16 @@ class User(Base):
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    last_activity: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_activity: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     
     # Relationships
-    players: Mapped[List["Player"]] = relationship(
+    players: Mapped[list["Player"]] = relationship(
         "Player",
         back_populates="user",
         lazy="selectin",
         cascade="all, delete-orphan",
         order_by="Player.slot"
     )
-    progress: Mapped[Optional["PlayerProgress"]] = relationship(
-        "PlayerProgress", 
-        back_populates="user", 
-        uselist=False,
-        lazy="selectin",
-        cascade="all, delete-orphan"
-    )
-    
     @property
     def player(self) -> Optional["Player"]:
         """Return active player for backward compatibility."""

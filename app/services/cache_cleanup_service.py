@@ -5,11 +5,10 @@ This service provides background cleanup of expired cache entries.
 """
 
 import asyncio
-from typing import Optional
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-from app.services.user_cache_service import user_cache
 from app.services.logging_service import get_logger
+from app.services.user_cache_service import user_cache
 
 logger = get_logger(__name__)
 
@@ -19,7 +18,7 @@ class CacheCleanupService:
     
     def __init__(self, cleanup_interval_minutes: int = 5):
         self.cleanup_interval = timedelta(minutes=cleanup_interval_minutes)
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
         self._running = False
     
     async def start(self) -> None:

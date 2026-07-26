@@ -2,21 +2,25 @@
 Multi-hero management commands (/heroes, /create_hero).
 """
 
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from sqlalchemy.ext.asyncio import AsyncSession
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.player import Player
-from app.models.user import User
 from app.models.character import CharacterClass, CharacterProgression
-from app.services.repositories.player_repo import PlayerRepository
+from app.models.user import User
 from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
+from app.services.repositories.player_repo import PlayerRepository
 
 logger = get_logger(__name__)
 router = Router()
@@ -51,7 +55,7 @@ def _heroes_keyboard(user_id: int, players: list, lang_user_id: int) -> InlineKe
         slot_label = i18n_service.get_text(lang_user_id, 'heroes.slot', slot=p.slot)
         class_name = p.get_character_class_name()
         header = f"{slot_label} — {p.character_name} ({class_name}) Lv.{p.level}{active_badge}"
-        rows.append([InlineKeyboardButton(text=header, callback_data=f"heroes_noop")])
+        rows.append([InlineKeyboardButton(text=header, callback_data="heroes_noop")])
         rows.append([
             InlineKeyboardButton(
                 text=i18n_service.get_text(lang_user_id, 'heroes.btn_select'),

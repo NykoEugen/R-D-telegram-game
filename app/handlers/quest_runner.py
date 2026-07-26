@@ -4,23 +4,26 @@ Quest runner — complete quest lifecycle:
 """
 
 import random
-from aiogram import Router, F
+
+from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import (
-    Message, CallbackQuery,
-    InlineKeyboardMarkup, InlineKeyboardButton,
-)
 from aiogram.filters import Command
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.game.states import GameStates
 from app.services.i18n_service import i18n_service
-from app.services.quest_loader import get_available_quests, get_quest_by_id, QuestDef
-from app.services.progression_service import ProgressionService
-from app.services.repositories.player_repo import PlayerRepository
 from app.services.logging_service import get_logger
+from app.services.progression_service import ProgressionService
+from app.services.quest_loader import QuestDef, get_available_quests, get_quest_by_id
+from app.services.repositories.player_repo import PlayerRepository
 
 router = Router()
 logger = get_logger(__name__)

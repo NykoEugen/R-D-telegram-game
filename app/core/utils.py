@@ -5,11 +5,12 @@ This module contains common utility functions used across the application.
 """
 
 import traceback as tb
-from typing import Any, Dict, Optional
+from typing import Any
+
 from aiogram.types import TelegramObject, Update
 
 
-def extract_update_info(event: TelegramObject) -> Dict[str, Any]:
+def extract_update_info(event: TelegramObject) -> dict[str, Any]:
     """Extract relevant information from the update for logging."""
     info = {'type': 'unknown'}
     
@@ -87,7 +88,7 @@ def extract_update_info(event: TelegramObject) -> Dict[str, Any]:
     return info
 
 
-def format_exception(exception: Exception) -> Dict[str, Any]:
+def format_exception(exception: Exception) -> dict[str, Any]:
     """Format exception information for logging."""
     return {
         'type': type(exception).__name__,

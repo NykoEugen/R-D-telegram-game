@@ -4,10 +4,9 @@ User repository for the Telegram RPG game bot.
 This module provides data access methods for User entities.
 """
 
-from typing import Optional, List
 from datetime import datetime
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -23,9 +22,9 @@ class UserRepository:
     async def create_user(
         self,
         telegram_id: int,
-        username: Optional[str] = None,
-        first_name: Optional[str] = None,
-        last_name: Optional[str] = None,
+        username: str | None = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
         language: str = "en",
         **kwargs
     ) -> User:
@@ -74,7 +73,7 @@ class UserRepository:
         
         return user
     
-    async def get_user_by_id(self, user_id: int) -> Optional[User]:
+    async def get_user_by_id(self, user_id: int) -> User | None:
         """
         Get a user by their ID.
         
@@ -88,7 +87,7 @@ class UserRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def get_user_by_telegram_id(self, telegram_id: int) -> Optional[User]:
+    async def get_user_by_telegram_id(self, telegram_id: int) -> User | None:
         """
         Get a user by their Telegram ID.
         
@@ -102,7 +101,7 @@ class UserRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
     
-    async def get_user_with_player(self, telegram_id: int) -> Optional[User]:
+    async def get_user_with_player(self, telegram_id: int) -> User | None:
         """
         Get a user with their associated player data.
         
@@ -123,9 +122,9 @@ class UserRepository:
     async def get_or_create_user(
         self,
         telegram_id: int,
-        username: Optional[str] = None,
-        first_name: Optional[str] = None,
-        last_name: Optional[str] = None,
+        username: str | None = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
         language: str = "en"
     ) -> User:
         """
@@ -171,7 +170,7 @@ class UserRepository:
             language=language
         )
     
-    async def update_user(self, user_id: int, **updates) -> Optional[User]:
+    async def update_user(self, user_id: int, **updates) -> User | None:
         """
         Update a user's attributes.
         
@@ -262,7 +261,7 @@ class UserRepository:
         result = await self.session.execute(stmt)
         return result.rowcount > 0
     
-    async def get_active_users(self) -> List[User]:
+    async def get_active_users(self) -> list[User]:
         """
         Get all active users.
         
@@ -273,7 +272,7 @@ class UserRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
     
-    async def get_users_by_language(self, language: str) -> List[User]:
+    async def get_users_by_language(self, language: str) -> list[User]:
         """
         Get all users with a specific language preference.
         

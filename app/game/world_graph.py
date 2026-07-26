@@ -2,15 +2,14 @@
 
 from collections import deque
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import yaml
 
-_DATA: Optional[Dict] = None
+_DATA: dict | None = None
 _YAML_PATH = Path(__file__).parent / "world_map.yaml"
 
 
-def _load() -> Dict:
+def _load() -> dict:
     global _DATA
     if _DATA is not None:
         return _DATA
@@ -23,7 +22,7 @@ def _t(obj: dict, locale: str) -> str:
     return obj.get(locale) or obj.get("en") or ""
 
 
-def get_node(node_id: str) -> Optional[Dict]:
+def get_node(node_id: str) -> dict | None:
     return _load()["nodes"].get(node_id)
 
 
@@ -44,13 +43,13 @@ def get_edge_text(from_id: str, to_id: str, locale: str) -> str:
     return _t(edge, locale) if edge else ""
 
 
-def shortest_path(start: str, end: str) -> List[str]:
+def shortest_path(start: str, end: str) -> list[str]:
     """BFS — returns list of node IDs from start (exclusive) to end (inclusive)."""
     if start == end:
         return []
     nodes = _load()["nodes"]
     visited = {start}
-    queue: deque[List[str]] = deque([[start]])
+    queue: deque[list[str]] = deque([[start]])
     while queue:
         path = queue.popleft()
         current = path[-1]

@@ -1,7 +1,8 @@
 import json
-from pathlib import Path
 from functools import lru_cache
-from typing import Dict, Optional, Any
+from pathlib import Path
+from typing import Any
+
 from app.services.logging_service import get_logger
 
 logger = get_logger(__name__)
@@ -15,11 +16,11 @@ def _load_locale(locale: str) -> dict:
     """Load locale data from JSON file with caching."""
     loc = locale if locale in SUPPORTED_LOCALES else DEFAULT_LOCALE
     try:
-        with open(LOCALES_DIR / f"{loc}.json", "r", encoding="utf-8") as f:
+        with open(LOCALES_DIR / f"{loc}.json", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
         logger.warning(f"Locale file not found: {loc}.json, falling back to {DEFAULT_LOCALE}")
-        with open(LOCALES_DIR / f"{DEFAULT_LOCALE}.json", "r", encoding="utf-8") as f:
+        with open(LOCALES_DIR / f"{DEFAULT_LOCALE}.json", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
         logger.error(f"Error loading locale {loc}: {e}")
@@ -57,7 +58,7 @@ class I18nService:
     """Compatibility layer for the new i18n implementation."""
     
     def __init__(self):
-        self.user_languages: Dict[int, str] = {}  # user_id -> language_code
+        self.user_languages: dict[int, str] = {}  # user_id -> language_code
         self.default_language = DEFAULT_LOCALE
         self.supported_languages = list(SUPPORTED_LOCALES)
         self.storage_file = Path(__file__).parent.parent.parent / "user_languages.json"
@@ -67,7 +68,7 @@ class I18nService:
         """Load user language preferences from storage file."""
         try:
             if self.storage_file.exists():
-                with open(self.storage_file, 'r', encoding='utf-8') as f:
+                with open(self.storage_file, encoding='utf-8') as f:
                     data = json.load(f)
                     # Convert string keys back to integers
                     self.user_languages = {int(k): v for k, v in data.items()}
@@ -117,7 +118,7 @@ class I18nService:
         lang_code = self.get_user_language(user_id)
         return t(f"btn.{button_key}", lang_code)
     
-    def get_all_available_keys(self, locale: str = None) -> Dict[str, Any]:
+    def get_all_available_keys(self, locale: str = None) -> dict[str, Any]:
         """Get all available translation keys for a locale."""
         loc = locale or self.default_language
         return _load_locale(loc)

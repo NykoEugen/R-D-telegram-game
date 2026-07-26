@@ -5,14 +5,18 @@ This model represents a player character linked to a User with game stats and pr
 """
 
 from datetime import datetime
-from typing import Optional, List
 from enum import Enum
 
-from sqlalchemy import String, Integer, DateTime, Boolean, Text, ForeignKey, JSON, Float
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
-from app.models.character import CharacterClass, BaseAttributes, DerivedStats, CharacterProgression
+from app.models.character import (
+    BaseAttributes,
+    CharacterClass,
+    CharacterProgression,
+    DerivedStats,
+)
 
 
 class PlayerStatus(str, Enum):
@@ -39,8 +43,8 @@ class Player(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     
     # Player character information
-    character_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    character_class: Mapped[Optional[CharacterClass]] = mapped_column(String(20), nullable=True)
+    character_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    character_class: Mapped[CharacterClass | None] = mapped_column(String(20), nullable=True)
     level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     experience: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     
@@ -69,13 +73,11 @@ class Player(Base):
     max_energy: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
     
     # Game progress flags
-    flags: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)  # Game progress flags
-    achievements: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)  # Achievement IDs
+    flags: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # Game progress flags
+    achievements: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)  # Achievement IDs
     
     # Current game state
-    current_scene_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("scenes.id"), nullable=True)
-    current_quest_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("quests.id"), nullable=True)
-    game_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)  # Additional game state
+    game_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # Additional game state
     
     # Player status
     status: Mapped[PlayerStatus] = mapped_column(String(20), default=PlayerStatus.ACTIVE, nullable=False)
@@ -84,13 +86,13 @@ class Player(Base):
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    last_played: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_played: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="players", lazy="selectin")
-    inventory_items: Mapped[List["InventoryItem"]] = relationship("InventoryItem", back_populates="player")
-    quest_progress: Mapped[List["QuestProgress"]] = relationship("QuestProgress", back_populates="player")
-    game_sessions: Mapped[List["GameSession"]] = relationship("GameSession", back_populates="player")
+    inventory_items: Mapped[list["InventoryItem"]] = relationship("InventoryItem", back_populates="player")
+    quest_progress: Mapped[list["QuestProgress"]] = relationship("QuestProgress", back_populates="player")
+    game_sessions: Mapped[list["GameSession"]] = relationship("GameSession", back_populates="player")
     
     def get_base_attributes(self) -> BaseAttributes:
         """Get base attributes as BaseAttributes object."""

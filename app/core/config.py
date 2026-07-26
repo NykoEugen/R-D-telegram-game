@@ -4,8 +4,8 @@ Core configuration module for the Telegram RPG game bot.
 This module provides a clean, single source of truth for all configuration settings.
 """
 
-from typing import Optional
-from urllib.parse import urlparse, urlunparse, urlencode, parse_qs
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+
 from pydantic import Field, validator
 from pydantic_settings import BaseSettings
 
@@ -23,14 +23,14 @@ class Settings(BaseSettings):
     bot_token: str = Field(..., env="BOT_TOKEN", description="Telegram bot token")
 
     # Webhook base URL (triggers webhook mode when set; use ngrok locally, Koyeb/DuckDNS in prod)
-    webhook_base_url: Optional[str] = Field(default="", env="WEBHOOK_BASE_URL", description="Base URL for webhook")
+    webhook_base_url: str | None = Field(default="", env="WEBHOOK_BASE_URL", description="Base URL for webhook")
     
     # Logging configuration
     log_level: str = Field(default="INFO", env="LOG_LEVEL", description="Logging level")
     
     # Webhook configuration
     webhook_path: str = Field(default="/webhook", description="Webhook path")
-    webhook_secret: Optional[str] = Field(default=None, env="WEBHOOK_SECRET", description="Webhook secret for security")
+    webhook_secret: str | None = Field(default=None, env="WEBHOOK_SECRET", description="Webhook secret for security")
     port: int = Field(default=8000, env="PORT", description="Port for webhook server")
     
     # Database configuration
@@ -68,15 +68,11 @@ class Settings(BaseSettings):
     game_name: str = Field(default="Fantasy RPG Adventure", description="Name of the game")
     game_description: str = Field(default="Embark on epic quests in a medieval fantasy world!", description="Game description")
     
-    # Scene graph configuration
-    scenes_file: str = Field(default="app/game/scenes.yaml", description="Path to scenes YAML file")
+    # Energy system configuration
     default_energy: int = Field(default=100, description="Default player energy")
     max_energy: int = Field(default=100, description="Maximum player energy")
     energy_regeneration_rate: int = Field(default=10, description="Energy regeneration per hour")
-    default_risk_threshold: int = Field(default=10, description="Default risk threshold for ending adventures")
-    default_step_budget: int = Field(default=4, description="Default step budget for adventures")
-    scene_seed: Optional[int] = Field(default=None, env="SCENE_SEED", description="Random seed for scene generation")
-    
+
     @property
     def webhook_url(self) -> str:
         if self.webhook_base_url:
@@ -130,11 +126,7 @@ class Config:
     GAME_NAME = settings.game_name
     GAME_DESCRIPTION = settings.game_description
     
-    # Scene graph configuration
-    SCENES_FILE = settings.scenes_file
+    # Energy system configuration
     DEFAULT_ENERGY = settings.default_energy
     MAX_ENERGY = settings.max_energy
     ENERGY_REGENERATION_RATE = settings.energy_regeneration_rate
-    DEFAULT_RISK_THRESHOLD = settings.default_risk_threshold
-    DEFAULT_STEP_BUDGET = settings.default_step_budget
-    SCENE_SEED = settings.scene_seed

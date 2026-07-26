@@ -4,16 +4,15 @@ Database configuration and session management for the Telegram RPG game bot.
 This module provides async SQLAlchemy engine, session management, and base model class.
 """
 
-import asyncio
-from typing import AsyncGenerator, Optional
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from sqlalchemy import MetaData
 from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
-    AsyncEngine,
 )
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
@@ -38,8 +37,8 @@ class Base(DeclarativeBase):
 
 
 # Global engine and session factory
-engine: Optional[AsyncEngine] = None
-async_session_maker: Optional[async_sessionmaker[AsyncSession]] = None
+engine: AsyncEngine | None = None
+async_session_maker: async_sessionmaker[AsyncSession] | None = None
 
 
 async def init_db() -> None:
