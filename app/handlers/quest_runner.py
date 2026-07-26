@@ -20,6 +20,7 @@ from aiogram.types import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.game.states import GameStates
+from app.models.player import Player
 from app.services import npc_loader
 from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
@@ -33,6 +34,16 @@ router = Router()
 logger = get_logger(__name__)
 
 ENERGY_COST_QUEST = 10  # spent when accepting a quest
+ENERGY_COST_ACTION = 2  # spent per action attempt (success or fail), except talk-<npc>
+GUARANTEED_CHANCE = 100  # talk-<npc> and unmapped actions always succeed
+
+# Which base attribute governs each action's success chance.
+# talk-<npc> objectives (dialogue-gated) are always guaranteed — not a skill check.
+_ACTION_STAT = {
+    "attack": "strength", "defend": "vitality", "flee": "agility",
+    "sneak": "agility", "investigate": "intelligence", "explore": "agility",
+    "loot": "luck", "talk": "intelligence", "negotiate": "luck", "rest": "vitality",
+}
 
 # ── Callback data ────────────────────────────────────────────────────────────
 
@@ -96,24 +107,35 @@ def _talk_label(npc_id: str, locale: str) -> str:
     return f"💬 Поговорити з {name}" if locale == "uk" else f"💬 Talk to {name}"
 
 
-def _action_label(action: str, locale: str, is_required: bool = True) -> str:
+def _action_label(action: str, locale: str, chance: int | None = None) -> str:
     if action.startswith("talk-"):
         label = _talk_label(action.removeprefix("talk-"), locale)
     else:
         labels = _ACTION_LABELS.get(locale, _ACTION_LABELS["en"])
         label = labels.get(action, action.title())
-    if not is_required:
-        label += "  (флейвор)" if locale == "uk" else "  (flavor)"
+    if chance is not None and chance < GUARANTEED_CHANCE:
+        label += f" ({chance}%)"
     return label
 
 
+def _action_success_chance(player: Player | None, action: str) -> int:
+    """Success chance from the stat governing this action; talk-<npc> is always guaranteed."""
+    if action.startswith("talk-") or player is None:
+        return GUARANTEED_CHANCE
+    stat_name = _ACTION_STAT.get(action)
+    if not stat_name:
+        return GUARANTEED_CHANCE
+    stat_value = getattr(player, stat_name, 10)
+    return max(20, min(90, 50 + (stat_value - 10) * 3))
+
+
 def _phase_kb(
-    actions: list[str], required_actions: list[str], locale: str
+    actions: list[str], chances: dict[str, int], locale: str
 ) -> InlineKeyboardMarkup:
     rows = []
     for a in actions:
         rows.append([InlineKeyboardButton(
-            text=_action_label(a, locale, is_required=a in required_actions),
+            text=_action_label(a, locale, chance=chances.get(a)),
             callback_data=QuestCB(action="do", data=a).pack(),
         )])
     hero_info = "🧙 Герой" if locale == "uk" else "🧙 Hero"
@@ -290,10 +312,7 @@ async def _start_quest_phase(
         current_obj_idx=0,
     )
     await state.set_state(GameStates.QUEST_ACTIVE)
-    await _render_phase(
-        message, quest, 0, obj_progress, locale, edit=edit,
-        player_level=player.level if player else 1,
-    )
+    await _render_phase(message, quest, 0, obj_progress, locale, edit=edit, player=player)
 
 
 @router.callback_query(QuestCB.filter(F.action == "accept"))
@@ -407,10 +426,7 @@ async def cb_back_to_quest(cb: CallbackQuery, state: FSMContext, db_session: Asy
     obj_idx = fsm.get("current_obj_idx", 0)
     obj_progress = fsm.get("obj_progress", {})
     player = await PlayerRepository(db_session).get_player_by_telegram_id(cb.from_user.id)
-    await _render_phase(
-        cb.message, quest, obj_idx, obj_progress, locale, edit=True,
-        player_level=player.level if player else 1,
-    )
+    await _render_phase(cb.message, quest, obj_idx, obj_progress, locale, edit=True, player=player)
 
 
 @router.callback_query(QuestCB.filter(F.action == "do"), GameStates.QUEST_ACTIVE)
@@ -435,6 +451,29 @@ async def cb_quest_do(cb: CallbackQuery, callback_data: QuestCB, state: FSMConte
         await cb.answer(miss, show_alert=False)
         return
 
+    player_repo = PlayerRepository(db_session)
+    player = await player_repo.get_player_by_telegram_id(cb.from_user.id)
+
+    energy_cost = 0 if action.startswith("talk-") else ENERGY_COST_ACTION
+    if player and energy_cost and not await player_repo.consume_energy(player, energy_cost):
+        eta = player_repo.energy_regen_eta_minutes(player, energy_cost)
+        msg = (
+            f"⚡ Недостатньо енергії для цієї дії. Відновиться через {eta} хв."
+            if locale == "uk"
+            else f"⚡ Not enough energy for this action. Regenerates in {eta} min."
+        )
+        await cb.answer(msg, show_alert=True)
+        return
+
+    chance = _action_success_chance(player, action)
+    if random.randint(1, 100) > chance:
+        fail = (
+            f"❌ Не вдалося ({chance}% шанс). Спробуй ще раз." if locale == "uk"
+            else f"❌ Failed ({chance}% chance). Try again."
+        )
+        await cb.answer(fail, show_alert=False)
+        return
+
     obj_progress[obj.id] = obj_progress.get(obj.id, 0) + 1
 
     if obj_progress[obj.id] >= obj.count:
@@ -442,9 +481,6 @@ async def cb_quest_do(cb: CallbackQuery, callback_data: QuestCB, state: FSMConte
 
     await state.update_data(obj_progress=obj_progress, current_obj_idx=obj_idx)
 
-    player = await PlayerRepository(db_session).get_player_by_telegram_id(
-        cb.from_user.id
-    )
     if player:
         await QuestRepository(db_session).update_progress(
             player.id,
@@ -461,7 +497,7 @@ async def cb_quest_do(cb: CallbackQuery, callback_data: QuestCB, state: FSMConte
         await _render_phase(
             cb.message, quest, obj_idx, obj_progress, locale,
             edit=not is_entering_confrontation,
-            player_level=player.level if player else 1,
+            player=player,
         )
 
 
@@ -481,8 +517,9 @@ async def _render_phase(
     obj_progress: dict,
     locale: str,
     edit: bool,
-    player_level: int = 1,
+    player: Player | None = None,
 ):
+    player_level = player.level if player else 1
     is_last_obj = obj_idx == len(quest.objectives) - 1
     phase_key = "confrontation_text" if is_last_obj else "exploration_text"
     phase_text = quest.get(phase_key, locale)
@@ -501,9 +538,7 @@ async def _render_phase(
 
     obj = quest.objectives[obj_idx]
     goal_label = "Ціль" if locale == "uk" else "Goal"
-    required_labels = " / ".join(
-        _action_label(a, locale, is_required=True) for a in obj.required_actions
-    )
+    required_labels = " / ".join(_action_label(a, locale) for a in obj.required_actions)
     obj_done = obj_progress.get(obj.id, 0)
     goal_line = f"\n\n🎯 {goal_label}: {required_labels} — {obj_done}/{obj.count}"
 
@@ -516,11 +551,10 @@ async def _render_phase(
             line, _idx = npc_loader.pick_line(talk_npc_id, "greeting", player_level, locale)
         if line:
             text += f"\n\n🗣 _{line}_"
-    # Show required actions + 2 extra for variety (deduplicated)
-    extra = [a for a in ["investigate", "explore", "talk", "flee"] if a not in obj.required_actions][:2]
-    actions = list(dict.fromkeys(obj.required_actions + extra))
 
-    kb = _phase_kb(actions, obj.required_actions, locale)
+    actions = list(obj.required_actions)
+    chances = {a: _action_success_chance(player, a) for a in actions}
+    kb = _phase_kb(actions, chances, locale)
     if edit:
         await _safe_edit(message, text, reply_markup=kb, parse_mode="Markdown")
     else:
