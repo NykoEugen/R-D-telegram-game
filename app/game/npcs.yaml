@@ -86,3 +86,113 @@ npcs:
       - item_id: "health_potion"
         price: 18
     dialogues: {}
+
+  - id: myron
+    name: {uk: "Аптекар Мирон", en: "Myron the Apothecary"}
+    location: apothecary
+    role: questgiver
+    quest_links: ["lost_letter"]
+    dialogues:
+      greeting:
+        - uk: "Мирон не відривається від баночок на полиці, бурмочучи щось про дозування."
+          en: "Myron doesn't look up from the jars on the shelf, muttering something about dosage."
+      rumor:
+        - uk: "«Гінці стали губитись частіше, ніж я хотів би. Дороги неспокійні»."
+          en: "\"Couriers go missing more often than I'd like these days. The roads are restless.\""
+      farewell:
+        - uk: "«Заходьте, якщо знову щось болітиме. Або навіть якщо ні»."
+          en: "\"Come back if something hurts again. Or even if it doesn't.\""
+
+  - id: teodor
+    name: {uk: "Вчений Теодор", en: "Scholar Teodor"}
+    location: ruins
+    role: questgiver
+    quest_links: ["ruins_mystery"]
+    dialogues:
+      greeting:
+        - uk: "Теодор піднімає погляд від креслень із таким виразом, ніби щойно згадав, що ти існуєш."
+          en: "Teodor looks up from his drawings with the expression of someone who just remembered you exist."
+      rumor:
+        - uk: "«Нижній рівень руїн старіший, ніж верхній — десь на тисячу років, за моїми підрахунками»."
+          en: "\"The lower level of the ruins is older than the upper — a thousand years, by my estimate.\""
+      farewell:
+        - uk: "«Ідіть, ідіть. Мені ще розбирати ці нотатки»."
+          en: "\"Go on, go on. I still have these notes to sort through.\""
+
+  - id: hanna
+    name: {uk: "Голова села Ганна", en: "Village Elder Hanna"}
+    location: forest
+    role: questgiver
+    quest_links: ["bandit_negotiation"]
+    dialogues:
+      greeting:
+        - uk: "Ганна дивиться на тебе так, як дивляться на людину, що пережила достатньо, щоб не дивуватись нічому."
+          en: "Hanna looks at you the way someone looks who has survived enough to be surprised by nothing."
+      rumor:
+        - uk: "«Дорога до ринку — єдина, і поки вона закрита, село голодує повільно, але певно»."
+          en: "\"The market road is the only one, and while it's blocked the village starves — slowly, but surely.\""
+      farewell:
+        - uk: "«Іди з розумом. Тут розум цінується більше за меч»."
+          en: "\"Go with sense. Sense is worth more than a sword out here.\""
+
+  - id: lukash
+    name: {uk: "Відьмак Лукаш", en: "Witcher Lukash"}
+    location: swamp
+    role: questgiver
+    quest_links: ["cursed_swamp"]
+    dialogues:
+      greeting:
+        - uk: "Лукаш киває коротко, не відриваючись від карти, змальованої на шкірі."
+          en: "Lukash nods briefly without looking up from a map drawn on hide."
+      rumor:
+        - uk: "«Болото пам'ятає більше, ніж будь-яка людина в цьому краю. І воно не в захваті від нас»."
+          en: "\"The swamp remembers more than any person in these parts. And it isn't fond of us.\""
+      farewell:
+        - uk: "«Не йди в болото сам. Воно любить рахувати тих, хто заходить, і забувати рахувати тих, хто виходить»."
+          en: "\"Don't go into the swamp alone. It likes counting who goes in and forgetting to count who comes out.\""
+
+  - id: voron
+    name: {uk: "Барон Ворон", en: "Baron Voron"}
+    location: beast_lair
+    role: questgiver
+    quest_links: ["lair_of_the_beast"]
+    dialogues:
+      greeting:
+        - uk: "Барон Ворон оглядає тебе оцінюючим поглядом людини, яка звикла судити про вартість швидко."
+          en: "Baron Voron looks you over with the appraising eye of a man used to judging worth quickly."
+      rumor:
+        - uk: "«Сім пастухів. Я перестав рахувати вівці й почав рахувати людей»."
+          en: "\"Seven shepherds. I've stopped counting sheep and started counting people.\""
+      farewell:
+        - uk: "«Повертайтесь живим. Мертвим я не плачу»."
+          en: "\"Come back alive. I don't pay the dead.\""
+
+  - id: yadviha
+    name: {uk: "Капітан варти Ядвіга", en: "Captain of the Guard Yadviha"}
+    location: road
+    role: questgiver
+    quest_links: ["missing_merchant"]
+    dialogues:
+      greeting:
+        - uk: "Ядвіга не встає — дивиться від стола так, ніби ти вже спізнився."
+          en: "Yadviha doesn't rise — she looks up from her table as though you're already late."
+      rumor:
+        - uk: "«Дорога між Вовчим Яром і переправою забирає більше людей, ніж має право»."
+          en: "\"The road between Vovchyi Yar and the crossing takes more people than it has any right to.\""
+      farewell:
+        - uk: "«Не гай часу. Я його теж не гаю»."
+          en: "\"Don't waste time. I don't either.\""
+
+  - id: city_guard
+    name: {uk: "Вартовий біля брами", en: "Gate Guard"}
+    location: city_gate
+    role: flavor
+    quest_links: []
+    dialogues: {}
+
+  - id: old_farmer
+    name: {uk: "Старий фермер", en: "Old Farmer"}
+    location: farm
+    role: flavor
+    quest_links: []
+    dialogues: {}

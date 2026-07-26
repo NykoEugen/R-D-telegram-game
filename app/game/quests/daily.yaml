@@ -42,3 +42,89 @@ quests:
       - id: "report_to_bruno"
         required_actions: ["talk-bruno"]
         count: 1
+
+  - id: "guild_board_sweep"
+    tier: 1
+    min_level: 1
+    reward_xp: 22
+    reward_gold: 8
+    type: "chore"
+    quest_type: "daily"
+    reset_hours: 24
+    location: "guild"
+    npc_id: "marta"
+    title:
+      uk: "Розібрати дошку оголошень"
+      en: "Sort the Notice Board"
+    questgiver:
+      uk: "Гільд-майстер Марта"
+      en: "Guildmaster Marta"
+    description:
+      uk: "Дошка оголошень заросла старими листками швидше, ніж Марта встигає їх знімати."
+      en: "The notice board grows old flyers faster than Marta can take them down."
+    proposal_text:
+      uk: "«Прострочені завдання — геть, нові — по центру», — каже Марта, не відриваючись від книги. «Легко наплутати, тож не поспішай»."
+      en: "\"Expired jobs — off, new ones — centred,\" Marta says without looking up. \"Easy to mix up, so don't rush.\""
+    exploration_text:
+      uk: "Аркуші розсипані без певної системи — хтось явно поспішав, знімаючи старі оголошення."
+      en: "The sheets are scattered without much order — someone was clearly in a hurry taking the old ones down."
+    confrontation_text:
+      uk: "Останній аркуш приклеївся так міцно, що доводиться відривати його по шматочках."
+      en: "The last sheet is stuck so firmly you have to peel it off in pieces."
+    success_text:
+      uk: "Дошка охайна вперше за тиждень. Марта оглядає результат і мовчки кладе монети на край столу."
+      en: "The board is tidy for the first time in a week. Marta inspects the result and silently sets coins on the edge of the table."
+    fail_text:
+      uk: "Дошка так і лишається безладом. Марта зітхає і бере це на себе."
+      en: "The board stays a mess. Marta sighs and takes it on herself."
+    objectives:
+      - id: "sort_flyers"
+        required_actions: ["explore", "investigate"]
+        count: 2
+
+  - id: "apothecary_errand"
+    tier: 1
+    min_level: 1
+    reward_xp: 24
+    reward_gold: 9
+    type: "delivery"
+    quest_type: "daily"
+    reset_hours: 24
+    location: "apothecary"
+    npc_id: "myron"
+    title:
+      uk: "Дрібне доручення аптекаря"
+      en: "A Small Errand for the Apothecary"
+    questgiver:
+      uk: "Аптекар Мирон"
+      en: "Myron the Apothecary"
+    description:
+      uk: "Мирону завжди бракує якогось інгредієнта — і завжди знаходиться той, хто може його принести."
+      en: "Myron is always short an ingredient — and there's always someone who can fetch it."
+    proposal_text:
+      uk: "«Мені потрібні свіжі трави, а не ті, що вже тиждень сохнуть на полиці», — каже Мирон, навіть не піднявши очей."
+      en: "\"I need fresh herbs, not the ones that have been drying on the shelf for a week,\" Myron says without even looking up."
+    exploration_text:
+      uk: "Трави ростуть неподалік, але знайти саме потрібні — окрема справа."
+      en: "The herbs grow nearby, but finding exactly the right ones is a separate matter."
+    confrontation_text:
+      uk: "Останній пучок ховається під камінням так, ніби не хоче бути знайденим."
+      en: "The last bunch hides under a rock as if it doesn't want to be found."
+    success_text:
+      uk: "Мирон оглядає траву, киває задоволено і віддає обіцяну плату без зайвих слів."
+      en: "Myron inspects the herbs, nods with satisfaction, and hands over the promised payment without extra words."
+    fail_text:
+      uk: "Ти повертаєшся з порожніми руками. Мирон бурчить щось про молодь і йде шукати сам."
+      en: "You return empty-handed. Myron mutters something about the youth and goes to look himself."
+    objectives:
+      - id: "gather_herbs"
+        required_actions: ["explore", "investigate"]
+        count: 2
+      - id: "talk_to_myron"
+        required_actions: ["talk-myron"]
+        count: 1
+    loot_table:
+      - item_id: "healing_herb"
+        chance: 0.5
+        qty_min: 1
+        qty_max: 2
