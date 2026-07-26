@@ -1,0 +1,41 @@
+# Repeatable quests, reset `reset_hours` after completion (see QuestRepository.is_available_again).
+
+quests:
+  - id: "tavern_chores"
+    tier: 1
+    min_level: 1
+    reward_xp: 20
+    reward_gold: 10
+    type: "chore"
+    quest_type: "daily"
+    reset_hours: 24
+    location: "tavern"
+    npc_id: "bruno"
+    title:
+      uk: "Прибрати таверну"
+      en: "Tidy the Tavern"
+    questgiver:
+      uk: "Бруно Трактирник"
+      en: "Bruno the Innkeeper"
+    description:
+      uk: "Бруно щоранку шукає рук, яких бракує — і щоранку знаходить тебе."
+      en: "Every morning Bruno is short-handed — and every morning he finds you."
+    proposal_text:
+      uk: "«Столи, бочки, підлога», — каже Бруно, не питаючи згоди. «Десять хвилин роботи, кухоль і трохи срібла. Домовились?»"
+      en: "\"Tables, barrels, floor,\" Bruno says without asking. \"Ten minutes of work, a mug, and a little silver. Deal?\""
+    exploration_text:
+      uk: "Робота нескладна, але нескінченна — щойно витерта стійка вкривається новим шаром пилу з дивовижною швидкістю."
+      en: "The work is simple but endless — the counter you just wiped collects a new layer of dust with remarkable speed."
+    confrontation_text:
+      uk: "Останній стіл — найупертіший. Пляма присохла так, ніби захищає щось особисте."
+      en: "The last table is the stubborn one. The stain has dried on as if defending something personal."
+    success_text:
+      uk: "Таверна виблискує (за місцевими мірками). Бруно киває — це найвища похвала, яку він видає до обіду."
+      en: "The tavern gleams (by local standards). Bruno nods — the highest praise he issues before noon."
+    fail_text:
+      uk: "Ти здаєшся на середині. Бруно зітхає і бере ганчірку сам."
+      en: "You give up halfway. Bruno sighs and picks up the rag himself."
+    objectives:
+      - id: "wipe_tables"
+        required_actions: ["explore", "rest"]
+        count: 2

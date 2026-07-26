@@ -1,0 +1,43 @@
+# Optional quests — not required for main-chain progression (no `requires` gate).
+
+quests:
+  - id: "haim_missing_crate"
+    tier: 1
+    min_level: 1
+    reward_xp: 40
+    reward_gold: 15
+    type: "delivery"
+    quest_type: "side"
+    location: "market"
+    npc_id: "haim"
+    title:
+      uk: "Загублений ящик Хаїма"
+      en: "Haim's Missing Crate"
+    questgiver:
+      uk: "Купець Хаїм"
+      en: "Merchant Haim"
+    description:
+      uk: "Один з ящиків Хаїма зник з возу дорогою на ринок. Хаїм підозрює конкретного носія, але доказів немає."
+      en: "One of Haim's crates went missing from the cart on the way to market. Haim suspects a particular porter, but has no proof."
+    proposal_text:
+      uk: "«Ящик з прянощами. Був — і нема», — Хаїм розводить руками з видом людини, яка вважає це особистою образою. «Знайди його, і я не забуду»."
+      en: "\"A crate of spices. There — then gone,\" Haim spreads his hands like a man who takes this personally. \"Find it, and I won't forget.\""
+    exploration_text:
+      uk: "Слід ящика веде через ринок до складського провулку, де товар часто «губиться» саме таким чином."
+      en: "The crate's trail leads across the market to a storage alley where goods have a habit of 'going missing' this exact way."
+    confrontation_text:
+      uk: "Носій із ящиком під пахвою помічає тебе і починає пояснювати щось про «тимчасове зберігання», відступаючи до виходу."
+      en: "The porter, crate under one arm, spots you and starts explaining something about 'temporary safekeeping' while backing toward the exit."
+    success_text:
+      uk: "Ящик повернуто. Хаїм перевіряє вміст, кивком підтверджує, що все ціле, і платить без зайвих запитань."
+      en: "The crate is returned. Haim checks the contents, nods that everything is intact, and pays without further questions."
+    fail_text:
+      uk: "Ящик так і не знайшовся. Хаїм записує щось у зошит — і не забуде цього ще довго."
+      en: "The crate is never found. Haim writes something in his ledger — and won't forget this for a while."
+    objectives:
+      - id: "find_crate"
+        required_actions: ["investigate", "explore"]
+        count: 2
+      - id: "confront_porter"
+        required_actions: ["talk", "negotiate"]
+        count: 1

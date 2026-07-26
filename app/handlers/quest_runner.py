@@ -4,6 +4,7 @@ Quest runner — complete quest lifecycle:
 """
 
 import random
+from datetime import datetime, timedelta
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
@@ -22,8 +23,9 @@ from app.game.states import GameStates
 from app.services.i18n_service import i18n_service
 from app.services.logging_service import get_logger
 from app.services.progression_service import ProgressionService
-from app.services.quest_loader import QuestDef, get_available_quests, get_quest_by_id
+from app.services.quest_loader import QuestDef, get_eligible_quests, get_quest_by_id
 from app.services.repositories.player_repo import PlayerRepository
+from app.services.repositories.quest_repo import QuestRepository
 
 router = Router()
 logger = get_logger(__name__)
@@ -140,8 +142,18 @@ async def _show_quest_board(target, state: FSMContext, db_session: AsyncSession,
             await target.answer(msg)
         return
 
-    completed = set((player.flags or {}).get("completed_quests", []))
-    quests = [q for q in get_available_quests(player.level) if q.id not in completed]
+    quest_repo = QuestRepository(db_session)
+    completed_ids = {
+        qp.quest_id for qp in await quest_repo.get_completed_quests(player.id)
+    }
+    candidates = get_eligible_quests(player.level, completed_ids)
+
+    quests = []
+    for q in candidates:
+        is_repeatable = q.quest_type in ("daily", "weekly")
+        if is_repeatable and not await quest_repo.is_available_again(player.id, q.id):
+            continue
+        quests.append(q)
 
     if not quests:
         all_done = (
@@ -209,7 +221,9 @@ async def cb_quest_select(cb: CallbackQuery, callback_data: QuestCB, state: FSMC
     await cb.message.edit_text(text, reply_markup=_proposal_kb(locale), parse_mode="Markdown")
 
 
-async def _start_quest_phase(message, state: FSMContext, edit: bool = False) -> None:
+async def _start_quest_phase(
+    message, state: FSMContext, db_session: AsyncSession, edit: bool = False
+) -> None:
     """Shared entry point used by both cb_quest_accept and travel arrival."""
     user_id = message.chat.id  # travel calls with message, not callback
     locale = i18n_service.get_user_language(user_id)
@@ -219,6 +233,10 @@ async def _start_quest_phase(message, state: FSMContext, edit: bool = False) -> 
     if not quest:
         await message.answer("Quest data lost. Try /quest.")
         return
+
+    player = await PlayerRepository(db_session).get_player_by_telegram_id(user_id)
+    if player:
+        await QuestRepository(db_session).start_quest(player.id, quest.id)
 
     obj_progress = {o.id: 0 for o in quest.objectives}
     await state.update_data(
@@ -231,7 +249,7 @@ async def _start_quest_phase(message, state: FSMContext, edit: bool = False) -> 
 
 
 @router.callback_query(QuestCB.filter(F.action == "accept"))
-async def cb_quest_accept(cb: CallbackQuery, state: FSMContext):
+async def cb_quest_accept(cb: CallbackQuery, state: FSMContext, db_session: AsyncSession):
     await cb.answer()
     if await state.get_state() == GameStates.QUEST_ACTIVE:
         return  # duplicate click — first already succeeded
@@ -249,6 +267,7 @@ async def cb_quest_accept(cb: CallbackQuery, state: FSMContext):
         quest_id=quest.id,
         quest_location=quest.location,
         start_quest_fn=_start_quest_phase,
+        db_session=db_session,
     )
 
 
@@ -350,12 +369,23 @@ async def cb_quest_do(cb: CallbackQuery, callback_data: QuestCB, state: FSMConte
     if obj_progress[obj.id] >= obj.count:
         obj_idx += 1
 
+    await state.update_data(obj_progress=obj_progress, current_obj_idx=obj_idx)
+
+    player = await PlayerRepository(db_session).get_player_by_telegram_id(
+        cb.from_user.id
+    )
+    if player:
+        await QuestRepository(db_session).update_progress(
+            player.id,
+            quest.id,
+            current_objective_idx=obj_idx,
+            obj_progress=obj_progress,
+        )
+
     if obj_idx >= len(quest.objectives):
         # All objectives done → resolve
-        await state.update_data(obj_progress=obj_progress, current_obj_idx=obj_idx)
         await _resolve_quest(cb, quest, state, db_session, cb.from_user.id, locale)
     else:
-        await state.update_data(obj_progress=obj_progress, current_obj_idx=obj_idx)
         is_entering_confrontation = obj_idx == len(quest.objectives) - 1
         await _render_phase(cb.message, quest, obj_idx, obj_progress, locale, edit=not is_entering_confrontation)
 
@@ -424,14 +454,16 @@ async def _resolve_quest(
         partial=1.0 if success else 0.25,
     )
 
+    quest_repo = QuestRepository(db_session)
     if success:
-        flags = player.flags or {}
-        completed = flags.get("completed_quests", [])
-        if quest.id not in completed:
-            completed.append(quest.id)
-        flags["completed_quests"] = completed
-        player.flags = flags
-        await db_session.flush()
+        available_at = (
+            datetime.utcnow() + timedelta(hours=quest.reset_hours)
+            if quest.reset_hours
+            else None
+        )
+        await quest_repo.complete_quest(player.id, quest.id, available_at=available_at)
+    else:
+        await quest_repo.fail_quest(player.id, quest.id)
 
     title = quest.get("title", locale)
     outcome = quest.get("success_text" if success else "fail_text", locale)
