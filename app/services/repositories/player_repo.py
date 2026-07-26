@@ -488,3 +488,41 @@ class PlayerRepository:
             "last_played": player.last_played,
             "created_at": player.created_at,
         }
+
+    def apply_energy_regen(self, player: Player) -> None:
+        """Regenerate energy lazily based on elapsed time (per-hour rate in Config)."""
+        from app.core.config import Config
+
+        now = datetime.utcnow()
+        last = player.energy_updated_at or now
+        elapsed_hours = (now - last).total_seconds() / 3600
+        if elapsed_hours <= 0 or player.energy >= player.max_energy:
+            return
+
+        regen = int(elapsed_hours * Config.ENERGY_REGENERATION_RATE)
+        if regen > 0:
+            player.energy = min(player.max_energy, player.energy + regen)
+            player.energy_updated_at = now
+
+    async def consume_energy(self, player: Player, amount: int) -> bool:
+        """Regenerate lazily, then spend `amount` energy. False if insufficient."""
+        self.apply_energy_regen(player)
+        if player.energy < amount:
+            return False
+
+        player.energy -= amount
+        player.energy_updated_at = datetime.utcnow()
+        await self.session.flush()
+        return True
+
+    def energy_regen_eta_minutes(self, player: Player, needed: int) -> int:
+        """Minutes until `player` reaches `needed` energy (no further spending)."""
+        from app.core.config import Config
+
+        deficit = needed - player.energy
+        if deficit <= 0:
+            return 0
+        rate_per_minute = Config.ENERGY_REGENERATION_RATE / 60
+        if rate_per_minute <= 0:
+            return 0
+        return max(1, int(deficit / rate_per_minute) + 1)

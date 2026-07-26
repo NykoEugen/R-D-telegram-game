@@ -71,6 +71,9 @@ class Player(Base):
     gems: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     energy: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
     max_energy: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
+    energy_updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
     
     # Game progress flags
     flags: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # Game progress flags

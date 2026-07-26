@@ -21,6 +21,7 @@ from app.handlers.shop import router as shop_router
 from app.handlers.travel import router as travel_router
 from app.middlewares.correlation import CorrelationMiddleware
 from app.middlewares.database import DatabaseMiddleware
+from app.middlewares.throttling import ThrottlingMiddleware
 from app.services.cache_cleanup_service import cache_cleanup_service
 from app.services.i18n_service import i18n_service
 from app.services.item_seed import sync_items_from_yaml
@@ -50,6 +51,8 @@ async def main():
     dp.callback_query.middleware(GlobalErrorHandler())
     dp.message.middleware(CorrelationMiddleware())
     dp.callback_query.middleware(CorrelationMiddleware())
+    dp.message.middleware(ThrottlingMiddleware())
+    dp.callback_query.middleware(ThrottlingMiddleware())
     dp.message.middleware(DatabaseMiddleware())
     dp.callback_query.middleware(DatabaseMiddleware())
 

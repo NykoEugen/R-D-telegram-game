@@ -32,6 +32,8 @@ from app.services.repositories.quest_repo import QuestRepository
 router = Router()
 logger = get_logger(__name__)
 
+ENERGY_COST_QUEST = 10  # spent when accepting a quest
+
 # ── Callback data ────────────────────────────────────────────────────────────
 
 class QuestCB(CallbackData, prefix="qst"):
@@ -300,6 +302,21 @@ async def cb_quest_accept(cb: CallbackQuery, state: FSMContext, db_session: Asyn
         await cb.message.edit_text("Quest data lost. Try /quest.")
         return
 
+    locale = _t(cb.from_user.id)
+    player_repo = PlayerRepository(db_session)
+    player = await player_repo.get_player_by_telegram_id(cb.from_user.id)
+    if player and not await player_repo.consume_energy(player, ENERGY_COST_QUEST):
+        eta = player_repo.energy_regen_eta_minutes(player, ENERGY_COST_QUEST)
+        msg = (
+            f"⚡ Недостатньо енергії ({player.energy}/{ENERGY_COST_QUEST}). "
+            f"Відновиться через {eta} хв."
+            if locale == "uk"
+            else f"⚡ Not enough energy ({player.energy}/{ENERGY_COST_QUEST}). "
+            f"Regenerates in {eta} min."
+        )
+        await cb.answer(msg, show_alert=True)
+        return
+
     from app.handlers.travel import travel_start
     await travel_start(
         message=cb.message,
@@ -340,6 +357,10 @@ async def cb_quest_hero_info(cb: CallbackQuery, state: FSMContext, db_session: A
         await cb.answer(msg, show_alert=True)
         return
 
+    player_repo = PlayerRepository(db_session)
+    player_repo.apply_energy_regen(player)
+    await db_session.flush()
+
     derived = player.get_derived_stats()
     xp_now, xp_need = player.get_xp_progress()
     from app.services.progression_service import ProgressionService
@@ -357,7 +378,7 @@ async def cb_quest_hero_info(cb: CallbackQuery, state: FSMContext, db_session: A
         f"{class_label}: {player.get_character_class_name()}\n\n"
         f"❤️ {hp_label}: {player.health}/{derived.hp_max}\n"
         f"⚔️ {atk_label}: {derived.attack}  🔮 {mag_label}: {derived.magic}\n"
-        f"💰 {gold_label}: {player.coins}\n\n"
+        f"💰 {gold_label}: {player.coins}  ⚡ {player.energy}/{player.max_energy}\n\n"
         f"{xp_bar}"
     )
 
