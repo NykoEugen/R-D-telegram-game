@@ -96,18 +96,24 @@ def _talk_label(npc_id: str, locale: str) -> str:
     return f"💬 Поговорити з {name}" if locale == "uk" else f"💬 Talk to {name}"
 
 
-def _action_label(action: str, locale: str) -> str:
+def _action_label(action: str, locale: str, is_required: bool = True) -> str:
     if action.startswith("talk-"):
-        return _talk_label(action.removeprefix("talk-"), locale)
-    labels = _ACTION_LABELS.get(locale, _ACTION_LABELS["en"])
-    return labels.get(action, action.title())
+        label = _talk_label(action.removeprefix("talk-"), locale)
+    else:
+        labels = _ACTION_LABELS.get(locale, _ACTION_LABELS["en"])
+        label = labels.get(action, action.title())
+    if not is_required:
+        label += "  (флейвор)" if locale == "uk" else "  (flavor)"
+    return label
 
 
-def _phase_kb(actions: list[str], locale: str) -> InlineKeyboardMarkup:
+def _phase_kb(
+    actions: list[str], required_actions: list[str], locale: str
+) -> InlineKeyboardMarkup:
     rows = []
     for a in actions:
         rows.append([InlineKeyboardButton(
-            text=_action_label(a, locale),
+            text=_action_label(a, locale, is_required=a in required_actions),
             callback_data=QuestCB(action="do", data=a).pack(),
         )])
     hero_info = "🧙 Герой" if locale == "uk" else "🧙 Hero"
@@ -493,9 +499,16 @@ async def _render_phase(
     else:
         header = f"🗺 **{title}**\n\n"
 
-    text = f"{header}{phase_text}\n\n📊 {prog_label}: {done}/{total}"
-
     obj = quest.objectives[obj_idx]
+    goal_label = "Ціль" if locale == "uk" else "Goal"
+    required_labels = " / ".join(
+        _action_label(a, locale, is_required=True) for a in obj.required_actions
+    )
+    obj_done = obj_progress.get(obj.id, 0)
+    goal_line = f"\n\n🎯 {goal_label}: {required_labels} — {obj_done}/{obj.count}"
+
+    text = f"{header}{phase_text}{goal_line}\n\n📊 {prog_label}: {done}/{total}"
+
     talk_npc_id = _talk_objective_npc(obj)
     if talk_npc_id:
         line, _idx = npc_loader.pick_line(talk_npc_id, "rumor", player_level, locale)
@@ -507,7 +520,7 @@ async def _render_phase(
     extra = [a for a in ["investigate", "explore", "talk", "flee"] if a not in obj.required_actions][:2]
     actions = list(dict.fromkeys(obj.required_actions + extra))
 
-    kb = _phase_kb(actions, locale)
+    kb = _phase_kb(actions, obj.required_actions, locale)
     if edit:
         await _safe_edit(message, text, reply_markup=kb, parse_mode="Markdown")
     else:
